@@ -1,0 +1,37 @@
+[
+  {
+    "id": "sample-001",
+    "language": "mr",
+    "script": "Devanagari",
+    "query": "महाराष्ट्रात गेल्या वर्षी किती शेतकऱ्यांना पीएम-किसानचा लाभ मिळाला?",
+    "target_table": "ndap_pm_kisan_disbursement"
+  },
+  {
+    "id": "sample-002",
+    "language": "hi",
+    "script": "Devanagari",
+    "query": "बिहार के किस जिले में 2023 में सबसे कम महिला साक्षरता थी?",
+    "target_table": "ndap_education_stats"
+  },
+  {
+    "id": "sample-003",
+    "language": "hi-en",
+    "script": "Latin",
+    "query": "Maharashtra mein pichle saal kitne kisano ne PM-Kisan yojana ka fayda liya?",
+    "target_table": "ndap_pm_kisan_disbursement"
+  },
+  {
+    "id": "sample-004",
+    "language": "ta",
+    "script": "Tamil",
+    "query": "தமிழ்நாட்டில் மகாத்மா காந்தி தேசிய ஊரக வேலை உறுதித் திட்டத்தின் கீழ் எத்தனை மனித நாட்கள் உருவாக்கப்பட்டன?",
+    "target_table": "mgnrega_state_annual_employment"
+  },
+  {
+    "id": "sample-005",
+    "language": "en",
+    "script": "Latin",
+    "query": "What is the total number of farmer beneficiaries under PM-KISAN in Maharashtra?",
+    "target_table": "ndap_pm_kisan_disbursement"
+  }
+]

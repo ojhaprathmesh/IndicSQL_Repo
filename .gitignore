@@ -1,0 +1,98 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Hugging Face & Model checkpoints
+checkpoints/
+models/
+lora_weights/
+*.bin
+*.safetensors
+*.pt
+*.pth
+.cache/
+huggingface/
+
+# Database files & local sandboxes
+*.duckdb
+*.duckdb.wal
+*.db
+*.sqlite
+*.sqlite3
+qdrant_storage/
+
+# Heavy data & benchmark datasets (preserve placeholders)
+data/ndap_catalogs/*
+!data/ndap_catalogs/.gitkeep
+!data/ndap_catalogs/README.md
+data/benchmarks/*
+!data/benchmarks/.gitkeep
+!data/benchmarks/README.md
+data/raw/*
+!data/raw/.gitkeep
+
+# Evaluation output logs
+benchmark_results/
+logs/
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Frontend / Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.env.local
+*.tsbuildinfo
+
+# IDE and OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
