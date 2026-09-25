@@ -5,10 +5,10 @@ catches runtime errors (syntax, column not found, typing) and reports execution 
 """
 
 from typing import Any, Dict
+
 from indicsql.core.state import IndicSQLState
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox
 from indicsql.sandbox.validator import validate_and_limit_sql
-
 
 # Reusable global sandbox instance for development
 _sandbox: DuckDBSandbox = DuckDBSandbox()
@@ -31,7 +31,7 @@ def sandbox_executor_node(state: IndicSQLState) -> Dict[str, Any]:
 
     try:
         result = _sandbox.execute_query(sanitized_sql_or_err)
-        
+
         audit_entry = {
             "step": 4,
             "agent": "SandboxExecutionAgent",

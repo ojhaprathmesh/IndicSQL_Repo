@@ -5,7 +5,9 @@ read-only analytical SQL queries with runtime resource safeguards.
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Optional
+
 try:
     import duckdb
     HAS_DUCKDB = True
@@ -15,22 +17,40 @@ except ImportError:
 
 from indicsql.core.state import TabularResult
 
+PARQUET_STORE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "parquet_stores"
+
 
 class DuckDBSandbox:
     """Ephemeral In-Memory Sandbox for executing candidate SQL on NDAP tables."""
 
-    def __init__(self, memory_limit_mb: int = 512):
+    def __init__(self, memory_limit_mb: int = 512, parquet_dir: Optional[Path] = None):
         self.has_duckdb = HAS_DUCKDB
+        self.parquet_dir = parquet_dir or PARQUET_STORE_DIR
         if self.has_duckdb:
             self.con = duckdb.connect(database=":memory:")
             self.con.execute(f"SET max_memory = '{memory_limit_mb}MB'")
         else:
             self.con = sqlite3.connect(":memory:")
-        self._init_ndap_sample_tables()
+        self._init_ndap_tables()
 
-    def _init_ndap_sample_tables(self) -> None:
-        """Initializes mock NDAP tables reflecting Government of India open datasets."""
-        # 1. PM-KISAN Beneficiary & Disbursement Table
+    def _init_ndap_tables(self) -> None:
+        """Loads tables from parquet store if available, or seeds core mock tables."""
+        loaded_from_parquet = False
+        if self.has_duckdb and self.parquet_dir.exists():
+            parquet_files = list(self.parquet_dir.glob("*.parquet"))
+            if parquet_files:
+                for p_file in parquet_files:
+                    table_name = p_file.stem
+                    self.con.execute(
+                        f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM read_parquet('{p_file.resolve()}');"
+                    )
+                loaded_from_parquet = True
+
+        if not loaded_from_parquet:
+            self._seed_default_mock_tables()
+
+    def _seed_default_mock_tables(self) -> None:
+        """Fallback mock tables if parquet stores are not generated yet."""
         self.con.execute("""
             CREATE TABLE IF NOT EXISTS ndap_pm_kisan_disbursement (
                 state_name VARCHAR,

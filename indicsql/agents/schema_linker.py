@@ -5,8 +5,8 @@ Addresses the 20% schema-linking error diagnosed in the IndicDB benchmark.
 """
 
 from typing import Any, Dict, List
-from indicsql.core.state import IndicSQLState, SchemaElement
 
+from indicsql.core.state import IndicSQLState, SchemaElement
 
 # Built-in seed mapping for core NDAP domains (Agriculture, Education, MGNREGA)
 NDAP_INDIC_SYNONYMS: Dict[str, Dict[str, Any]] = {

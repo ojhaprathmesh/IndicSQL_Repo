@@ -5,7 +5,8 @@ in the citizen's mother tongue (Hindi, Marathi, Tamil, Telugu, Bengali, Hinglish
 with localized Indian numbering (Lakhs and Crores).
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
+
 from indicsql.core.state import IndicSQLState
 
 
@@ -25,7 +26,6 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
     res = state.get("execution_result")
     err = state.get("execution_error")
     lang = state.get("detected_lang", "en")
-    raw = state.get("raw_query", "")
 
     if err or not res:
         if lang == "hi":

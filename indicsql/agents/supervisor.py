@@ -5,6 +5,7 @@ Analyzes input query, detects script and language, manages state transitions, an
 
 import unicodedata
 from typing import Any, Dict
+
 from indicsql.core.state import IndicSQLState
 
 
@@ -41,7 +42,7 @@ def identify_language_code(text: str, script: str) -> str:
         if "ळ" in text or "आहे" in text or "किती" in text or "शेतकऱ्यांना" in text:
             return "mr"
         return "hi"
-    
+
     # For Latin script: Distinguish Hinglish vs English
     hinglish_markers = {"kitne", "kisko", "pichle", "saal", "me", "mein", "ka", "ki", "ke", "hai", "kya", "yojana"}
     words = set(text.lower().split())

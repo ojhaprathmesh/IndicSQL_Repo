@@ -7,7 +7,6 @@ to canonical vocabulary terms.
 import re
 from typing import Dict
 
-
 # Common Latin-to-canonical mappings for Indian administrative terms
 TRANSLITERATION_MAP: Dict[str, str] = {
     "kisan": "farmer",

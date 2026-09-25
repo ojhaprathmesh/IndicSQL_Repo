@@ -6,6 +6,7 @@ Addresses the 28% Aggregation & GROUP BY Breakdown identified in IndicDB.
 """
 
 from typing import Any, Dict
+
 from indicsql.core.state import IndicSQLState
 
 
@@ -15,7 +16,6 @@ def generate_aggregation_sql(state: IndicSQLState) -> str:
     Supports LoRA model inference or rule-based template generation as fallback.
     """
     raw_query = state.get("raw_query", "")
-    pruned_schema = state.get("pruned_schema", [])
     table_name = state.get("target_database", "ndap_pm_kisan_disbursement")
 
     # Inspect query tokens for domain specific aggregation

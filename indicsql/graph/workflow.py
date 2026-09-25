@@ -4,17 +4,17 @@ Constructs the cyclic state graph coordinating the IndicSQL agent swarm:
 Supervisor -> SchemaLinker -> Synthesizer -> Critic -> SandboxExecutor -> (ReflectionLoop or Verbalizer) -> END
 """
 
-from typing import Any, Dict, Optional
 import uuid
+from typing import Any, Optional
 
-from indicsql.core.state import IndicSQLState
-from indicsql.agents.supervisor import supervisor_node
-from indicsql.agents.schema_linker import schema_linker_node
-from indicsql.agents.sql_synthesizer import sql_synthesizer_node
 from indicsql.agents.critic import critic_node
-from indicsql.agents.sandbox_executor import sandbox_executor_node
 from indicsql.agents.reflection_healer import reflection_healer_node
 from indicsql.agents.response_verbalizer import response_verbalizer_node
+from indicsql.agents.sandbox_executor import sandbox_executor_node
+from indicsql.agents.schema_linker import schema_linker_node
+from indicsql.agents.sql_synthesizer import sql_synthesizer_node
+from indicsql.agents.supervisor import supervisor_node
+from indicsql.core.state import IndicSQLState
 
 
 def route_after_execution(state: IndicSQLState) -> str:
@@ -39,8 +39,8 @@ def create_indicsql_graph(checkpointer: Optional[Any] = None):
     Compiles the LangGraph StateGraph when langgraph is available.
     """
     try:
-        from langgraph.graph import StateGraph, END  # type: ignore
         from langgraph.checkpoint.memory import MemorySaver  # type: ignore
+        from langgraph.graph import END, StateGraph  # type: ignore
 
         if checkpointer is None:
             checkpointer = MemorySaver()

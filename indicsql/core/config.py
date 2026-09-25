@@ -4,6 +4,7 @@ Loads settings from environment variables and .env file.
 """
 
 from typing import Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

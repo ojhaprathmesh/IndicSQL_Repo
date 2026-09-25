@@ -83,9 +83,15 @@ IndicSQL coordinates 6 specialized agent nodes through a unified LangGraph State
 ```
 IndicSQL_Repo/
 ├── data/                         # Datasets & benchmark partitions
-│   ├── benchmarks/               # IndicDB benchmark test partitions (15k queries)
+│   ├── benchmarks/               # IndicDB benchmark test partitions & JSON suites
+│   │   ├── indicdb_eval_suite.json
 │   │   └── README.md
-│   ├── ndap_catalogs/            # NDAP relational schemas and catalogs
+│   ├── ndap_catalogs/            # 20 NDAP relational schemas, DDLs & metadata
+│   │   ├── catalog_metadata.json
+│   │   ├── *.sql (20 database DDLs)
+│   │   └── README.md
+│   ├── parquet_stores/           # High-performance compressed Parquet stores
+│   │   ├── *.parquet (20 databases)
 │   │   └── README.md
 │   └── sample_queries/           # Multilingual sample test queries (7 languages)
 │       └── queries.json
@@ -104,6 +110,10 @@ IndicSQL_Repo/
 │   ├── api/                      # REST & WebSocket API gateway
 │   │   ├── __init__.py
 │   │   └── server.py             # FastAPI endpoints (/query, /schemas, /health)
+│   ├── benchmark/                # IndicDB evaluation harness & dataset loaders
+│   │   ├── __init__.py
+│   │   ├── dataset.py            # Benchmark query schemas & suite generators
+│   │   └── evaluator.py          # Execution Accuracy (EX) & Gap Delta metrics
 │   ├── core/                     # Foundational configurations & state
 │   │   ├── __init__.py
 │   │   ├── config.py             # Pydantic Settings & environment loader
@@ -113,18 +123,22 @@ IndicSQL_Repo/
 │   │   └── workflow.py           # LangGraph StateGraph & fallback pipeline
 │   ├── sandbox/                  # Relational execution engine
 │   │   ├── __init__.py
-│   │   ├── duckdb_engine.py      # In-memory DuckDB sandbox with NDAP sample tables
+│   │   ├── duckdb_engine.py      # In-memory DuckDB sandbox with NDAP parquet mounting
 │   │   └── validator.py          # SQLGlot AST read-only & LIMIT linter
 │   ├── schema/                   # Schema catalogs & phonetic tools
 │   │   ├── __init__.py
-│   │   ├── catalog.py            # NDAP database catalog registry
+│   │   ├── catalog.py            # Complete registry for all 20 NDAP databases
+│   │   ├── ingest_ndap.py        # Parquet ingestion & DDL generation pipeline
 │   │   └── phonetic.py           # Phonetic transliteration bridge
 │   └── __init__.py               # Package metadata and version info
 ├── scripts/                      # Utility and demonstration tools
+│   ├── evaluate_benchmark.py     # CLI IndicDB benchmark evaluation harness
 │   └── run_demo.py               # Interactive CLI multi-agent demo
 ├── tests/                        # Automated unit and integration test suite
 │   ├── __init__.py
 │   ├── test_agents.py            # Unit tests for agent nodes and AST validator
+│   ├── test_benchmark_harness.py # Unit tests for IndicDB evaluator and isomorphism
+│   ├── test_ndap_catalogs.py     # Unit tests for 20 NDAP databases and parquet stores
 │   └── test_pipeline.py          # End-to-end integration tests
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Git ignore rules for Python, models & artifacts
@@ -209,13 +223,29 @@ uv run scripts/run_demo.py "महाराष्ट्रात गेल्य
 ======================================================================
 ```
 
-### 4. Run the Test Suite
+### 4. Run the IndicDB Benchmark Evaluation Harness
+
+Evaluate the cross-lingual performance across all 7 Indian languages and measure the Indic-to-English accuracy delta:
+
+```bash
+uv run scripts/evaluate_benchmark.py
+```
+
+### 5. Re-ingest / Export 20 NDAP Databases to Parquet
+
+Regenerate clean, compressed Parquet files and SQL DDL schemas for all 20 NDAP databases:
+
+```bash
+uv run python indicsql/schema/ingest_ndap.py
+```
+
+### 6. Run the Test Suite
 
 ```bash
 uv run python -m unittest discover tests
 ```
 
-### 5. Launch the FastAPI Gateway
+### 7. Launch the FastAPI Gateway
 
 ```bash
 uv run uvicorn indicsql.api.server:app --reload --port 8000
@@ -227,7 +257,7 @@ Visit `http://localhost:8000/docs` to test interactive Swagger documentation.
 ## 🗺️ 10-Week Engineering Roadmap (Summary from PLAN.md)
 
 - [x] **Phase 0: Project Inception & Scaffolding** (Scaffolding, state contracts, DuckDB sandbox, CI tests)
-- [ ] **Phase 1: NDAP 20-DB Ingestion & Benchmark Harness** (Parquet exports, full IndicDB 15,617 test suite)
+- [x] **Phase 1: NDAP 20-DB Ingestion & Benchmark Harness** (20-DB Parquet stores, SQL DDL catalogs, 7-language test suite, Execution Accuracy & Gap Delta evaluator)
 - [ ] **Phase 2: Phonetic Schema-Linking & Vector Retrieval** (IndicXlit integration, mE5/BGE-M3 Qdrant indexing)
 - [ ] **Phase 3: Fine-Tuning Aggregation Transformer** (`IndicSQL-Agg-12K` dataset, Sarvam-2B / Qwen-2.5-Coder LoRA)
 - [ ] **Phase 4: Full Multi-Agent Graph & Next.js UI** (Production LangGraph checkpointing, BharatQuery Cockpit)

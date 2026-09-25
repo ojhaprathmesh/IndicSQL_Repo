@@ -6,8 +6,8 @@ and ensures appropriate safety limits.
 """
 
 from typing import Any, Dict
-from indicsql.core.state import IndicSQLState
 
+from indicsql.core.state import IndicSQLState
 
 FORBIDDEN_KEYWORDS = {"DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "CREATE", "GRANT"}
 

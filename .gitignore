@@ -54,13 +54,10 @@ huggingface/
 *.sqlite3
 qdrant_storage/
 
-# Heavy data & benchmark datasets (preserve placeholders)
-data/ndap_catalogs/*
-!data/ndap_catalogs/.gitkeep
-!data/ndap_catalogs/README.md
-data/benchmarks/*
-!data/benchmarks/.gitkeep
-!data/benchmarks/README.md
+# Heavy data & local parquet stores (regenerated via ingest_ndap.py)
+data/parquet_stores/*
+!data/parquet_stores/.gitkeep
+!data/parquet_stores/README.md
 data/raw/*
 !data/raw/.gitkeep
 

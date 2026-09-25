@@ -4,12 +4,13 @@ Exposes endpoints for natural language queries, schema inspection, and benchmark
 """
 
 from typing import Any, Dict, List, Optional
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from indicsql import __version__
 from indicsql.graph.workflow import execute_indicsql_pipeline
 from indicsql.schema.catalog import NDAPCatalog
-from indicsql import __version__
 
 app = FastAPI(
     title="IndicSQL API Gateway",
