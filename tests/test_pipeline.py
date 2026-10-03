@@ -13,7 +13,10 @@ class TestPipeline(unittest.TestCase):
         self.assertNotEqual(state["generated_sql"], "")
         self.assertIsNotNone(state["execution_result"])
         self.assertGreater(state["execution_result"]["row_count"], 0)
-        self.assertTrue("शेतकऱ्यांना" in state["verbalized_response"] or "पीएम-किसान" in state["verbalized_response"])
+        self.assertTrue(
+            "शेतकऱ्यांना" in state["verbalized_response"]
+            or "पीएम-किसान" in state["verbalized_response"]
+        )
         self.assertGreaterEqual(len(state["audit_trace"]), 4)
 
     def test_bihar_education_pipeline_run(self):

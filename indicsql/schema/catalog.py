@@ -47,7 +47,13 @@ class NDAPCatalog:
             "domain": "Agriculture",
             "title": "e-NAM Mandi Market Commodity Arrivals & Prices",
             "description": "Daily and monthly wholesale agricultural commodity prices across regulated mandis.",
-            "primary_key": ["state_name", "district_name", "market_name", "commodity", "arrival_date"],
+            "primary_key": [
+                "state_name",
+                "district_name",
+                "market_name",
+                "commodity",
+                "arrival_date",
+            ],
             "columns": {
                 "state_name": "VARCHAR - State/UT name",
                 "district_name": "VARCHAR - District name",
@@ -91,7 +97,6 @@ class NDAPCatalog:
                 "organic_carbon_pct": "FLOAT - Percentage organic carbon soil content",
             },
         },
-
         # =====================================================================
         # 2. Education & Skill Development (5 Databases)
         # =====================================================================
@@ -160,7 +165,12 @@ class NDAPCatalog:
             "domain": "Education",
             "title": "Skill India & PMKVY Vocational Database",
             "description": "Short-term skilling, ITI certifications, and placement records.",
-            "primary_key": ["state_name", "district_name", "financial_year", "sector_skill_council"],
+            "primary_key": [
+                "state_name",
+                "district_name",
+                "financial_year",
+                "sector_skill_council",
+            ],
             "columns": {
                 "state_name": "VARCHAR - State/UT name",
                 "district_name": "VARCHAR - District name",
@@ -171,7 +181,6 @@ class NDAPCatalog:
                 "placed_candidates": "INTEGER - Candidates verified placed in formal employment",
             },
         },
-
         # =====================================================================
         # 3. Healthcare, Nutrition & Demographics (5 Databases)
         # =====================================================================
@@ -249,7 +258,6 @@ class NDAPCatalog:
                 "dbt_nutritional_amount_inr": "DOUBLE - Nikshay Poshan Yojana direct cash assistance paid in INR",
             },
         },
-
         # =====================================================================
         # 4. Rural Development, Welfare & Infrastructure (5 Databases)
         # =====================================================================

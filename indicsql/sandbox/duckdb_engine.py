@@ -10,9 +10,11 @@ from typing import Optional
 
 try:
     import duckdb
+
     HAS_DUCKDB = True
 except ImportError:
     import sqlite3
+
     HAS_DUCKDB = False
 
 from indicsql.core.state import TabularResult
@@ -37,6 +39,7 @@ class DuckDBSandbox:
         """Loads all NDAP database tables strictly from data/parquet_stores/."""
         if not self.parquet_dir.exists() or not list(self.parquet_dir.glob("*.parquet")):
             from indicsql.schema.ingest_ndap import ingest_and_export_all_ndap_databases
+
             ingest_and_export_all_ndap_databases(parquet_dir=self.parquet_dir)
 
         parquet_files = list(self.parquet_dir.glob("*.parquet"))
@@ -55,6 +58,7 @@ class DuckDBSandbox:
         else:
             # Load actual parquet files into in-memory sqlite3 without dummy data
             import pandas as pd
+
             for p_file in parquet_files:
                 table_name = p_file.stem
                 df = pd.read_parquet(p_file)
@@ -95,4 +99,3 @@ class DuckDBSandbox:
     def close(self) -> None:
         """Closes the database connection."""
         self.con.close()
-

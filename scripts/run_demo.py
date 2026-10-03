@@ -26,8 +26,12 @@ def main():
         description="IndicSQL Swarm Interactive CLI Demonstration (Phase 1)"
     )
     parser.add_argument("query", nargs="?", default=None, help="Custom natural language query")
-    parser.add_argument("--list", action="store_true", help="List available sample queries across NDAP domains")
-    parser.add_argument("--sample", type=int, default=None, help="Run a specific sample query index (1-based)")
+    parser.add_argument(
+        "--list", action="store_true", help="List available sample queries across NDAP domains"
+    )
+    parser.add_argument(
+        "--sample", type=int, default=None, help="Run a specific sample query index (1-based)"
+    )
     args = parser.parse_args()
 
     samples = load_sample_queries()
@@ -38,7 +42,7 @@ def main():
         print("=" * 80)
         for i, s in enumerate(samples, start=1):
             print(f"[{i}] [{s.get('language')}] ({s.get('target_table')}):")
-            print(f"    \"{s.get('query')}\"\n")
+            print(f'    "{s.get("query")}"\n')
         print("To run a sample, use: uv run scripts/run_demo.py --sample <index>")
         return
 
@@ -54,14 +58,18 @@ def main():
 
     print("=" * 75)
     print("🇮🇳 IndicSQL: Autonomous Cross-Lingual Text-to-SQL Swarm (Phase 1)")
-    print(f"   Registered NDAP Databases: {NDAPCatalog.get_total_table_count()} | Parquet Stores Mounted")
+    print(
+        f"   Registered NDAP Databases: {NDAPCatalog.get_total_table_count()} | Parquet Stores Mounted"
+    )
     print("=" * 75)
     print(f"📥 Input Query: {selected_query}\n")
 
     state = execute_indicsql_pipeline(selected_query)
 
     print("🔍 [Step 1] Supervisor Script & Language Detection:")
-    print(f"   • Detected Language: {state.get('detected_lang')} | Script: {state.get('detected_script')}")
+    print(
+        f"   • Detected Language: {state.get('detected_lang')} | Script: {state.get('detected_script')}"
+    )
 
     print("\n🔗 [Step 2] Cross-Lingual Schema Linking:")
     target_tbl = state.get("target_database", "Unknown")
@@ -78,7 +86,9 @@ def main():
     res = state.get("execution_result")
     if res:
         print(f"   • Columns: {res.get('columns')}")
-        print(f"   • Rows ({res.get('row_count')} record(s), {res.get('execution_time_ms', 0):.2f}ms latency):")
+        print(
+            f"   • Rows ({res.get('row_count')} record(s), {res.get('execution_time_ms', 0):.2f}ms latency):"
+        )
         for row in res.get("rows", [])[:5]:
             print(f"     -> {row}")
     else:

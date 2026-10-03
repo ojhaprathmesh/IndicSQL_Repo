@@ -58,7 +58,11 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
 
     # 2. MGNREGA Person-Days (Mandays)
     if "total_mandays" in columns or "total_mandays_generated" in columns:
-        mandays_idx = columns.index("total_mandays") if "total_mandays" in columns else columns.index("total_mandays_generated")
+        mandays_idx = (
+            columns.index("total_mandays")
+            if "total_mandays" in columns
+            else columns.index("total_mandays_generated")
+        )
         mandays = row[mandays_idx]
         mandays_fmt = format_indian_currency_number(float(mandays))
         if lang == "ta":
@@ -72,15 +76,27 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
 
     # 3. PM-KISAN Farmers & Disbursement
     if "total_farmers" in columns or "farmer_beneficiaries" in columns:
-        farmers_idx = columns.index("total_farmers") if "total_farmers" in columns else columns.index("farmer_beneficiaries")
+        farmers_idx = (
+            columns.index("total_farmers")
+            if "total_farmers" in columns
+            else columns.index("farmer_beneficiaries")
+        )
         farmers = row[farmers_idx]
         farmers_fmt = format_indian_currency_number(float(farmers))
         amount_part = ""
         if "total_amount" in columns or "amount_inr" in columns:
-            amt_idx = columns.index("total_amount") if "total_amount" in columns else columns.index("amount_inr")
+            amt_idx = (
+                columns.index("total_amount")
+                if "total_amount" in columns
+                else columns.index("amount_inr")
+            )
             amt = row[amt_idx]
             amt_fmt = format_indian_currency_number(float(amt))
-            amount_part = f", आणि ₹{amt_fmt} ची रक्कम थेट वितरित करण्यात आली" if lang == "mr" else f", और कुल ₹{amt_fmt} की राशि हस्तांतरित की गई"
+            amount_part = (
+                f", आणि ₹{amt_fmt} ची रक्कम थेट वितरित करण्यात आली"
+                if lang == "mr"
+                else f", और कुल ₹{amt_fmt} की राशि हस्तांतरित की गई"
+            )
 
         if lang == "mr":
             return f"पीएम-किसान योजनेअंतर्गत एकूण {farmers_fmt} शेतकऱ्यांना लाभ मिळाला{amount_part}."
@@ -89,7 +105,9 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         elif lang == "hi-en":
             return f"PM-KISAN yojana ke tahat total {farmers_fmt} farmers ko labh mila."
         else:
-            return f"Under PM-KISAN, a total of {farmers:,} farmers received direct benefit transfers."
+            return (
+                f"Under PM-KISAN, a total of {farmers:,} farmers received direct benefit transfers."
+            )
 
     # Generic schema-aware verbalization
     items_desc = []

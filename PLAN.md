@@ -450,6 +450,7 @@ from typing import TypedDict, List, Dict, Optional, Any, Union
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
+
 class SchemaElement(TypedDict):
     table_name: str
     column_name: str
@@ -458,11 +459,13 @@ class SchemaElement(TypedDict):
     is_foreign_key: bool
     foreign_target: Optional[str]
 
+
 class TabularResult(TypedDict):
     columns: List[str]
     rows: List[List[Any]]
     row_count: int
     execution_time_ms: float
+
 
 class IndicSQLState(TypedDict):
     query_id: str
@@ -486,7 +489,7 @@ class IndicSQLState(TypedDict):
 ```python
 def create_indicsql_graph(checkpointer: MemorySaver):
     workflow = StateGraph(IndicSQLState)
-    
+
     # Register Swarm Nodes
     workflow.add_node("supervisor_router", supervisor_node)
     workflow.add_node("schema_linker", schema_linker_node)
@@ -494,15 +497,15 @@ def create_indicsql_graph(checkpointer: MemorySaver):
     workflow.add_node("sandbox_executor", sandbox_executor_node)
     workflow.add_node("reflection_healer", reflection_healer_node)
     workflow.add_node("response_verbalizer", response_verbalizer_node)
-    
+
     # Set Entry Point
     workflow.set_entry_point("supervisor_router")
-    
+
     # Define Edges
     workflow.add_edge("supervisor_router", "schema_linker")
     workflow.add_edge("schema_linker", "sql_synthesizer")
     workflow.add_edge("sql_synthesizer", "sandbox_executor")
-    
+
     # Conditional Reflection Routing
     workflow.add_conditional_edges(
         "sandbox_executor",
@@ -510,13 +513,13 @@ def create_indicsql_graph(checkpointer: MemorySaver):
         {
             "success": "response_verbalizer",
             "retry": "reflection_healer",
-            "fatal_error": "response_verbalizer" # Verbalize graceful explanation
-        }
+            "fatal_error": "response_verbalizer",  # Verbalize graceful explanation
+        },
     )
-    
+
     workflow.add_edge("reflection_healer", "sql_synthesizer")
     workflow.add_edge("response_verbalizer", END)
-    
+
     return workflow.compile(checkpointer=checkpointer)
 ```
 

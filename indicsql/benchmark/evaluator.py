@@ -22,6 +22,7 @@ RESULTS_DIR = Path(__file__).resolve().parent.parent.parent / "benchmark_results
 
 class BenchmarkResult(BaseModel):
     """Evaluation result for an individual benchmark query instance."""
+
     query_id: str
     language: str
     script: str
@@ -48,7 +49,9 @@ def normalize_value(val: Any) -> Any:
     return str(val)
 
 
-def are_tabular_results_equivalent(res_pred: Optional[TabularResult], res_gold: Optional[TabularResult]) -> bool:
+def are_tabular_results_equivalent(
+    res_pred: Optional[TabularResult], res_gold: Optional[TabularResult]
+) -> bool:
     """
     Evaluates whether two SQL tabular execution outputs are isomorphic:
     Checks row multiset equality regardless of column ordering or row ordering (unless explicit order is tested).
@@ -75,7 +78,9 @@ def are_tabular_results_equivalent(res_pred: Optional[TabularResult], res_gold: 
     return counter_pred == counter_gold
 
 
-def compute_schema_linking_f1(predicted_elements: List[Dict[str, Any]], gold_columns: List[str]) -> float:
+def compute_schema_linking_f1(
+    predicted_elements: List[Dict[str, Any]], gold_columns: List[str]
+) -> float:
     """Computes F1 score on predicted columns vs gold ground-truth columns."""
     if not gold_columns:
         return 1.0
@@ -142,9 +147,7 @@ class IndicDBEvaluator:
         )
 
     def evaluate_suite(
-        self,
-        queries: List[BenchmarkQuery],
-        save_results: bool = True
+        self, queries: List[BenchmarkQuery], save_results: bool = True
     ) -> Dict[str, Any]:
         """
         Executes benchmark evaluation across a set of queries and computes aggregate metrics.
@@ -159,14 +162,21 @@ class IndicDBEvaluator:
             res = self.evaluate_query(q)
             results.append(res)
             status_icon = "✓" if res.execution_match else "✗"
-            print(f"   [{i}/{total}] {status_icon} [{q.language}] {q.query[:45]}... ({res.execution_time_ms:.1f}ms)")
+            print(
+                f"   [{i}/{total}] {status_icon} [{q.language}] {q.query[:45]}... ({res.execution_time_ms:.1f}ms)"
+            )
 
         # Aggregate Metrics Calculation
         metrics_by_lang: Dict[str, Dict[str, Any]] = {}
         for res in results:
             lang = res.language
             if lang not in metrics_by_lang:
-                metrics_by_lang[lang] = {"total": 0, "correct": 0, "f1_sum": 0.0, "latency_sum": 0.0}
+                metrics_by_lang[lang] = {
+                    "total": 0,
+                    "correct": 0,
+                    "f1_sum": 0.0,
+                    "latency_sum": 0.0,
+                }
             metrics_by_lang[lang]["total"] += 1
             if res.execution_match:
                 metrics_by_lang[lang]["correct"] += 1
@@ -196,7 +206,9 @@ class IndicDBEvaluator:
         avg_indic_acc = (sum(indic_accuracies) / len(indic_accuracies)) if indic_accuracies else 0.0
         delta_indic_en = round(en_accuracy - avg_indic_acc, 2)
 
-        overall_acc = (sum(1 for r in results if r.execution_match) / total) * 100.0 if total else 0.0
+        overall_acc = (
+            (sum(1 for r in results if r.execution_match) / total) * 100.0 if total else 0.0
+        )
 
         report: Dict[str, Any] = {
             "total_evaluated": total,

@@ -14,15 +14,27 @@ BENCHMARK_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "benchm
 
 class BenchmarkQuery(BaseModel):
     """Represents an IndicDB benchmark test query with ground-truth SQL and execution expectation."""
+
     query_id: str = Field(..., description="Unique query identifier (e.g. ind-q-001)")
-    query: str = Field(..., description="Natural language question in Indic language or Hinglish/English")
-    language: str = Field(..., description="ISO language code ('hi', 'mr', 'ta', 'te', 'bn', 'hi-en', 'en')")
-    script: str = Field(..., description="Unicode script ('Devanagari', 'Tamil', 'Telugu', 'Bengali', 'Latin')")
-    domain: str = Field(..., description="Sector domain ('Agriculture', 'Education', 'Healthcare', 'Rural Development')")
+    query: str = Field(
+        ..., description="Natural language question in Indic language or Hinglish/English"
+    )
+    language: str = Field(
+        ..., description="ISO language code ('hi', 'mr', 'ta', 'te', 'bn', 'hi-en', 'en')"
+    )
+    script: str = Field(
+        ..., description="Unicode script ('Devanagari', 'Tamil', 'Telugu', 'Bengali', 'Latin')"
+    )
+    domain: str = Field(
+        ...,
+        description="Sector domain ('Agriculture', 'Education', 'Healthcare', 'Rural Development')",
+    )
     target_table: str = Field(..., description="Target NDAP database table name")
     gold_sql: str = Field(..., description="Gold standard executable SQL query")
     difficulty: str = Field(default="medium", description="'easy', 'medium', or 'hard'")
-    target_columns: List[str] = Field(default_factory=list, description="Ground truth columns for schema linking")
+    target_columns: List[str] = Field(
+        default_factory=list, description="Ground truth columns for schema linking"
+    )
 
 
 # Benchmark query templates covering the 7 IndicDB languages
@@ -63,7 +75,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "easy",
         "target_columns": ["schools_with_computer_labs", "state_name", "district_name"],
     },
-
     # -------------------------------------------------------------------------
     # Hindi (hi)
     # -------------------------------------------------------------------------
@@ -100,7 +111,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "easy",
         "target_columns": ["cards_issued", "state_name"],
     },
-
     # -------------------------------------------------------------------------
     # Hinglish (hi-en)
     # -------------------------------------------------------------------------
@@ -137,7 +147,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "medium",
         "target_columns": ["houses_completed", "state_name"],
     },
-
     # -------------------------------------------------------------------------
     # Tamil (ta)
     # -------------------------------------------------------------------------
@@ -163,7 +172,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "easy",
         "target_columns": ["households_with_tap_connection", "state_name", "district_name"],
     },
-
     # -------------------------------------------------------------------------
     # Telugu (te)
     # -------------------------------------------------------------------------
@@ -189,7 +197,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "medium",
         "target_columns": ["completed_road_length_km", "state_name", "district_name"],
     },
-
     # -------------------------------------------------------------------------
     # Bengali (bn)
     # -------------------------------------------------------------------------
@@ -215,7 +222,6 @@ CURATED_BENCHMARK_INSTANCES: List[Dict[str, Any]] = [
         "difficulty": "easy",
         "target_columns": ["primary_students_benefited", "state_name", "district_name"],
     },
-
     # -------------------------------------------------------------------------
     # English (en - Baseline Control)
     # -------------------------------------------------------------------------

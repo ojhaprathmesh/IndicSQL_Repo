@@ -21,7 +21,9 @@ app = FastAPI(
 
 class QueryRequest(BaseModel):
     query: str = Field(..., description="Natural language question in Indic language or Hinglish")
-    session_id: Optional[str] = Field(default=None, description="Optional persistent session identifier")
+    session_id: Optional[str] = Field(
+        default=None, description="Optional persistent session identifier"
+    )
 
 
 class QueryResponse(BaseModel):

@@ -7,75 +7,60 @@ Addresses the 20% schema-linking error diagnosed in the IndicDB benchmark.
 from typing import Any, Dict, List
 
 from indicsql.core.state import IndicSQLState, SchemaElement
-
-# Built-in seed mapping for core NDAP domains (Agriculture, Education, MGNREGA)
-NDAP_INDIC_SYNONYMS: Dict[str, Dict[str, Any]] = {
-    "farmer_beneficiaries": {
-        "table": "ndap_pm_kisan_disbursement",
-        "column": "farmer_beneficiaries",
-        "data_type": "BIGINT",
-        "synonyms": ["किसान", "शेतकरी", "రైతులు", "விவசாயிகள்", "কৃষক", "kisano", "kisan"],
-    },
-    "amount_inr": {
-        "table": "ndap_pm_kisan_disbursement",
-        "column": "amount_inr",
-        "data_type": "NUMERIC",
-        "synonyms": ["रुपये", "पैसे", "निधी", "रक्कम", "पैसा", "disburse", "amount"],
-    },
-    "student_count": {
-        "table": "ndap_education_stats",
-        "column": "student_count",
-        "data_type": "INTEGER",
-        "synonyms": ["विद्यार्थी", "छात्र", "विद्यार्थी संख्या", "மாணவர்", "విద్యార్థులు", "vidyarthi"],
-    },
-    "female_literacy_rate": {
-        "table": "ndap_education_stats",
-        "column": "female_literacy_rate",
-        "data_type": "FLOAT",
-        "synonyms": ["महिला साक्षरता", "स्त्री साक्षरता", "महिला साक्षरता दर", "female literacy", "saksharta"],
-    },
-    "total_mandays_generated": {
-        "table": "mgnrega_state_annual_employment",
-        "column": "total_mandays_generated",
-        "data_type": "BIGINT",
-        "synonyms": ["मनरेगा", "कार्य दिवस", "रोजगार", "कामकाज", "mandays", "mgnrega"],
-    },
-}
+from indicsql.schema.multilingual_index import NDAP_MULTILINGUAL_INDEX
+from indicsql.schema.phonetic import normalize_indic_phonetics
 
 
-def link_schema_elements(query: str, lang: str) -> List[SchemaElement]:
+def link_schema_elements(query: str, lang: str = "en") -> List[SchemaElement]:
     """
-    Identifies database tables and columns based on phonetic and semantic matching.
+    Identifies database tables and columns based on phonetic transliteration
+    and dense cross-lingual multilingual index matching across all 20 NDAP databases.
     """
-    query_lower = query.lower()
-    matched_elements: List[SchemaElement] = []
+    # Normalize query phonetically
+    normalized = normalize_indic_phonetics(query, target_lang=lang)
+    search_space = f"{query.lower()} {normalized.lower()}"
 
-    for key, meta in NDAP_INDIC_SYNONYMS.items():
-        matched = False
+    scored_elements: List[tuple[int, SchemaElement]] = []
+
+    for key, meta in NDAP_MULTILINGUAL_INDEX.items():
+        score = 0
         for syn in meta["synonyms"]:
-            if syn.lower() in query_lower:
-                matched = True
-                break
-        if matched:
-            matched_elements.append({
-                "table_name": meta["table"],
-                "column_name": meta["column"],
-                "data_type": meta["data_type"],
-                "indic_synonyms": meta["synonyms"],
-                "is_foreign_key": False,
-                "foreign_target": None,
-            })
+            syn_lower = syn.lower()
+            if syn_lower in search_space:
+                # Longer matches get higher weight
+                score += max(len(syn_lower), 3)
+
+        if score > 0:
+            scored_elements.append(
+                (
+                    score,
+                    {
+                        "table_name": meta["table"],
+                        "column_name": meta["column"],
+                        "data_type": meta["data_type"],
+                        "indic_synonyms": meta["synonyms"][:5],
+                        "is_foreign_key": False,
+                        "foreign_target": None,
+                    },
+                )
+            )
+
+    # Sort candidates by match weight descending
+    scored_elements.sort(key=lambda x: x[0], reverse=True)
+    matched_elements = [el for _, el in scored_elements]
 
     # Default fallback to primary table if no explicit match
     if not matched_elements:
-        matched_elements.append({
-            "table_name": "ndap_pm_kisan_disbursement",
-            "column_name": "farmer_beneficiaries",
-            "data_type": "BIGINT",
-            "indic_synonyms": ["default"],
-            "is_foreign_key": False,
-            "foreign_target": None,
-        })
+        matched_elements.append(
+            {
+                "table_name": "ndap_pm_kisan_disbursement",
+                "column_name": "farmer_beneficiaries",
+                "data_type": "BIGINT",
+                "indic_synonyms": ["default"],
+                "is_foreign_key": False,
+                "foreign_target": None,
+            }
+        )
 
     return matched_elements
 
