@@ -33,16 +33,42 @@ class TestAgentNodes(unittest.TestCase):
         self.assertEqual(result["pruned_schema"][0]["table_name"], "ndap_pm_kisan_disbursement")
 
     def test_critic_and_ast_validator(self):
+        # 1. Safe SELECT, checks automatic LIMIT injection
         safe_sql = "SELECT state_name, SUM(amount_inr) FROM ndap_pm_kisan_disbursement GROUP BY state_name"
-        self.assertTrue(validate_sql_security(safe_sql))
+        is_safe, regenerated_sql = validate_sql_security(safe_sql)
+        self.assertTrue(is_safe)
+        self.assertIn("LIMIT 1000", regenerated_sql.upper())
+
+        # Also testing sandbox validator logic if any
         valid, limited_sql = validate_and_limit_sql(safe_sql)
         self.assertTrue(valid)
         self.assertIn("LIMIT 1000", limited_sql)
 
+        # 2. Unsafe mutation (DROP)
         malicious_sql = "DROP TABLE ndap_pm_kisan_disbursement;"
-        self.assertFalse(validate_sql_security(malicious_sql))
+        is_safe, err_msg = validate_sql_security(malicious_sql)
+        self.assertFalse(is_safe)
+        self.assertIn("Non-SELECT mutation", err_msg)
+        
         valid, err = validate_and_limit_sql(malicious_sql)
         self.assertFalse(valid)
+        
+        # 3. Unsafe mutation (DELETE)
+        delete_sql = "DELETE FROM ndap_pm_kisan_disbursement WHERE state_name='Bihar'"
+        is_safe, err_msg = validate_sql_security(delete_sql)
+        self.assertFalse(is_safe)
+
+        # 4. False-positive names containing forbidden keywords (e.g., "drop")
+        false_positive_sql = "SELECT * FROM drop_shipping_data"
+        is_safe, fp_sql = validate_sql_security(false_positive_sql)
+        self.assertTrue(is_safe)
+        self.assertIn("LIMIT 1000", fp_sql.upper())
+        
+        # 5. Invalid SQL Parse Error
+        invalid_sql = "SELECT * FORM table" # intentional typo
+        is_safe, err_msg = validate_sql_security(invalid_sql)
+        self.assertFalse(is_safe)
+        self.assertIn("SQL Parse Error", err_msg)
 
 
 if __name__ == "__main__":
