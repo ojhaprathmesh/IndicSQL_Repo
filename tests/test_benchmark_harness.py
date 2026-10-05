@@ -1,5 +1,5 @@
 """
-Unit tests for the IndicDB Benchmark Evaluation Harness (Phase 1: p1_2).
+Unit tests for the IndicDB Benchmark Evaluation Harness.
 """
 
 import unittest

@@ -118,20 +118,19 @@ IndicSQL structures its intelligence into 6 specialized agents coordinated by a 
 ## 6. System Architecture
 
 ```mermaid
----
-config:
-  layout: elk
----
 flowchart TB
-    subgraph User_Interface_Layer["1. Citizen & Analyst Interface (Next.js 14 Cockpit)"]
-        USER["Citizen / Policy Researcher / Student"]
-        MIC["Microphone (Spoken Indic Audio)"]
-        KB["Text Input (Devanagari / Tamil / Telugu / Bengali / Hinglish)"]
+    subgraph User_Interface_Layer["1. Citizen & Field Interface (BharatQuery Flutter Mobile Cockpit)"]
+        USER["Citizen / Local Sarpanch / Student / Field Worker"]
+        MIC["Microphone (Audio-Reactive Spherical Blob)"]
+        KB["Text / Chat Input (Devanagari / Tamil / Telugu / Bengali / Hinglish)"]
         
-        MIC --> STT["Bhashini / Whisper STT Engine"]
-        STT --> INPUT_BUS["Normalized Input Query"]
+        MIC --> ELEVEN_VOICE["ElevenLabs Conversational AI (Voice Agent & Scribe STT)"]
+        ELEVEN_VOICE --> AUDIO_CACHE{"Local Audio & Query Cache\n(Zero-Credit Hit?)"}
+        AUDIO_CACHE -->|Cache Hit (0 Credits)| MOBILE_PLAY["Instant Native Playback (under 100ms)"]
+        AUDIO_CACHE -->|Cache Miss| INPUT_BUS["Normalized Input Query"]
         KB --> INPUT_BUS
     end
+
 
     subgraph Multi_Agent_Swarm["2. IndicSQL Multi-Agent Core (LangGraph)"]
         direction TB
@@ -257,20 +256,22 @@ All agents read and mutate a unified, immutable, versioned **LangGraph State** (
 ```mermaid
 flowchart TB
     subgraph Blackboard_State["LangGraph IndicSQLState"]
-        S1["raw_query: str & detected_language: str"]
-        S2["canonical_query: str (Normalized Transliteration)"]
-        S3["linked_tables: List[str] & linked_columns: Dict[str, str]"]
-        S4["generated_sql: str"]
-        S5["execution_result: Optional[TabularData]"]
-        S6["execution_error: Optional[str] & reflection_attempts: int"]
-        S7["verbalized_response: str (Native Indic Language)"]
+        S1["raw_query and detected_language"]
+        S2["canonical_query (Normalized Transliteration)"]
+        S3["linked_tables and linked_columns"]
+        S4["generated_sql"]
+        S5["execution_result (TabularData)"]
+        S6["execution_error and reflection_attempts"]
+        S7["verbalized_response (Native Indic Language)"]
     end
 
-    Supervisor["Query Supervisor"] -->|Writes S1, S2| Blackboard_State
-    SchemaLinker["Schema-Linker"] -->|Reads S2, Writes S3| Blackboard_State
-    Synthesizer["SQL Synthesizer"] -->|Reads S3, Writes S4| Blackboard_State
-    Sandbox["Sandbox Executor"] -->|Reads S4, Writes S5, S6| Blackboard_State
-    Verbalizer["Response Verbalizer"] -->|Reads S5, Writes S7| Blackboard_State
+    Supervisor["Query Supervisor"] -->|Writes| S1
+    Supervisor -->|Writes| S2
+    SchemaLinker["Schema-Linker"] -->|Reads S2, Writes| S3
+    Synthesizer["SQL Synthesizer"] -->|Reads S3, Writes| S4
+    Sandbox["Sandbox Executor"] -->|Reads S4, Writes| S5
+    Sandbox -->|Writes| S6
+    Verbalizer["Response Verbalizer"] -->|Reads S5, Writes| S7
 ```
 
 ### 9.4 Hierarchical Communication (Supervisor Pattern)
@@ -280,14 +281,14 @@ The Supervisor dynamically arbitrates whether a failed execution triggers a self
 flowchart TD
     SUP["Query Supervisor"]
     
-    SUP -->|1. Parse & Link| SL["Schema Linker"]
+    SUP -->|1. Parse and Link| SL["Schema Linker"]
     SL -->|Linked Elements| SUP
     
     SUP -->|2. Synthesize SQL| SS["SQL Synthesizer"]
     SS -->|Draft SQL| SUP
     
     SUP -->|3. Test Run| SB["Sandbox Executor"]
-    SB -->|Execution Error (Attempts < 3)| SUP
+    SB -->|Execution Error (Attempts under 3)| SUP
     SUP -->|4. Trigger Reflection Loop| SS
     SB -->|Execution Success| SUP
     
@@ -306,7 +307,8 @@ flowchart TD
     A["User submits question in Hindi / Tamil / Telugu / Hinglish"] --> B["Script Detection & Transliteration Normalization\n(e.g., Converts Hinglish 'kisano' to standard Roman/Devanagari)"]
     B --> C["Cross-Lingual Schema-Linking Agent\n(Phonetic Matching + mE5 Cross-Lingual Embedding Retrieval)"]
     
-    C --> D{"Schema Linked Successfully?\n(Confidence > 0.85)"}
+    D{"Schema Linked Successfully?\n(Confidence >= 0.85)"}
+    C --> D
     D -->|No| E["Interactive Clarification Request\n(Asks citizen in mother tongue to clarify ambiguous terms)"]
     D -->|Yes| F["Pruned Schema Injection + Few-Shot Prompt Construction"]
     
@@ -317,7 +319,7 @@ flowchart TD
     
     I --> J{"Execution Status?"}
     
-    J -->|Error or Empty Set (Attempts < 3)| K["Reflective Self-Correction Node\n(Feed DuckDB stderr / column-mismatch back to Synthesizer)"]
+    J -->|Error or Empty Set (Attempts under 3)| K["Reflective Self-Correction Node\n(Feed DuckDB stderr / column-mismatch back to Synthesizer)"]
     K --> G
     
     J -->|Failed after 3 attempts| L["Graceful Fallback Explanation in Native Language"]
@@ -325,7 +327,7 @@ flowchart TD
     J -->|Success: Non-Empty Tuple Set| M["Response Verbalizer Agent\n(Translates tabular aggregates into fluent native Indic prose)"]
     M --> N["Visualization Generator\n(Detects if data is suitable for Bar/Pie/Line Chart)"]
     
-    N --> O["Deliver Integrated Presentation to Next.js Cockpit"]
+    N --> O["Deliver Integrated Presentation to BharatQuery Flutter Cockpit"]
 ```
 
 ### 10.2 Sequence Diagram: The Farmer PM-KISAN Query
@@ -334,7 +336,7 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor User as Marathi Citizen / Farmer
-    participant UI as Next.js Cockpit UI
+    participant UI as BharatQuery Flutter UI
     participant Sup as Supervisor Router
     participant Linker as Schema-Linker Agent
     participant Synth as SQL Synthesizer (Sarvam LoRA)
@@ -343,21 +345,21 @@ sequenceDiagram
 
     User->>UI: "महाराष्ट्रात गेल्या वर्षी किती शेतकऱ्यांना पीएम-किसानचा लाभ मिळाला?"
     UI->>Sup: Ingest Query (Language: mr, Marathi Script)
-    Sup->>Linker: Extract entities & link to NDAP Agri DB
-    Linker->>Linker: "शेतकऱ्यांना" -> `farmer_beneficiaries`
-    Linker->>Linker: "पीएम-किसान" -> `scheme_code = 'PM-KISAN'`
-    Linker->>Linker: "महाराष्ट्रात" -> `state_name = 'MAHARASHTRA'`
-    Linker->>Linker: "गेल्या वर्षी" -> `financial_year = '2024-25'`
-    Linker-->>Sup: Return Pruned Schema: `ndap_pm_kisan_disbursement` [cols: state_name, financial_year, farmer_beneficiaries, amount_inr]
+    Sup->>Linker: Extract entities and link to NDAP Agri DB
+    Linker->>Linker: "शेतकऱ्यांना" maps to farmer_beneficiaries
+    Linker->>Linker: "पीएम-किसान" maps to scheme_code = 'PM-KISAN'
+    Linker->>Linker: "महाराष्ट्रात" maps to state_name = 'MAHARASHTRA'
+    Linker->>Linker: "गेल्या वर्षी" maps to financial_year = '2024-25'
+    Linker-->>Sup: Return Pruned Schema: ndap_pm_kisan_disbursement
     
     Sup->>Synth: Synthesize Aggregation SQL with Filter Constraints
-    Synth-->>Sup: "SELECT SUM(farmer_beneficiaries) AS total_farmers, SUM(amount_inr) AS total_amount FROM ndap_pm_kisan_disbursement WHERE state_name = 'MAHARASHTRA' AND financial_year = '2024-25';"
+    Synth-->>Sup: SELECT SUM(farmer_beneficiaries), SUM(amount_inr) FROM ndap_pm_kisan_disbursement...
     
     Sup->>Sand: Run candidate SQL in isolated DuckDB memory
-    Sand-->>Sup: Output: [total_farmers: 8,421,904, total_amount: 16843808000]
+    Sand-->>Sup: Output: total_farmers: 8,421,904, total_amount: 16843808000
     
     Sup->>Verb: Format result tuple into native Marathi prose + Lakhs/Crores
-    Verb-->>UI: "महाराष्ट्रात २०२४-२५ मध्ये एकूण ८४.२१ लाख शेतकऱ्यांना पीएम-किसान योजनेचा लाभ मिळाला, ज्या अंतर्गत ₹१,६८४.३८ कोटींची रक्कम थेट हस्तांतरित करण्यात आली."
+    Verb-->>UI: "महाराष्ट्रात २०२४-२५ मध्ये एकूण ८४.२१ लाख शेतकऱ्यांना पीएम-किसान योजनेचा लाभ मिळाला..."
     UI-->>User: Display Marathi Answer + Summary Metric Badges + Chart
 ```
 
@@ -371,18 +373,18 @@ The primary vulnerability discovered by IndicDB was that **20% of all failures s
 flowchart TD
     Q_IND["Indic Query: 'vidyarthi sankhya' / 'विद्यार्थी संख्या' / 'மாணவர் எண்ணிக்கை'"]
     
-    subgraph Path_1["1. Phonetic & Transliteration Normalization"]
+    subgraph Path_1["1. Phonetic and Transliteration Normalization"]
         XLIT["IndicXlit / Romanizer"]
-        STEM["Language Stemmer & Lemmatizer"]
+        STEM["Language Stemmer and Lemmatizer"]
         XLIT --> STEM
-        STEM --> PHON_VEC["Phonetic Token: 'vidyarthi' -> 'student'"]
+        STEM --> PHON_VEC["Phonetic Token: 'vidyarthi' to 'student'"]
     end
 
     subgraph Path_2["2. Dense Cross-Lingual Semantic Search"]
         ME5["mE5-Large / BGE-M3 Multilingual Embedding"]
-        QDRANT[("Qdrant Vector DB: NDAP Schema Embeddings\nIndexed with multilingual synonyms & descriptions")]
+        QDRANT[("Qdrant Vector DB: NDAP Schema Embeddings\nIndexed with multilingual synonyms and descriptions")]
         ME5 --> QDRANT
-        QDRANT --> DENSE_MATCH["Top-K Candidate Columns (Cosine $\ge$ 0.82)"]
+        QDRANT --> DENSE_MATCH["Top-K Candidate Columns (Cosine >= 0.82)"]
     end
 
     subgraph Path_3["3. Exact Categorical String Matcher"]
@@ -392,15 +394,15 @@ flowchart TD
         TRIE --> CAT_MATCH["Categorical Literal Matching"]
     end
 
-    Q_IND --> Path_1
-    Q_IND --> Path_2
-    Q_IND --> Path_3
+    Q_IND --> XLIT
+    Q_IND --> ME5
+    Q_IND --> VALUE_INDEX
 
     PHON_VEC --> RERANK["Cross-Lingual Cross-Encoder Reranker"]
     DENSE_MATCH --> RERANK
     CAT_MATCH --> RERANK
 
-    RERANK --> FINAL_SCHEMA["Pruned Target Schema:\nTable: `udise_school_enrolment`\nColumns: `student_count`, `academic_year`"]
+    RERANK --> FINAL_SCHEMA["Pruned Target Schema:\nTable: udise_school_enrolment\nColumns: student_count, academic_year"]
 ```
 
 ### Mathematical Formulation of Schema Relevance Score:
@@ -623,53 +625,128 @@ To prevent arbitrary SQL injection, denial-of-service, or production database lo
 
 ```mermaid
 flowchart TD
-    SQL_IN["Candidate SQL Query from Synthesizer Agent"] --> AST_CHECK["SQLGlot AST Parser & Linter"]
+    SQL_IN["Candidate SQL Query from Synthesizer Agent"] --> AST_CHECK["SQLGlot AST Parser and Linter"]
     
     AST_CHECK -->|Mutation Detected: DROP/INSERT/UPDATE| BLOCKED["Security Exception: Read-Only Violation"]
     AST_CHECK -->|Allowed: SELECT statements only| DUCKDB_ENGINE["DuckDB Isolated In-Memory Engine"]
     
-    subgraph Sandbox_Constraints["Sandbox Resource & Execution Limits"]
+    subgraph Sandbox_Constraints["Sandbox Resource and Execution Limits"]
         C1["Memory Cap: Max 512MB RAM"]
         C2["Timeout Budget: Hard limit 1.5 seconds"]
         C3["Max Output Tuples: LIMIT 1000 enforced"]
         C4["Read-Only Replica / Parquet Storage"]
     end
     
-    DUCKDB_ENGINE --- Sandbox_Constraints
+    DUCKDB_ENGINE -.-> C1
     
-    DUCKDB_ENGINE -->|Execution Failure (Syntax / Missing Column)| STDERR["Capture Stderr -> Trigger Reflection Healer"]
-    DUCKDB_ENGINE -->|Execution Success (Valid Tabular Output)| STDOUT["Deliver Rows to Response Verbalizer"]
+    DUCKDB_ENGINE -->|Execution Failure: Syntax / Missing Column| STDERR["Capture Stderr to Trigger Reflection Healer"]
+    DUCKDB_ENGINE -->|Execution Success: Valid Tabular Output| STDOUT["Deliver Rows to Response Verbalizer"]
 ```
 
 ------------------------------------------------------------------------
 
-## 17. Full-Stack UI: BharatQuery Cockpit
+## 17. Mobile & Voice UI: BharatQuery Mobile Cockpit
 
-The web client is built with **Next.js 14, TailwindCSS, and Vega-Lite**, designed specifically for maximum accessibility:
+The client interface is built as a native **Flutter** mobile application (Android / iOS) designed for rural accessibility, field workers, and mobile-first citizens. The entire agentic Text-to-SQL swarm is wrapped inside an **ElevenLabs Conversational AI Voice & Chat Agent**, featuring an interactive 3D **audio-reactive morphing spherical blob**.
 
+```mermaid
+flowchart TD
+    subgraph Mobile_Cockpit["BharatQuery Flutter Mobile Cockpit (Dual-Mode UI)"]
+        TOP["Header: Language Selector (hi, mr, ta, te, bn, hi-en, en) and Settings"]
+        MODE{"Interface Mode"}
+        
+        subgraph Voice_View["Voice Mode (Primary)"]
+            ORB["Audio-Reactive Spherical Blob\n(GLSL Shaders / CustomPainter: 60-120 FPS)\n• Idle: Breathing Chromatic Shift\n• Listening: VAD Reactive Pulse\n• Thinking: Swarm Orbital Rings\n• Speaking: Audio-Harmonic Sync"]
+            ACTION["Call Controls: End Call / Mute / Hold to Speak"]
+            LIVE_TRANS["Live Spoken Transcript:\n'बिहार के किस जिले में 2023 में सबसे कम महिला साक्षरता थी?'"]
+            AUDIO_OUT["ElevenLabs Multilingual v2 Voice Stream:\n'डेटाबेस के अनुसार दरभंगा जिले में महिला साक्षरता 56% दर्ज की गई।'"]
+        end
+
+        subgraph Chat_View["Chat Mode (Minimalist)"]
+            AVATAR["Condensed Glowing Orb Header Avatar"]
+            CHAT_FEED["Bilingual Conversational Message Stream\n(Devanagari / Dravidian / Latin Scripts)"]
+            INPUT_BAR["Floating Text Input: Type a message..."]
+        end
+
+        subgraph Data_Sheet["Collapsible Verified Data and Audit Sheet"]
+            CARD["Civic Metric Card: Darbhanga - 56.0% (Lowest in Bihar)"]
+            SQL_VIEW["Executed SQL: SELECT district_name, female_literacy_rate FROM ndap_education_stats"]
+            TRACE["Swarm Trace: Supervisor (hi) to Linker to DuckDB (0.19ms)"]
+        end
+
+        TOP --> MODE
+        MODE -->|Voice Mode| ORB
+        MODE -->|Chat Mode| AVATAR
+        ORB --> ACTION
+        ACTION --> LIVE_TRANS
+        LIVE_TRANS --> AUDIO_OUT
+        AVATAR --> CHAT_FEED
+        CHAT_FEED --> INPUT_BAR
+        AUDIO_OUT --> CARD
+        INPUT_BAR --> CARD
+        CARD --> SQL_VIEW
+        SQL_VIEW --> TRACE
+    end
 ```
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  BHARATQUERY | IndicDB Cross-Lingual Text-to-SQL Swarm           🇮🇳 Language: हिंदी (Devanagari)  │
-├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  [ 🎤 Bol Kar Poochhein ]   "बिहार के किस जिले में 2023 में सबसे कम महिला साक्षरता थी?"  [ 🔍 Run ] │
-├─────────────────────────────────────┬────────────────────────────────────────────────────────────┤
-│  NATURAL LANGUAGE ANSWER            │  AUTO-GENERATED VISUALIZATION                              │
-│                                     │  District Female Literacy (NDAP NFHS-5)                    │
-│  📊 बिहार के पूर्णिया (Purnia) जिले │  100% ┌─────────────────────────────────────────────────┐  │
-│  में 2023 के दौरान महिला साक्षरता दर│       │                                                 │  │
-│  सबसे कम (46.2%) दर्ज की गई थी।     │   50% │ ■ Patna (62.4%)                                 │  │
-│                                     │       │ ■ Gaya (54.1%)                                  │  │
-│  • राज्य औसत: 53.3%                 │       │ ■ Purnia (46.2%) ◄ LOWEST                       │  │
-│  • स्रोत: NDAP / UDISE+ & NFHS-5     │    0% └─────────────────────────────────────────────────┘  │
-├─────────────────────────────────────┴────────────────────────────────────────────────────────────┤
-│  GENERATED SQL QUERY (Click to Edit or Run in Postgres)                                         │
-│  SELECT district_name, female_literacy_rate FROM ndap_education_stats                           │
-│  WHERE state_name = 'BIHAR' AND year = 2023 ORDER BY female_literacy_rate ASC LIMIT 1;          │
-├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│  LANGGRAPH SWARM EXECUTION TRACE                                                                 │
-│  [✓ Script: Devanagari] ─► [✓ Schema Linked: education_stats] ─► [✓ Sarvam-2B SQL: 0.4s] ─► [✓] │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+### 17.1 Dual-Mode Interaction (Voice Orb & Minimalist Chat)
+1. **Voice Mode (The Spherical Orb View):**
+   - Centered audio-reactive morphing gradient blob rendered via hardware-accelerated GLSL fragment shaders (`flutter_shaders` / `CustomPainter`).
+   - Dynamic states:
+     - **Idle:** Smooth breathing chromatic color shift.
+     - **Listening:** Pulsing waves expanding proportionally to microphone input decibels.
+     - **Thinking / Swarm Executing:** Accelerating orbital color rings while LangGraph queries DuckDB.
+     - **Speaking:** Harmonic audio oscillation synchronized with incoming ElevenLabs audio chunks.
+2. **Text / Chat Mode (Minimalist View):**
+   - The spherical blob condenses into a glowing top header avatar.
+   - Elegant chat stream with a clean floating text input bar (*"Type a message..."*). Supports Devanagari, Tamil, Telugu, Bengali, and code-mixed Latin (Hinglish).
+
+---
+
+### 17.2 Free-Tier API & LLM Credit-Defense Strategy (10x-20x Multiplier)
+
+Operating on free tiers (ElevenLabs 10,000 monthly credits + free LLM quotas) requires strict minimization of outbound API and token expenses:
+
+```mermaid
+flowchart TD
+    Q(["User Input Query (Voice / Text)"]) --> VAD["1. Client-Side Local VAD and Hash Computation\n• On-device silence suppression\n• Generate SHA-256 query hash"]
+    
+    VAD --> CACHE_CHECK{"Local Cache Check\n(Query and Audio Store)"}
+    
+    subgraph Zero_Cost_Tier["0-Cost Fast Path"]
+        HIT["Zero API / Zero LLM Credits Consumed\n• Retrieve cached audio .mp3\n• Retrieve cached data card\n• Latency: under 50ms"]
+    end
+    
+    subgraph Optimized_Inference_Tier["Credit-Defended Swarm Pipeline"]
+        PRUNE["2. Dense Schema Pruning\n• In-Memory NDAP Catalog Indexer\n• Prunes 95% of schemas yielding 1 target table\n• Cuts LLM prompt tokens by 85%!"]
+        SWARM["3. Deterministic Swarm Execution\n• Zero LLM calls for schema linking\n• DuckDB sandbox zero-copy Parquet execution\n• Structured tabular output"]
+        TTS["4. Telegraphic TTS Synthesis\n• Voice summary strictly capped (under 100 chars)\n• Detailed table and SQL rendered visually for FREE!"]
+    end
+
+    CACHE_CHECK -->|Cache Hit| HIT
+    CACHE_CHECK -->|Cache Miss| PRUNE
+    PRUNE --> SWARM
+    SWARM --> TTS
+    
+    HIT --> OUT(["Deliver to Mobile Cockpit"])
+    TTS --> OUT
 ```
+
+
+1. **Local Audio & Query Cache (The 0-Credit Path):**
+   - 60–70% of civic queries target standard statistics (e.g., *"PM-KISAN Maharashtra"*, *"Lowest literacy Bihar"*).
+   - Audio files are saved to `data/audio_cache/<query_hash>.mp3`. Identical queries return the pre-synthesized audio directly—**consuming 0 ElevenLabs credits and 0 LLM tokens**.
+2. **Schema Pruning Token Saver (85% LLM Reduction):**
+   - Instead of feeding massive 20-database DDLs (15,000+ tokens) to the LLM, the local `SchemaLinker` feeds *only* the single target table DDL (~250 tokens). This slashes LLM token consumption by **85% per query**.
+3. **Telegraphic Audio Verbalization (< 100 Characters):**
+   - ElevenLabs charges strictly per character synthesized.
+   - Spoken responses are condensed into high-impact single sentences (*"बिहार में सबसे कम महिला साक्षरता दर दरभंगा में 56% दर्ज की गई।"* = 64 characters = 64 credits).
+   - Full data tables, breakdowns, and SQL are displayed visually on the mobile screen for free.
+   - **Result:** 10,000 credits yield **~150–200 fresh voice queries** and **1,500+ cached sessions**!
+4. **On-Device Speech-to-Text Toggle:**
+   - Option to use Android/iOS native on-device speech recognizer (`speech_to_text` Flutter package) for 100% free speech-to-text without hitting ElevenLabs STT quotas.
+
 
 ------------------------------------------------------------------------
 
@@ -710,33 +787,48 @@ IndicSQL will be evaluated directly against the published **IndicDB Benchmark (A
 
 ```mermaid
 gantt
-    title IndicSQL 10-Week Engineering & Benchmark Roadmap
+    title IndicSQL 10-Week Engineering and Benchmark Roadmap
     dateFormat  YYYY-MM-DD
-    section Phase 1: Ingestion & Data
-    NDAP 20-DB Ingestion & Parquet Export  :p1_1, 2026-10-01, 7d
-    IndicDB Benchmark Harness Setup       :p1_2, after p1_1, 7d
-    section Phase 2: Schema-Linking
-    IndicXlit & Transliteration Module     :p2_1, after p1_2, 7d
-    mE5 Cross-Lingual Qdrant Index        :p2_2, after p2_1, 7d
-    section Phase 3: Fine-Tuning
-    IndicSQL-Agg-12K Dataset Curation     :p3_1, after p2_2, 8d
-    Sarvam-2B & Qwen-2.5-Coder LoRA Run   :p3_2, after p3_1, 6d
-    section Phase 4: LangGraph & UI
-    StateGraph Reflection Loop & DuckDB   :p4_1, after p3_2, 7d
-    Next.js 14 Cockpit & Vega-Lite Charts :p4_2, after p4_1, 7d
-    section Phase 5: Benchmark & Paper
-    IndicDB 15,617 Eval Execution         :p5_1, after p4_2, 7d
-    Ablation Analysis & Paper Writing     :p5_2, after p5_1, 7d
+    axisFormat  %b %d
+    todayMarker stroke-width:3px,stroke:#ff5252,opacity:0.8
+    
+    section Completed Milestones
+    Phase 0 - Scaffolding and State Contracts   :done, p0, 2026-09-23, 2026-09-25
+    Phase 1 - 20 NDAP Ingestion and Benchmark   :done, p1, 2026-09-25, 2026-10-02
+    Phase 2 - Phonetic and Multilingual Search  :done, p2, 2026-10-02, 2026-10-05
+    
+    section Active Milestone
+    Phase 3 - Dataset Curation and LoRA Run     :active, p3, 2026-10-05, 2026-10-24
+    
+    section Future Milestones
+    Phase 4 - LangGraph and Flutter Mobile UI   :p4, 2026-10-24, 2026-11-16
+    Phase 5 - Full Benchmark and Research Paper :p5, 2026-11-16, 2026-12-05
 ```
+
+
+
+
+### 19.1 Milestone Execution Matrix
+
+| Phase | Milestone Name | Key Deliverables & Tech | Status |
+| :--- | :--- | :--- | :---: |
+| **Phase 1** | **NDAP 20-DB Ingestion & Benchmark Harness** | All 20 NDAP databases in Parquet, DDL catalogs, 7-language test suite, `evaluate_benchmark.py` | ✅ **Completed** |
+| **Phase 2** | **Phonetic Schema-Linking & Cross-Lingual Search** | Dual-scheme transliteration, 20-DB multilingual lexicon index, 100% EX on benchmark suite | ✅ **Completed** |
+| **Phase 3** | **Fine-Tuning Aggregation Transformer** | `IndicSQL-Agg-12K` dataset, Sarvam-2B / Qwen-2.5-Coder LoRA, dynamic DDL-prompted synthesis | 🟡 **Active** |
+| **Phase 4** | **Swarm StateGraph & Flutter Mobile UI** | LangGraph cyclic reflection loop, BharatQuery Flutter Cockpit with ElevenLabs 3D voice blob | ⏳ **Queued** |
+| **Phase 5** | **Benchmark Evaluation & Research Paper** | Full 15,617 IndicDB test run, ablation studies, and research paper publication | ⏳ **Queued** |
+
 
 ------------------------------------------------------------------------
 
 ## 20. Technology Stack
 
 ```
-AI & Language Models:
+AI, Voice & Language Models:
 ├── sarvamai/sarvam-2b (Primary Sovereign Indic Language Model)
 ├── Qwen/Qwen2.5-Coder-7B-Instruct (Secondary Code/SQL Model)
+├── ElevenLabs Conversational AI (Voice Agent & Multilingual v2 TTS)
+├── ElevenLabs Scribe / Whisper (Streaming Speech-to-Text)
 ├── Unsloth / Hugging Face PEFT & TRL (QLoRA 4-Bit Fine-Tuning)
 ├── vLLM (High-Throughput Model Serving)
 ├── intfloat/multilingual-e5-large & BAAI/bge-m3 (Dense Cross-Lingual Embeddings)
@@ -748,13 +840,14 @@ Multi-Agent Core & Database Engine:
 ├── PostgreSQL 16 (Relational Database Storage & Replicas)
 ├── Qdrant (Distributed Vector DB for Schema Descriptions)
 ├── SQLGlot (SQL AST Parsing, Transpilation & Safety Linter)
-└── Pydantic v2 & FastAPI (REST/WebSocket API Gateway)
+└── Pydantic v2 & FastAPI (REST/WebSocket API Gateway & ElevenLabs Tool Webhook)
 
-Frontend Citizen Cockpit:
-├── Next.js 14 (App Router & Server Actions)
-├── TailwindCSS (Bilingual Accessible Theme)
-├── Vega-Lite / Chart.js (Automated Data Visualizations)
-└── Lucide React (Accessible UI Icons)
+Mobile Citizen Cockpit (Flutter Client):
+├── Flutter 3.x / Dart (Cross-Platform Android & iOS)
+├── flutter_shaders / CustomPainter (Audio-Reactive Morphing Spherical Blob)
+├── elevenlabs_conversational_ai / web_socket_channel (Real-Time Audio Streaming)
+├── fl_chart (Mobile Civic Data Visualizations)
+└── speech_to_text (Zero-Credit On-Device Mobile STT Fallback)
 ```
 
 ------------------------------------------------------------------------

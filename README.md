@@ -140,7 +140,7 @@ IndicSQL_Repo/
 │   ├── test_agents.py            # Unit tests for agent nodes and AST validator
 │   ├── test_benchmark_harness.py # Unit tests for IndicDB evaluator and isomorphism
 │   ├── test_ndap_catalogs.py     # Unit tests for 20 NDAP databases and parquet stores
-│   ├── test_phase2_schema_linking.py # Cross-lingual schema linking test suite across 7 languages
+│   ├── test_schema_linking.py # Cross-lingual schema linking test suite across 7 languages
 │   └── test_pipeline.py          # End-to-end integration tests
 
 ├── .env.example                  # Environment configuration template

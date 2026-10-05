@@ -93,3 +93,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Graphify knowledge graph outputs
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
