@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI Benchmark Runner for IndicDB Evaluation Suite (Phase 1: p1_2).
+CLI Benchmark Runner for IndicDB Evaluation Suite.
 Usage:
     uv run scripts/evaluate_benchmark.py [--output results.json]
 """
