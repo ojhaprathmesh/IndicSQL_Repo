@@ -121,47 +121,49 @@ IndicSQL structures its intelligence into 6 specialized agents coordinated by a 
 
 ```mermaid
 flowchart TB
-    subgraph User_Interface_Layer["1. Citizen & Field Interface (BharatQuery Flutter Mobile Cockpit)"]
+    subgraph User_Interface_Layer["1. Citizen and Field Interface - BharatQuery Flutter Mobile Cockpit"]
         USER["Citizen / Local Sarpanch / Student / Field Worker"]
-        MIC["Microphone (Audio-Reactive Spherical Blob)"]
-        KB["Text / Chat Input (Devanagari / Tamil / Telugu / Bengali / Hinglish)"]
-        ARENA["Model Arena Drawer (Secondary)\n• Tri-Combo Benchmark: EX%, Latency, AST\n• Qualitative Phrasing & SQL Inspect\n• Runtime Engine Dictation Toggle"]
+        MIC["Microphone - Audio-Reactive Spherical Blob"]
+        KB["Text / Chat Input - Vernacular Scripts and Hinglish"]
+        ARENA["Model Arena Drawer - Secondary\n• Tri-Combo Benchmark: EX%, Latency, AST\n• Qualitative Phrasing and SQL Inspect\n• Runtime Engine Dictation Toggle"]
         
-        MIC --> ELEVEN_VOICE["ElevenLabs Conversational AI (Voice Agent & Scribe STT)"]
-        ELEVEN_VOICE --> AUDIO_CACHE{"Local Audio & Query Cache\n(Zero-Credit Hit?)"}
-        AUDIO_CACHE -->|Cache Hit (0 Credits)| MOBILE_PLAY["Instant Native Playback (under 100ms)"]
+        USER --> MIC
+        USER --> KB
+        USER -.->|Inspect / Dictate Engine| ARENA
+        
+        MIC --> ELEVEN_VOICE["ElevenLabs Conversational AI - Voice Agent and Scribe STT"]
+        ELEVEN_VOICE --> AUDIO_CACHE{"Local Audio and Query Cache - Zero-Credit Hit?"}
+        AUDIO_CACHE -->|Cache Hit - 0 Credits| MOBILE_PLAY["Instant Native Playback - under 100ms"]
         AUDIO_CACHE -->|Cache Miss| INPUT_BUS["Normalized Input Query"]
         KB --> INPUT_BUS
-        USER -.->|Inspect / Dictate Engine| ARENA
     end
 
-
-    subgraph Multi_Agent_Swarm["2. IndicSQL Multi-Agent Core (LangGraph)"]
+    subgraph Multi_Agent_Swarm["2. IndicSQL Multi-Agent Core - LangGraph"]
         direction TB
-        SUP["Query Supervisor & Context Normalizer\n(Powered by Sarvam-2B Sovereign Model)"]
+        SUP["Query Supervisor and Context Normalizer\nPowered by Sarvam-2B Sovereign Model"]
         
-        SLA["Cross-Lingual Schema-Linker Agent\n(Phonetic Transliteration + mE5 Embeddings)"]
-        SSA["Aggregation SQL Synthesizer Agent\n(Powered by Qwen-2.5-Coder LoRA)"]
-        SRA["Sandbox Execution & Reflection Agent\n(In-Memory DuckDB Sandbox)"]
-        RVA["Response Verbalizer Agent\n(Vernacular NLG + Lakhs/Crores Formatter)"]
-        CRITIC["Security & Semantic Critic Node\n(AST Validator & Mutation Blocker)"]
+        SLA["Cross-Lingual Schema-Linker Agent\nPhonetic Transliteration + mE5 Embeddings"]
+        SSA["Aggregation SQL Synthesizer Agent\nPowered by Qwen-2.5-Coder LoRA"]
+        SRA["Sandbox Execution and Reflection Agent\nIn-Memory DuckDB Sandbox"]
+        RVA["Response Verbalizer Agent\nVernacular NLG + Lakhs/Crores Formatter"]
+        CRITIC["Security and Semantic Critic Node\nAST Validator and Mutation Blocker"]
         
-        STATE[("LangGraph IndicSQLState\n(PostgreSQL / MemorySaver Checkpoint)")]
+        STATE[("LangGraph IndicSQLState - Checkpoint Store")]
         
-        SUP <--> SLA
-        SUP <--> SSA
-        SUP <--> SRA
-        SUP <--> RVA
-        SUP <--> CRITIC
-        SUP <--> STATE
+        SUP --- SLA
+        SUP --- SSA
+        SUP --- SRA
+        SUP --- RVA
+        SUP --- CRITIC
+        SUP --- STATE
     end
 
-    subgraph Schema_and_Knowledge["3. Cross-Lingual Knowledge & Catalog Substrate"]
+    subgraph Schema_and_Knowledge["3. Cross-Lingual Knowledge and Catalog Substrate"]
         direction TB
-        CATALOG[("NDAP English Database Catalogs\n(Table Schemas, Types, Primary/Foreign Keys)")]
-        VEC_STORE[("Qdrant Vector DB\nMultilingual Column Descriptions & Synonyms")]
-        PHONETIC[("IndicXlit / Phonetic Soundex Table\n(Transliteration Bridge)")]
-        SAMPLE_VALS[("Enumerated Value Index\n(District Names, Crop Types, Scheme Names)")]
+        CATALOG[("NDAP English Database Catalogs - DDL and Keys")]
+        VEC_STORE[("Qdrant Vector DB - Schema Embeddings")]
+        PHONETIC[("IndicXlit Phonetic Soundex Table")]
+        SAMPLE_VALS[("Enumerated Value Index - Categorical Strings")]
         
         SLA -.-> CATALOG
         SLA -.-> VEC_STORE
@@ -171,24 +173,25 @@ flowchart TB
 
     subgraph Database_Execution["4. Sandboxed Relational Execution Engine"]
         direction TB
-        DUCKDB[("DuckDB In-Memory Execution Sandbox\n(Read-Only NDAP Datasets)")]
+        DUCKDB[("DuckDB In-Memory Execution Sandbox")]
         POSTGRES[("Production PostgreSQL NDAP Replicas")]
-        SQLGLOT["SQLGlot AST Transpiler & Formatter"]
+        SQLGLOT["SQLGlot AST Transpiler and Formatter"]
         
-        SRA <--> SQLGLOT
-        SQLGLOT <--> DUCKDB
-        SQLGLOT <--> POSTGRES
+        SRA --> SQLGLOT
+        SQLGLOT --> DUCKDB
+        SQLGLOT --> POSTGRES
     end
 
-    subgraph Output_Presentation["5. Dual-Output Presentation & Analytics"]
+    subgraph Output_Presentation["5. Dual-Output Presentation and Analytics"]
         direction TB
-        NAT_LANG["Natural Language Answer (Original Mother Tongue)"]
+        NAT_LANG["Natural Language Answer - Original Mother Tongue"]
         DATA_TABLE["Interactive Filterable Data Table"]
-        CHARTS["Auto-Generated Visualizations (Bar/Line Charts)"]
-        SQL_PREVIEW["Copyable Executable SQL Query (Dev Mode)"]
+        CHARTS["Auto-Generated Visualizations - Bar/Line Charts"]
+        SQL_PREVIEW["Copyable Executable SQL Query - Dev Mode"]
     end
 
     INPUT_BUS --> SUP
+    ARENA -.->|Dictate Combo A/B/C| SUP
     RVA --> NAT_LANG
     SRA --> DATA_TABLE
     SRA --> CHARTS
@@ -841,30 +844,114 @@ gantt
     todayMarker stroke-width:3px,stroke:#ff5252,opacity:0.8
     
     section Completed Milestones
-    Phase 0 - Scaffolding and State Contracts   :done, p0, 2026-09-23, 2026-09-25
-    Phase 1 - 20 NDAP Ingestion and Benchmark   :done, p1, 2026-09-25, 2026-10-02
-    Phase 2 - Phonetic and Multilingual Search  :done, p2, 2026-10-02, 2026-10-05
+    Phase 1 - Planning, PEAS and ADK Harness       :done, p1, 2026-09-23, 2026-10-02
+    Phase 2 - 6-Agent Swarm and Schema Substrate   :done, p2, 2026-10-02, 2026-10-12
     
     section Active Milestone
-    Phase 3 - Dual LoRA Run and Tri-Combo Matrix:active, p3, 2026-10-05, 2026-10-24
+    Phase 3A - Advanced Intelligence and Events    :active, p3a, 2026-10-12, 2026-10-22
     
     section Future Milestones
-    Phase 4 - LangGraph and Flutter Mobile UI   :p4, 2026-10-24, 2026-11-16
-    Phase 5 - Full Benchmark and Research Paper :p5, 2026-11-16, 2026-12-05
+    Phase 3B - Dual-Model LoRA Fine-Tuning Engine  :p3b, 2026-10-22, 2026-11-02
+    Phase 3C - BharatQuery Flutter UI and Dashboard:p3c, 2026-11-02, 2026-11-12
+    Phase 4 - IndicDB Evaluation and Tri-Combo Run :p4, 2026-11-12, 2026-11-20
+    Phase 5 - Enterprise Docker and Packaging      :p5, 2026-11-20, 2026-11-28
+    Phase 6 - Final Paper, Report and Handover     :p6, 2026-11-28, 2026-12-05
 ```
 
 
+### 19.1 Definition of Done
 
+#### Phase 1 — Planning, PEAS, Scaffolding & State Contracts
 
-### 19.1 Milestone Execution Matrix
+- [x] Problem statement approved (April 2026 IndicDB vernacular Text-to-SQL gap identified)
+- [x] PEAS specification completed (P: EX >82%, Indic gap <2%; E: 20 NDAP DBs; A: FastText, mE5, LoRA; S: Speech/Text, DDLs, DuckDB stdout/err)
+- [x] Environment analysis completed (20 Indian Government NDAP relational schemas, complex joins, time-series)
+- [x] Agent responsibilities defined (Supervisor, Schema-Linker, SQL Synthesizer, DuckDB Sandbox, Verbalizer, Critic)
+- [x] Architecture diagrams completed (System architecture, sequence diagrams, LangGraph state machine)
+- [x] RAG & Schema-Linking strategy defined (Tripartite: Phonetic IndicXlit, dense mE5/BGE-M3 embeddings, categorical inverted index)
+- [x] Reasoning strategy defined (Cross-Lingual Chain-of-Thought scratchpad with SOV-to-SFW semantic deconstruction)
+- [x] Communication strategy defined (Sequential, parallel catalog broadcast, Blackboard shared state, hierarchical reflection)
+- [x] Tech stack justified (DuckDB, LangGraph, Sarvam-2B, Qwen-2.5-Coder, ElevenLabs, Flutter)
+- [x] Timeline completed (10-Week Engineering and Benchmark Roadmap)
+- [x] Team responsibility matrix completed
+- [x] Minimal ADK prototype demonstrated (20 NDAP databases in Parquet + `evaluate_benchmark.py` harness passing 100% EX on baseline)
 
-| Phase | Milestone Name | Key Deliverables & Tech | Status |
-| :--- | :--- | :--- | :---: |
-| **Phase 1** | **NDAP 20-DB Ingestion & Benchmark Harness** | All 20 NDAP databases in Parquet, DDL catalogs, 7-language test suite, `evaluate_benchmark.py` | ✅ **Completed** |
-| **Phase 2** | **Phonetic Schema-Linking & Cross-Lingual Search** | Dual-scheme transliteration, 20-DB multilingual lexicon index, 100% EX on benchmark suite | ✅ **Completed** |
-| **Phase 3** | **Dual Fine-Tuning & Tri-Combo Matrix** | `IndicSQL-Agg-12K` dataset, Sarvam-2B transliteration + Qwen-2.5-Coder LoRA, Tri-Combo benchmark harness & Arena drawer | 🟡 **Active** |
-| **Phase 4** | **Swarm StateGraph & Flutter Mobile UI** | LangGraph cyclic reflection loop, BharatQuery Flutter Cockpit with ElevenLabs 3D voice blob | ⏳ **Queued** |
-| **Phase 5** | **Benchmark Evaluation & Research Paper** | Full 15,617 IndicDB test run, ablation studies, and research paper publication | ⏳ **Queued** |
+#### Phase 2 — Core Multi-Agent Swarm, Schema Linking & Vernacular Audio Loop
+
+- [x] Six core agents operational (`supervisor_node`, `schema_linker_node`, `sql_synthesizer_node`, `sandbox_executor_node`, `response_verbalizer_node`, `critic_node`)
+- [ ] Speech / Audio Agent operational (bidirectional ElevenLabs Conversational AI voice/audio stream with hands-free loop)
+- [x] Sequential workflow operational (Supervisor -> Schema-Linker -> Synthesizer -> Sandbox -> Verbalizer)
+- [x] Hierarchical workflow operational (Supervisor dynamically arbitrating reflection loops on runtime errors)
+- [x] Shared state operational (`IndicSQLState` TypedDict tracking query, script, pruned schema, candidate SQL, tabular tuples, audit trace)
+- [x] RAG operational with atomic claim-to-chunk provenance (`matched_table`, `matched_columns`, `confidence_score`, `catalog_version`)
+- [x] Tools operational (FastText language detector, IndicXlit transliterator, DuckDB in-memory execution sandbox, SQLGlot AST linter)
+- [x] Safety validation operational (SQLGlot AST parser blocking mutations: `DROP`, `INSERT`, `UPDATE`, `DELETE`, enforcing read-only transactions)
+- [x] Critic/reflection operational (intercepting DuckDB syntax/casing/type errors and executing self-healing reflection loops)
+- [x] Persistent memory operational (DuckDB session cache and LangGraph MemorySaver checkpointing)
+- [x] MCP integration operational (Graphify AST knowledge graph and local OmniRoute toolchain)
+- [x] Structured traces operational with database provenance claims (step-by-step execution latency, token counts, and returned tuples)
+- [ ] Working frontend with speech interaction (ElevenLabs audio streaming with local audio cache)
+- [x] Initial evaluation suite (19/19 passing tests across all 20 NDAP databases and 7 target languages)
+
+#### Phase 3A — Advanced Agent Intelligence & Event-Driven Architecture
+
+- [ ] Tree-of-Thoughts (ToT) multi-candidate sequence exploration operational in SQL Synthesizer & Schema Linker
+- [ ] Weighted utility function candidate scoring operational (ranking candidate SQL by AST safety, join validity, and schema similarity)
+- [ ] Asynchronous Pub/Sub Event Bus (`indicsql/events/bus.py`) operational for multi-agent decoupled communication
+- [ ] Typed event schemas (`QueryInitiatedEvent`, `SchemaLinkedEvent`, `ExecutionCompletedEvent`, `ReflectionTriggeredEvent`, `VoiceSynthesisEvent`)
+- [ ] Dynamic DDL prompt injection operational (eliminating hardcoded rule-based generation with live schema context)
+- [ ] Unit tests for ToT query planning and Event Bus passing
+
+#### Phase 3B — Sovereign Dual-Model LoRA Fine-Tuning Engine (Sarvam-2B & Qwen-2.5-Coder)
+
+- [ ] Dataset curation pipeline operational for `IndicSQL-Agg-12K` (12,000 paired Indic questions, DDLs, and Gold SQL across 7 languages)
+- [ ] Partition 1 curated for `Sarvam-2B`: Indic contextual transliteration, dialectal normalization, and semantic entity/filter boundary deconstruction
+- [ ] Partition 2 curated for `Qwen-2.5-Coder`: Complex aggregation SQL synthesis (`GROUP BY`, nested subqueries, temporal windows, and multi-table joins)
+- [ ] 4-bit NormalFloat (NF4) QLoRA training harness operational with Unsloth / Hugging Face PEFT & TRL (<24GB VRAM footprint)
+- [ ] Target adapter modules configured (`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
+- [ ] Tri-Combo execution harness established for runtime comparison (Combo A: Hybrid Champion, Combo B: Sarvam Pure, Combo C: Qwen Pure)
+- [ ] Dynamic adapter switching & zero-copy LoRA runtime serving via vLLM / Hugging Face pipeline
+- [ ] Standalone interactive CLI benchmark runner (`scripts/run_model_arena.py`) with telemetry HUD (latency, token count, EX%, AST validity)
+- [ ] Unit tests for fine-tuning dataset integrity, tokenization coverage across 7 scripts, and LoRA inference passing
+
+#### Phase 3C — BharatQuery Flutter Mobile Cockpit UI & Swarm Observability Dashboard
+
+- [ ] Hardware-accelerated GLSL shader canvas with audio-reactive 3D morphing spherical blob (Idle breathing, listening pulse, thinking orbits, speaking wave)
+- [ ] Live visual HUD with green/yellow/red SQL execution status rings and latency indicators
+- [ ] Synchronous vernacular audio player for ElevenLabs Multilingual v2 / on-device TTS with telegraphic brevity clamp (<100 chars)
+- [ ] Swarm Observability & Trace Analytics Dashboard (`indicsql/ui/dashboard.py` / Flutter Drawer) operational
+- [ ] Per-agent latency waterfalls, token usage by model (Sarvam vs Qwen), and communication visualizer
+- [ ] Model Arena Drawer: qualitative side-by-side phrasing/SQL diff inspector and runtime engine switcher (Combo A* / Combo B / Combo C)
+- [ ] Real-time FPS monitor for 3D shader blob and sub-second speech turnaround monitor
+
+#### Phase 4 — Scientific Evaluation & Benchmark Experiments (15,617 IndicDB Runs)
+
+- [ ] 15,617 diverse evaluation runs executed across all 20 NDAP databases and 7 languages (Hindi, Bengali, Tamil, Telugu, Marathi, Hinglish, English)
+- [ ] 3-way Tri-Combo architectural comparison benchmark (Combo A: Hybrid Champion vs Combo B: Sarvam Pure vs Combo C: Qwen Pure)
+- [ ] Multi-model baseline comparison (Proposed Dual-Model vs GPT-4o baseline vs Llama-3 baseline)
+- [ ] Human-in-the-Loop (HITL) domain expert panel evaluation completed across vernacular responses (civic validity & numeral correctness)
+- [ ] Inter-rater reliability (Cohen's / Fleiss' Kappa) measured on expert linguistic and SQL equivalence rubric scores
+- [ ] Reflection loop ablation study completed (measuring EX% delta with 0, 1, 2, and 3 reflection repair attempts)
+- [ ] End-to-end latency benchmark with p95 measured against the sub-second database execution budget (<150ms DuckDB ceiling)
+
+#### Phase 5 — Enterprise Containerization & Production Docker Packaging
+
+- [ ] Production multi-stage backend Dockerfile (`Dockerfile.backend`) with non-root security user & minimal slim Python 3.12/3.14 runtime
+- [ ] Production frontend Dockerfile / Flutter web build pipeline (`Dockerfile.frontend`) with multi-stage build optimization
+- [ ] Orchestrated `docker-compose.yml` and `docker-compose.prod.yml` with isolated networks (`api`, `qdrant`, `sandbox`, `gateway`)
+- [ ] Enterprise resource quotas, health checks, and restart policies configured for client host environments
+- [ ] Persistent volume orchestration for Parquet stores (`data/parquet_stores`), schema catalogs (`data/catalogs`), and model LoRA weights (`models/lora_weights`)
+- [ ] Reverse proxy configuration (Nginx / Caddy) with WebSocket support, streaming audio chunking, CORS, and TLS termination
+- [ ] Production environment template (`.env.production.example`) with API key masking and strict validation
+- [ ] Automated container smoke tests and CI verification script (`scripts/docker_smoke_test.sh`)
+- [ ] Enterprise deployment guide & operations runbook (`docs/DEPLOYMENT_GUIDE.md`)
+
+#### Phase 6 — Client Handover, Final Technical Report & Defense Deliverables
+
+- [ ] Comprehensive IEEE-style academic final report & enterprise technical whitepaper completed (`docs/FINAL_REPORT.md` / `paper/indic_sql_paper.pdf`)
+- [ ] Turnkey Client Handover Package with SLA verification, NDAP schema registry, and architectural runbook
+- [ ] Executive presentation slide deck and live interactive demonstration script completed
+- [ ] Viva defense & technical review preparation guide with design rationale completed
 
 
 ------------------------------------------------------------------------
