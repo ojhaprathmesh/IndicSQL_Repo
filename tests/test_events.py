@@ -99,7 +99,10 @@ class TestEventBus(unittest.TestCase):
 
     def test_unsubscribe(self):
         received = []
-        handler = lambda e: received.append(e)
+
+        def handler(e):
+            received.append(e)
+
         EventBus.subscribe(QueryInitiatedEvent, handler)
         EventBus.unsubscribe(QueryInitiatedEvent, handler)
         EventBus.publish(QueryInitiatedEvent(query_id="q1"))

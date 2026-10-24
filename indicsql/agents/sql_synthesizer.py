@@ -16,7 +16,7 @@ Addresses the 28% Aggregation & GROUP BY Breakdown identified in IndicDB.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from indicsql.core.state import IndicSQLState
 from indicsql.events.bus import EventBus
@@ -253,37 +253,60 @@ def generate_aggregation_sql(state: IndicSQLState) -> str:
     Backward-compatible entry point.
     Runs ToT internally and returns the highest-utility SQL string.
     """
-    best_sql, _, _ = _tot_select(state)
+    best_sql, _, _, _ = _tot_select(state)
     return best_sql
 
 
 def _tot_select(
     state: IndicSQLState,
-) -> Tuple[str, float, int]:
+) -> Tuple[str, float, int, str]:
     """
-    Tree-of-Thoughts selection: expand candidates, score, return winner.
+    Tree-of-Thoughts selection: expand candidates (including LoRA branch if available),
+    score by weighted utility, and return the winning SQL candidate and metadata.
 
     Returns:
-        (best_sql, best_score, num_candidates)
+        (best_sql, best_score, num_candidates, method)
     """
     candidates = _build_candidates(state)
+
+    # LoRA Candidate Branch: evaluate fine-tuned Qwen model if weights exist
+    try:
+        from indicsql.models.adapter import QwenAdapter
+        qwen = QwenAdapter()
+        if qwen.is_available:
+            from indicsql.models.combo import TriComboEngine
+            lora_sql = TriComboEngine(qwen_adapter=qwen).synthesize_sql_lora(state)
+            if lora_sql:
+                candidates.append({
+                    "sql": lora_sql,
+                    "agg_covered": True,
+                    "filter_precise": True,
+                    "has_join": False,
+                    "_method": "lora",
+                })
+    except Exception as e:
+        logger.debug("LoRA candidate branch evaluation skipped: %s", e)
+
     if not candidates:
         fallback = (
             "SELECT SUM(farmer_beneficiaries) AS total_farmers, "
             "SUM(amount_inr) AS total_amount "
             "FROM ndap_pm_kisan_disbursement WHERE 1=1;"
         )
-        return fallback, 0.0, 0
+        return fallback, 0.0, 0, "tot_heuristic"
 
-    scored = [(c["sql"], _score_candidate(c)) for c in candidates]
+    scored = [
+        (c["sql"], _score_candidate(c), c.get("_method", "tot_heuristic"))
+        for c in candidates
+    ]
     scored.sort(key=lambda x: x[1], reverse=True)
 
-    best_sql, best_score = scored[0]
+    best_sql, best_score, best_method = scored[0]
     logger.debug(
-        "ToT selected candidate (score=%.4f) from %d branches: %s",
-        best_score, len(candidates), best_sql[:80]
+        "ToT selected candidate (score=%.4f, method=%s) from %d branches: %s",
+        best_score, best_method, len(candidates), best_sql[:80]
     )
-    return best_sql, best_score, len(candidates)
+    return best_sql, best_score, len(candidates), best_method
 
 
 # ---------------------------------------------------------------------------
@@ -294,20 +317,20 @@ def sql_synthesizer_node(state: IndicSQLState) -> Dict[str, Any]:
     """
     Synthesizer Node
 
-    1. Expands N candidate SQL branches (ToT).
+    1. Expands N candidate SQL branches (ToT + optional LoRA).
     2. Scores each by weighted utility.
     3. Selects the highest-utility candidate.
     4. Emits SQLSynthesizedEvent on the global EventBus.
     5. Returns state patch.
     """
-    best_sql, best_score, n_candidates = _tot_select(state)
+    best_sql, best_score, n_candidates, best_method = _tot_select(state)
 
     # Emit event
     EventBus.publish(
         SQLSynthesizedEvent(
             query_id=state.get("query_id"),
             candidate_sql=best_sql,
-            method="tot_heuristic",
+            method=best_method,
             utility_score=best_score,
             candidates_evaluated=n_candidates,
         )
@@ -317,6 +340,7 @@ def sql_synthesizer_node(state: IndicSQLState) -> Dict[str, Any]:
         "step": 3,
         "agent": "SQLSynthesizerAgent",
         "action": "tot_select",
+        "method": best_method,
         "output_sql": best_sql,
         "utility_score": best_score,
         "candidates_evaluated": n_candidates,
