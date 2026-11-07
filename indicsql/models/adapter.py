@@ -38,6 +38,7 @@ class ModelAdapter:
         self.max_length = max_length
         self._model = None
         self._tokenizer = None
+        self._load_failed = False
 
     @property
     def is_available(self) -> bool:
@@ -45,6 +46,8 @@ class ModelAdapter:
         Returns True if fine-tuned adapter weights exist on local disk
         AND base model is available locally (or online downloading is permitted).
         """
+        if self._load_failed:
+            return False
         if not self.lora_path or not self.lora_path.exists():
             return False
         has_safetensors = (self.lora_path / "adapter_model.safetensors").exists()
@@ -92,6 +95,7 @@ class ModelAdapter:
             )
 
         try:
+            import os
             import torch
             from peft import PeftModel
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -101,7 +105,7 @@ class ModelAdapter:
 
             logger.info(f"Loading base model {self.model_id} (local_only={local_only})...")
             self._tokenizer = AutoTokenizer.from_pretrained(
-                str(self.lora_path), trust_remote_code=True
+                str(self.lora_path), trust_remote_code=True, local_files_only=local_only
             )
             if self.device != "auto":
                 target_device = self.device
@@ -153,7 +157,8 @@ class ModelAdapter:
             self._model = PeftModel.from_pretrained(base_model, str(self.lora_path))
             self._model.eval()
         except Exception as e:
-            logger.error(f"Failed to load model adapter {self.model_id}: {e}")
+            self._load_failed = True
+            logger.warning(f"Failed to load model adapter {self.model_id}: {e}")
             raise ModelUnavailableError(f"Failed loading weights: {e}") from e
 
     def unload(self) -> None:
