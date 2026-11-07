@@ -6,6 +6,7 @@ Exposes endpoints for natural language queries, schema inspection, and benchmark
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from indicsql import __version__
@@ -16,6 +17,20 @@ app = FastAPI(
     title="IndicSQL API Gateway",
     description="Cross-Lingual Text-to-SQL Swarm for Indian Languages (NDAP Benchmark)",
     version=__version__,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

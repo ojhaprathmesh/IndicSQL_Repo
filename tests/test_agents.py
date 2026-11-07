@@ -2,6 +2,7 @@ import unittest
 
 from indicsql.agents.critic import validate_sql_security
 from indicsql.agents.schema_linker import schema_linker_node
+from indicsql.agents.sql_synthesizer import generate_aggregation_sql
 from indicsql.agents.supervisor import detect_indic_script, identify_language_code
 from indicsql.sandbox.validator import validate_and_limit_sql
 
@@ -33,6 +34,16 @@ class TestAgentNodes(unittest.TestCase):
         result = schema_linker_node(state)
         self.assertTrue(len(result["pruned_schema"]) > 0)
         self.assertEqual(result["pruned_schema"][0]["table_name"], "ndap_pm_kisan_disbursement")
+
+    def test_pm_kisan_by_state_query_returns_grouped_rows(self):
+        sql = generate_aggregation_sql(
+            {
+                "raw_query": "Show PM-KISAN beneficiaries by state",
+                "target_database": "ndap_pm_kisan_disbursement",
+            }
+        )
+        self.assertIn("GROUP BY state_name", sql)
+        self.assertIn("state_name", sql.split("FROM", maxsplit=1)[0])
 
     def test_critic_and_ast_validator(self):
         safe_sql = (

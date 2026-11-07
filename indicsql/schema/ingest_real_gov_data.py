@@ -1031,7 +1031,7 @@ def ingest_all_20_ndap_databases(
             target_path = parquet_dir / f"{table_name}.parquet"
             df.to_parquet(target_path, index=False)
             summary[table_name] = len(df)
-            print(f"✅ Ingested {len(df):>7} records -> {target_path.name}")
+            print(f"Ingested {len(df):>7} records -> {target_path.name}")
         except Exception as e:
             logger.error(f"Error ingesting table {table_name}: {e}")
             print(f"❌ Failed to ingest {table_name}: {e}")

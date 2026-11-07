@@ -473,7 +473,7 @@ def ingest_and_export_all_ndap_databases(
         "tables": {},
     }
 
-    print(f"🚀 Starting Ingestion for all {len(tables)} NDAP Databases...")
+    print(f"Starting Ingestion for all {len(tables)} NDAP Databases...")
 
     for tbl in tables:
         schema = NDAPCatalog.get_table_schema(tbl)
@@ -500,7 +500,7 @@ def ingest_and_export_all_ndap_databases(
             "columns": schema.get("columns"),
             "primary_key": schema.get("primary_key", []),
         }
-        print(f"   ✓ Ingested '{tbl}': {len(df):,} records -> {parquet_path.name}")
+        print(f"   Ingested '{tbl}': {len(df):,} records -> {parquet_path.name}")
 
     # Write master catalog metadata
     metadata_path = catalog_dir / "catalog_metadata.json"
@@ -508,10 +508,10 @@ def ingest_and_export_all_ndap_databases(
         json.dump(master_metadata, f, indent=2)
 
     print(
-        f"\n✨ Ingestion Complete: {sum(summary.values()):,} total records across 20 NDAP databases."
+        f"\nIngestion Complete: {sum(summary.values()):,} total records across 20 NDAP databases."
     )
-    print(f"📁 Parquet Stores: {parquet_dir}")
-    print(f"📁 Catalog DDLs: {catalog_dir}")
+    print(f"Parquet Stores: {parquet_dir}")
+    print(f"Catalog DDLs: {catalog_dir}")
     return summary
 
 

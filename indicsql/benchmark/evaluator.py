@@ -157,11 +157,11 @@ class IndicDBEvaluator:
         results: List[BenchmarkResult] = []
         total = len(queries)
 
-        print(f"🚀 Evaluating {total} IndicDB Benchmark Queries across 7 Languages...")
+        print(f"Evaluating {total} IndicDB Benchmark Queries across 7 Languages...")
         for i, q in enumerate(queries, start=1):
             res = self.evaluate_query(q)
             results.append(res)
-            status_icon = "✓" if res.execution_match else "✗"
+            status_icon = "OK" if res.execution_match else "FAIL"
             print(
                 f"   [{i}/{total}] {status_icon} [{q.language}] {q.query[:45]}... ({res.execution_time_ms:.1f}ms)"
             )
@@ -226,6 +226,6 @@ class IndicDBEvaluator:
             report_path = RESULTS_DIR / f"indicdb_eval_{timestamp}.json"
             with open(report_path, "w", encoding="utf-8") as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
-            print(f"\n📊 Detailed Benchmark Report saved: {report_path}")
+            print(f"\nDetailed Benchmark Report saved: {report_path}")
 
         return report

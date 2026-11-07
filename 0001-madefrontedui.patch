@@ -1,0 +1,2767 @@
+From 85e9a3c1e9bbc838e73de59c887c4f75c9279581 Mon Sep 17 00:00:00 2001
+From: authentic-saurabh <saurabh.yadav.22cse@bmu.edu.in>
+Date: Sat, 7 Nov 2026 15:11:25 +0530
+Subject: [PATCH] madefrontedui
+
+---
+ data/ndap_catalogs/catalog_metadata.json |   40 +-
+ frontend/app/.gitignore                  |   24 +
+ frontend/app/.oxlintrc.json              |    8 +
+ frontend/app/README.md                   |   16 +
+ frontend/app/index.html                  |   13 +
+ frontend/app/package-lock.json           | 1316 ++++++++++++++++++++++
+ frontend/app/package.json                |   23 +
+ frontend/app/public/favicon.svg          |    1 +
+ frontend/app/public/icons.svg            |   24 +
+ frontend/app/src/App.css                 |  310 +++++
+ frontend/app/src/App.jsx                 |  206 ++++
+ frontend/app/src/assets/hero.png         |  Bin 0 -> 13057 bytes
+ frontend/app/src/assets/react.svg        |    1 +
+ frontend/app/src/assets/vite.svg         |    1 +
+ frontend/app/src/index.css               |   34 +
+ frontend/app/src/main.jsx                |   10 +
+ frontend/app/vite.config.js              |    7 +
+ indicsql/agents/sql_synthesizer.py       |   31 +-
+ indicsql/api/server.py                   |   15 +
+ indicsql/benchmark/evaluator.py          |    6 +-
+ indicsql/schema/ingest_ndap.py           |   10 +-
+ indicsql/schema/ingest_real_gov_data.py  |    2 +-
+ tests/test_agents.py                     |   11 +
+ 23 files changed, 2074 insertions(+), 35 deletions(-)
+ create mode 100644 frontend/app/.gitignore
+ create mode 100644 frontend/app/.oxlintrc.json
+ create mode 100644 frontend/app/README.md
+ create mode 100644 frontend/app/index.html
+ create mode 100644 frontend/app/package-lock.json
+ create mode 100644 frontend/app/package.json
+ create mode 100644 frontend/app/public/favicon.svg
+ create mode 100644 frontend/app/public/icons.svg
+ create mode 100644 frontend/app/src/App.css
+ create mode 100644 frontend/app/src/App.jsx
+ create mode 100644 frontend/app/src/assets/hero.png
+ create mode 100644 frontend/app/src/assets/react.svg
+ create mode 100644 frontend/app/src/assets/vite.svg
+ create mode 100644 frontend/app/src/index.css
+ create mode 100644 frontend/app/src/main.jsx
+ create mode 100644 frontend/app/vite.config.js
+
+diff --git a/data/ndap_catalogs/catalog_metadata.json b/data/ndap_catalogs/catalog_metadata.json
+index 906ea31..63bc4ed 100644
+--- a/data/ndap_catalogs/catalog_metadata.json
++++ b/data/ndap_catalogs/catalog_metadata.json
+@@ -13,7 +13,7 @@
+       "domain": "Agriculture",
+       "title": "PM-KISAN Direct Benefit Transfer Portal",
+       "description": "Pradhan Mantri Kisan Samman Nidhi state and district level fund disbursements.",
+-      "row_count": 388,
++      "row_count": 212,
+       "parquet_file": "ndap_pm_kisan_disbursement.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name (e.g., MAHARASHTRA, BIHAR, TAMIL NADU)",
+@@ -32,7 +32,7 @@
+       "domain": "Agriculture",
+       "title": "Annual Agricultural Crop Census",
+       "description": "District-wise crop acreage, production yield, and seasonal harvest volumes.",
+-      "row_count": 17853,
++      "row_count": 1060,
+       "parquet_file": "ndap_crop_production_census.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -56,7 +56,7 @@
+       "domain": "Agriculture",
+       "title": "e-NAM Mandi Market Commodity Arrivals & Prices",
+       "description": "Daily and monthly wholesale agricultural commodity prices across regulated mandis.",
+-      "row_count": 76,
++      "row_count": 400,
+       "parquet_file": "ndap_mandi_commodity_prices.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -81,7 +81,7 @@
+       "domain": "Agriculture",
+       "title": "Integrated Fertilizer Management System (iFMS)",
+       "description": "District-level fertilizer allocations, stock availability, and retail point sales.",
+-      "row_count": 1552,
++      "row_count": 848,
+       "parquet_file": "ndap_fertilizer_distribution.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -103,7 +103,7 @@
+       "domain": "Agriculture",
+       "title": "Soil Health Card Scheme Database",
+       "description": "Micro and macro nutrient soil test profiles and Soil Health Cards issued.",
+-      "row_count": 291,
++      "row_count": 159,
+       "parquet_file": "ndap_soil_health_records.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -125,7 +125,7 @@
+       "domain": "Education",
+       "title": "UDISE+ School Education & Demographic Statistics",
+       "description": "Unified District Information System for Education Plus student and literacy indicators.",
+-      "row_count": 388,
++      "row_count": 212,
+       "parquet_file": "ndap_education_stats.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -146,7 +146,7 @@
+       "domain": "Education",
+       "title": "National School Facility & Basic Amenities Survey",
+       "description": "School facility compliance including electricity, drinking water, toilets, and digital labs.",
+-      "row_count": 388,
++      "row_count": 106,
+       "parquet_file": "ndap_school_infrastructure.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -168,7 +168,7 @@
+       "domain": "Education",
+       "title": "All India Survey on Higher Education (AISHE)",
+       "description": "Colleges, universities, faculty census, and Gross Enrollment Ratios (GER).",
+-      "row_count": 56,
++      "row_count": 20,
+       "parquet_file": "ndap_higher_education_aishe.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -188,7 +188,7 @@
+       "domain": "Education",
+       "title": "PM POSHAN / Mid-Day Meal Nutrition Portal",
+       "description": "Coverage of school meal nutrition, foodgrain quotas, and student beneficiaries.",
+-      "row_count": 388,
++      "row_count": 106,
+       "parquet_file": "ndap_midday_meal_scheme.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -209,7 +209,7 @@
+       "domain": "Education",
+       "title": "Skill India & PMKVY Vocational Database",
+       "description": "Short-term skilling, ITI certifications, and placement records.",
+-      "row_count": 2716,
++      "row_count": 240,
+       "parquet_file": "ndap_vocational_skill_training.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -231,7 +231,7 @@
+       "domain": "Healthcare",
+       "title": "National Family Health Survey (NFHS-5)",
+       "description": "District maternal health, child nutrition, immunization, and lifestyle indicators.",
+-      "row_count": 341,
++      "row_count": 53,
+       "parquet_file": "ndap_nfhs5_health_indicators.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -251,7 +251,7 @@
+       "domain": "Healthcare",
+       "title": "Rural Health Statistics (RHS Bulletin)",
+       "description": "Primary healthcare centers (PHC), community health centers (CHC), and specialist doctors.",
+-      "row_count": 56,
++      "row_count": 20,
+       "parquet_file": "ndap_rural_health_infrastructure.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -271,7 +271,7 @@
+       "domain": "Healthcare",
+       "title": "Sample Registration System (SRS) Vital Statistics",
+       "description": "Maternal Mortality Ratio (MMR), Infant Mortality Rate (IMR), and Under-5 Mortality.",
+-      "row_count": 56,
++      "row_count": 20,
+       "parquet_file": "ndap_maternal_child_mortality.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -290,7 +290,7 @@
+       "domain": "Healthcare",
+       "title": "Ayushman Bharat PM-JAY Health Protection Portal",
+       "description": "Golden card issuances, hospital empanelment, and secondary/tertiary claim settlements.",
+-      "row_count": 388,
++      "row_count": 106,
+       "parquet_file": "ndap_ayushman_bharat_pmjay.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -311,7 +311,7 @@
+       "domain": "Healthcare",
+       "title": "Ni-kshay National TB Elimination Portal",
+       "description": "Tuberculosis notifications, treatment completion outcomes, and nutritional support (Nikshay Poshan).",
+-      "row_count": 388,
++      "row_count": 159,
+       "parquet_file": "ndap_national_tuberculosis_portal.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -332,7 +332,7 @@
+       "domain": "Rural Development",
+       "title": "MGNREGA National Rural Employment Portal",
+       "description": "Mahatma Gandhi NREGA person-days generated, households engaged, and wage expenditures.",
+-      "row_count": 24,
++      "row_count": 40,
+       "parquet_file": "mgnrega_state_annual_employment.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -351,7 +351,7 @@
+       "domain": "Rural Development",
+       "title": "Pradhan Mantri Gram Sadak Yojana (PMGSY)",
+       "description": "All-weather road connectivity to eligible unconnected rural habitations.",
+-      "row_count": 388,
++      "row_count": 159,
+       "parquet_file": "ndap_pmgsy_rural_roads.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -372,7 +372,7 @@
+       "domain": "Rural Development",
+       "title": "Jal Jeevan Mission Har Ghar Jal Portal",
+       "description": "Rural household tap water connections (FHTC) and water quality surveillance.",
+-      "row_count": 97,
++      "row_count": 53,
+       "parquet_file": "ndap_jal_jeevan_tap_water.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -391,7 +391,7 @@
+       "domain": "Rural Development",
+       "title": "Pradhan Mantri Awaas Yojana - Gramin (PMAY-G)",
+       "description": "Pucca houses sanctioned, constructed, and subsidy installments credited to homeless beneficiaries.",
+-      "row_count": 388,
++      "row_count": 159,
+       "parquet_file": "ndap_pmay_rural_housing.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+@@ -411,7 +411,7 @@
+       "domain": "Rural Development",
+       "title": "e-GramSwaraj Local Body Finance & 15th FC Grants",
+       "description": "Fifteenth Finance Commission basic and tied grants allocated to Gram Panchayats.",
+-      "row_count": 388,
++      "row_count": 106,
+       "parquet_file": "ndap_gram_panchayat_finance.parquet",
+       "columns": {
+         "state_name": "VARCHAR - State/UT name",
+diff --git a/frontend/app/.gitignore b/frontend/app/.gitignore
+new file mode 100644
+index 0000000..a547bf3
+--- /dev/null
++++ b/frontend/app/.gitignore
+@@ -0,0 +1,24 @@
++# Logs
++logs
++*.log
++npm-debug.log*
++yarn-debug.log*
++yarn-error.log*
++pnpm-debug.log*
++lerna-debug.log*
++
++node_modules
++dist
++dist-ssr
++*.local
++
++# Editor directories and files
++.vscode/*
++!.vscode/extensions.json
++.idea
++.DS_Store
++*.suo
++*.ntvs*
++*.njsproj
++*.sln
++*.sw?
+diff --git a/frontend/app/.oxlintrc.json b/frontend/app/.oxlintrc.json
+new file mode 100644
+index 0000000..1255078
+--- /dev/null
++++ b/frontend/app/.oxlintrc.json
+@@ -0,0 +1,8 @@
++{
++  "$schema": "./node_modules/oxlint/configuration_schema.json",
++  "plugins": ["react", "oxc"],
++  "rules": {
++    "react/rules-of-hooks": "error",
++    "react/only-export-components": ["warn", { "allowConstantExport": true }]
++  }
++}
+diff --git a/frontend/app/README.md b/frontend/app/README.md
+new file mode 100644
+index 0000000..d937833
+--- /dev/null
++++ b/frontend/app/README.md
+@@ -0,0 +1,16 @@
++# React + Vite
++
++This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
++
++Currently, two official plugins are available:
++
++- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
++- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
++
++## React Compiler
++
++The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
++
++## Expanding the Oxlint configuration
++
++If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+diff --git a/frontend/app/index.html b/frontend/app/index.html
+new file mode 100644
+index 0000000..4a9f024
+--- /dev/null
++++ b/frontend/app/index.html
+@@ -0,0 +1,13 @@
++<!doctype html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>app</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.jsx"></script>
++  </body>
++</html>
+diff --git a/frontend/app/package-lock.json b/frontend/app/package-lock.json
+new file mode 100644
+index 0000000..5eefac5
+--- /dev/null
++++ b/frontend/app/package-lock.json
+@@ -0,0 +1,1316 @@
++{
++  "name": "app",
++  "version": "0.0.0",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "app",
++      "version": "0.0.0",
++      "dependencies": {
++        "react": "^19.3.1",
++        "react-dom": "^19.3.1"
++      },
++      "devDependencies": {
++        "@types/react": "^19.3.0",
++        "@types/react-dom": "^19.3.0",
++        "@vitejs/plugin-react": "^6.1.2",
++        "oxlint": "^1.90.0",
++        "vite": "^8.3.6"
++      }
++    },
++    "node_modules/@oxc-project/types": {
++      "version": "0.156.0",
++      "resolved": "https://registry.npmjs.org/@oxc-project/types/-/types-0.156.0.tgz",
++      "integrity": "sha512-1Duyg48TdJNdyhEB8Xn1L36bT9Pv6GUtlKjHxOys8xkaF/rQq3XJE+bAurSK/AgIz5mGFsb77cn9Pb20+WCScw==",
++      "dev": true,
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/oxc-project"
++      }
++    },
++    "node_modules/@oxlint/binding-android-arm-eabi": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-android-arm-eabi/-/binding-android-arm-eabi-1.92.0.tgz",
++      "integrity": "sha512-k3Sd4ixQfiOrybv1gT+AMI81HSdtAFsiCFx+xXxWdFkmKW2HNrSiOfwn20o5nl/ggwbzU1oNLDeU/fRPinTVZQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-android-arm64": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-android-arm64/-/binding-android-arm64-1.92.0.tgz",
++      "integrity": "sha512-OZzgEuiTSG11QkBWdXEguiLOT6lL09KtfcC/BmvUQWBAjU5eVyBxIAsmWAXv8L85/eT6RE0GBEWTEFBAbYE74g==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-darwin-arm64": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-darwin-arm64/-/binding-darwin-arm64-1.92.0.tgz",
++      "integrity": "sha512-We6XS7tIqxgUoany6uyGjj7mNsh/mwf4Gt9gUzhxG65NKo2Ow9s6tDfrVuI0FVg8n3YmpW5PBx80qFxiLwAfsA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-darwin-x64": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-darwin-x64/-/binding-darwin-x64-1.92.0.tgz",
++      "integrity": "sha512-jKJWijmi6AxAZcXXWA6R/NLVZHxoRTbIMnV8znsHzeiVfuEefYcyR8SJGfbBPmkG+kveLFRcBGw0fBrjLqtGmQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-freebsd-x64": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-freebsd-x64/-/binding-freebsd-x64-1.92.0.tgz",
++      "integrity": "sha512-wkw01wvJPM8/4jh+MV3cp11859VuBc94N2q5uOzcBgdGIRAqMCg1O0W/+xsZ1fsInvuUcv2Xo4nd1nzcKhi9kg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm-gnueabihf": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.92.0.tgz",
++      "integrity": "sha512-Elm6nW308MzmR8knvk0tPqQ4XE+PGKztjXv7kVZTRLkhBQZRXHUQoBLc4E30fiIuF6gkZO5f3EpJtQc4Ok/fXw==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm-musleabihf": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm-musleabihf/-/binding-linux-arm-musleabihf-1.92.0.tgz",
++      "integrity": "sha512-oylpBAoeogddjhTlSPsXrzGq/aeJsvaULz/hYXvWtGn/Wt8LPLC7gFhucCicbRnzEKsShrZxIA0KyHmtFNnijQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm64-gnu": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.92.0.tgz",
++      "integrity": "sha512-/EWOI0wwY+74UGvC93TldpoNP8moIcidVUPbUSoX16/SEdF7ah209yxSQia4+9JdCRWYA3+yQMofXMgWKk/16Q==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm64-musl": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.92.0.tgz",
++      "integrity": "sha512-9Se7Zuazr104yc2PaluriJW2rqvtaN6FSi9MSjQgZGeYb6LKvEcJ586tpjek0l7hNQNoir8MID7OENPH6juN1w==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-ppc64-gnu": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.92.0.tgz",
++      "integrity": "sha512-88IAchs204I/xxAbAo3NRyz1m/29tn8jUAPvc4tK4FzrT2PLwZertd93ANF6231vwbAhYiD5gl0cX8Po5xsjWQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-riscv64-gnu": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-riscv64-gnu/-/binding-linux-riscv64-gnu-1.92.0.tgz",
++      "integrity": "sha512-KtFdVdkfvBGcsrmnbjYJ9/XTDABnaniiwnptAcAm0pkaR2zhZ3sr/Xy+N1Xbz1Yq5Jegu7SoeNv9caTP0b5OTA==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-riscv64-musl": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-riscv64-musl/-/binding-linux-riscv64-musl-1.92.0.tgz",
++      "integrity": "sha512-V43CO5FPgHtwHup4H5+dIdwzZX2FhREQGsSBZx8V1UyFEAul0Q13qviKqZfSMM6G41CGtCekVpJGGOxW5v1y8Q==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-s390x-gnu": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.92.0.tgz",
++      "integrity": "sha512-WooxeACzGH5q34olo7JgAk7XbVkTUNfwhR/TzmhwVs/y1p2R7ZWJo14hiyxiGcoYZR1iBnbBFHectADqb/KSog==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-x64-gnu": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.92.0.tgz",
++      "integrity": "sha512-lW2pLF1oFvNN780YUCtDyoUm8oFzZGJNcOFe9RtLMX5v5+FcWfAQvHUMMPF8H8kJB0HAi3dFmWDWLa5VPuY9mw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-x64-musl": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-x64-musl/-/binding-linux-x64-musl-1.92.0.tgz",
++      "integrity": "sha512-2BJAAB/eqPn7iD7mFVfs+1ZVUogAYOMCTaUgjAvbtNGg2ppCDE7gcv/9VSO6GCDybdFUqlcyeyjn9hRpl1ZHog==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-openharmony-arm64": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-openharmony-arm64/-/binding-openharmony-arm64-1.92.0.tgz",
++      "integrity": "sha512-iLtjNqqa/2IV5qu/3rrkpVd42Ia3yeCn4fSZoEr+m5FoGHtZvAV6J6YuU3lewg5Rg5ORGvwhdgN+7gNzwkl7tA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-arm64-msvc": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.92.0.tgz",
++      "integrity": "sha512-ryxiR3ZqB0OJzydMu+bVC3R7ZtoU7X1rI8sEgTBCCvQvgVwoCwqSFlfmhgiZ+9wZ4IdTsFeu9tdiF9KtRCbSHQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-ia32-msvc": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-ia32-msvc/-/binding-win32-ia32-msvc-1.92.0.tgz",
++      "integrity": "sha512-DaE9OChj4nsdEST32BP7saGu8WtjOinTy/eS88dZ0TvTfDV26ebRDhsI1rL9OKXfO+DgehzhAQMqdPr2jgfcFw==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-x64-msvc": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.92.0.tgz",
++      "integrity": "sha512-0AyhqX0ciFuEnHIL+B4PIMMX3s/IpGHNEbbUqwsNhSrzWUSlEOPw/q7qFnRsEJfiKedcqVfUE/aXYuSMtpiFyw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-android-arm-eabi": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.16.tgz",
++      "integrity": "sha512-ia3DwAs0OsMGS7+IConptSiyk9pEXkOx/AbJ2n/lAGxH3QkWQus1t8d7gnAT38FCU2sQu8lUbeR6AiZFv4JxaA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-android-arm64": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.2.16.tgz",
++      "integrity": "sha512-kx5wBiMB6E7TEvpl2B9gjLU004BkvEm2Dr941BFjx/SontPwSzNuQUIoVKxHHoSjpFIfHMmcguyLOtyn0hObRg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-darwin-arm64": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.16.tgz",
++      "integrity": "sha512-qslZrXnKJU4cUpjoAmtAo/KQM9e2IRMlmpig6Zpwj+8KWxW8v+nkAf9216Bsek9lOC1jvg2yCjygCFo2f83msQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-darwin-x64": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-darwin-x64/-/binding-darwin-x64-1.2.16.tgz",
++      "integrity": "sha512-FdF+y48ND13eAyM2mQn+85kvAqNlvRWROy2rhgA463X/0Gv4vGtazZtfaF1mRBLscYvtOlh4QnLjOWiFzX69OQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-freebsd-x64": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-freebsd-x64/-/binding-freebsd-x64-1.2.16.tgz",
++      "integrity": "sha512-ddjqFM5e95AgLbUPtKIS7V1KTVlA0RUgCVr5mn+/IEhsdy3pr+Vuj/HZ7nlMN2FyxIwUktOH1LEPIQXO1v9y1Q==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-arm-gnueabihf": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.2.16.tgz",
++      "integrity": "sha512-tHdKWbFkFBI687iim3LIyIvyL7j66VvQYkDPss5Stn/qyE2tWkR1YD0dXmXPFKKqT/o5ZEJVsaRsWS2meQwGOA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-arm64-gnu": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.2.16.tgz",
++      "integrity": "sha512-FJiLGAblPBMlBEdbOqw6kW6QcXDWAf/oJu7gYs9ZJZwmg+K+/zjFLxPTIY9izJUzxzc24FHvmseyA0IvJSl17w==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-arm64-musl": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.2.16.tgz",
++      "integrity": "sha512-hrJpblMsrQ58U9veWpbXzkhV5zStunds6HWLprqq1qauvgBr1E6P+24kLj6lSLI9vjRn/RYpjprhkHQPKGWpNg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-ppc64-gnu": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.2.16.tgz",
++      "integrity": "sha512-qJd/dC6j6CwLG9/s/RP2nb1RZ0GIgj7Ioj7x/SYa3RzjVrlzrmH0fhIOpfvqQDeIsdP0loi+kHaMhJzY1PBIaA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-s390x-gnu": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.2.16.tgz",
++      "integrity": "sha512-Vx7Xg5uUJuNcujJjI70OICaH0EYj80BtOLZTSN7uOYg8QOLlyKnaG0IW7Fn/J0IpJsaKzmDKMhOQv1JBM9m9vg==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-x64-gnu": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.2.16.tgz",
++      "integrity": "sha512-TNKhgE3uJTsTzatUSSYt0Kgo+Oa2uSlSjz4r1aEIea7HX6ULBym4fAlYUhG1i6pjNf2njfCUAfKwr6C3E9Xg1w==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-linux-x64-musl": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-linux-x64-musl/-/binding-linux-x64-musl-1.2.16.tgz",
++      "integrity": "sha512-7chXdpjXZ8qG0+mIxECN3cT9kvhZ3/oZhMX6Pp876P7CDrIy8nJswva6Mq357JR7eYXfuskwZxMeV1SzoZdHrA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-openharmony-arm64": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-openharmony-arm64/-/binding-openharmony-arm64-1.2.16.tgz",
++      "integrity": "sha512-Kwjt+7uNTJK5/MDkGWGVO2KQPnj8yAV75dMpfwyHZrJSXWHrniOB0aUEWlVYf3H1hOqFLIStLdM5QXq6bnKmOQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-win32-arm64-msvc": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.2.16.tgz",
++      "integrity": "sha512-/LH6WfjDRXXJz/p5xl4TmU+jpcnwcxbKEQBW/GZE0JHfN0lGIyTtsUEGaQ/q/GikkGJ2yLKe6pwm7AnEWO8pdw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/binding-win32-x64-msvc": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.16.tgz",
++      "integrity": "sha512-1lv1KvX0Z871zfk7vw+dnXMMnHNyDwMzWG8Kv3HxDXMOhzCX4SHc7HK319fInP0i+0p9D8brkfzL7pJOaGl+tw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@rolldown/pluginutils": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz",
++      "integrity": "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/@types/react": {
++      "version": "19.3.0",
++      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.3.0.tgz",
++      "integrity": "sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "csstype": "^3.2.2"
++      }
++    },
++    "node_modules/@types/react-dom": {
++      "version": "19.3.0",
++      "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.3.0.tgz",
++      "integrity": "sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==",
++      "dev": true,
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "^19.3.0"
++      }
++    },
++    "node_modules/@vitejs/plugin-react": {
++      "version": "6.2.1",
++      "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-6.2.1.tgz",
++      "integrity": "sha512-9KyWCij3r0+qLG3Q62vBmv0VyevmYibAtxaCIVK9o0k6CXgaajZRIe8tpfchQcdZArJ5b/7OrIz4W3b2uxVRDA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@rolldown/pluginutils": "^1.0.1"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "peerDependencies": {
++        "@rolldown/plugin-babel": "^0.1.7 || ^0.2.0 || ^0.3.0",
++        "babel-plugin-react-compiler": "^1.0.0",
++        "oxc-transform-react": ">=0.152.0 <0.157.0",
++        "vite": "^8.0.0"
++      },
++      "peerDependenciesMeta": {
++        "@rolldown/plugin-babel": {
++          "optional": true
++        },
++        "babel-plugin-react-compiler": {
++          "optional": true
++        },
++        "oxc-transform-react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/csstype": {
++      "version": "3.2.3",
++      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
++      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/detect-libc": {
++      "version": "2.1.2",
++      "resolved": "https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz",
++      "integrity": "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/fdir": {
++      "version": "6.5.0",
++      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
++      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "peerDependencies": {
++        "picomatch": "^3 || ^4"
++      },
++      "peerDependenciesMeta": {
++        "picomatch": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/fsevents": {
++      "version": "2.3.3",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
++      "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
++    "node_modules/lightningcss": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss/-/lightningcss-1.33.0.tgz",
++      "integrity": "sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==",
++      "dev": true,
++      "license": "MPL-2.0",
++      "dependencies": {
++        "detect-libc": "^2.0.3"
++      },
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      },
++      "optionalDependencies": {
++        "lightningcss-android-arm64": "1.33.0",
++        "lightningcss-darwin-arm64": "1.33.0",
++        "lightningcss-darwin-x64": "1.33.0",
++        "lightningcss-freebsd-x64": "1.33.0",
++        "lightningcss-linux-arm-gnueabihf": "1.33.0",
++        "lightningcss-linux-arm64-gnu": "1.33.0",
++        "lightningcss-linux-arm64-musl": "1.33.0",
++        "lightningcss-linux-x64-gnu": "1.33.0",
++        "lightningcss-linux-x64-musl": "1.33.0",
++        "lightningcss-win32-arm64-msvc": "1.33.0",
++        "lightningcss-win32-x64-msvc": "1.33.0"
++      }
++    },
++    "node_modules/lightningcss-android-arm64": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.33.0.tgz",
++      "integrity": "sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-darwin-arm64": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.33.0.tgz",
++      "integrity": "sha512-Sciaz8eenNTKn9b3t7+xr0ipTp9YxKQY4npwQ3mrRuL0BAVHBLyZxofhaKBAVtzmtRZ/zTyo0/to4B1uWG/Djg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-darwin-x64": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.33.0.tgz",
++      "integrity": "sha512-Z5UPAxzrjlWNNyGy6i65cJzzvgJ5D3T6wMvs+gWpY9d7qRhANrxqAp6LhxIgZhWEw18RfJTGcRxjuLIBr+m8XQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-freebsd-x64": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.33.0.tgz",
++      "integrity": "sha512-QQM/Ti/hQajJwCY+RiWuCZ9sdtI/XQk7nDK5vC8kkdwixezOlDgvDx7+RT+QjK6FcFT4MpsuoBnHIo/O3StRRg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-linux-arm-gnueabihf": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.33.0.tgz",
++      "integrity": "sha512-N7FVBe6iS24MlM6R/4RBTxGhQheZGs7tiQ9U32UtF75NzP5Q7xWPRqLBCKxlRQRk3rY1jCIPLzx7WzOhuUIRLQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-linux-arm64-gnu": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.33.0.tgz",
++      "integrity": "sha512-j2v/itmy4HlNxlc6voKXYgBqNi0Ng2LShg4z7GufpEgs05P+2suBVyi9I6YHq5uoVFx9ETin3eCEhLVyXGQnKg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-linux-arm64-musl": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.33.0.tgz",
++      "integrity": "sha512-yiO5ROMuYQgXbC60yjZU5CYSFZGKXL0HFATXt9mHJn1+zW55oCtMI9NfcVhYLMFDL7gV7oBPon/EmMMGg2OvtQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-linux-x64-gnu": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.33.0.tgz",
++      "integrity": "sha512-ar+Ju7LmcN0Jo4FpL4hpFybwNG9/3A/Br5KW2n2jyODg3MEZXaDYADdemoNS+BDNfMgKvylJLj4S5tyRActuAg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-linux-x64-musl": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.33.0.tgz",
++      "integrity": "sha512-RYiYbkokw0trfKqqzfF55lginwEPrD3OJDfTuJzFs1MK6iFnDenaz1fqLLtX4ITG3OktJQXOeTaw1awrBAlZPw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-win32-arm64-msvc": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.33.0.tgz",
++      "integrity": "sha512-1K+MPfLSFVpphzpdbfkhlWk6wBrTObBzS2T6db10PNOZgR9GoVsAWzwNyuhUYYbTp23j+4RrncfujZ4uAzXvwA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/lightningcss-win32-x64-msvc": {
++      "version": "1.33.0",
++      "resolved": "https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.33.0.tgz",
++      "integrity": "sha512-OlEICDx/Xl0FqSp4bry8zFnCvGpig3Gl4gCquvYwHuqJKEC1+n9NgDniFvqHGmMv1ZkqDJrDqKKSykTDX+ehuA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MPL-2.0",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">= 12.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/parcel"
++      }
++    },
++    "node_modules/nanoid": {
++      "version": "3.3.20",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz",
++      "integrity": "sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "bin": {
++        "nanoid": "bin/nanoid.cjs"
++      },
++      "engines": {
++        "node": "^10 || ^12 || ^13.7 || ^14 || >=15.0.1"
++      }
++    },
++    "node_modules/oxlint": {
++      "version": "1.92.0",
++      "resolved": "https://registry.npmjs.org/oxlint/-/oxlint-1.92.0.tgz",
++      "integrity": "sha512-y9iRiRwVjVFqzKNXZJ9bT/GYRdf+F9Gy+a1Yju2Aq3xqqa4FJYXHI8VrxlpzxKDvkYRohvJX42m/eH+qkQPOFw==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "oxlint": "bin/oxlint"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/oxc-project"
++      },
++      "optionalDependencies": {
++        "@oxlint/binding-android-arm-eabi": "1.92.0",
++        "@oxlint/binding-android-arm64": "1.92.0",
++        "@oxlint/binding-darwin-arm64": "1.92.0",
++        "@oxlint/binding-darwin-x64": "1.92.0",
++        "@oxlint/binding-freebsd-x64": "1.92.0",
++        "@oxlint/binding-linux-arm-gnueabihf": "1.92.0",
++        "@oxlint/binding-linux-arm-musleabihf": "1.92.0",
++        "@oxlint/binding-linux-arm64-gnu": "1.92.0",
++        "@oxlint/binding-linux-arm64-musl": "1.92.0",
++        "@oxlint/binding-linux-ppc64-gnu": "1.92.0",
++        "@oxlint/binding-linux-riscv64-gnu": "1.92.0",
++        "@oxlint/binding-linux-riscv64-musl": "1.92.0",
++        "@oxlint/binding-linux-s390x-gnu": "1.92.0",
++        "@oxlint/binding-linux-x64-gnu": "1.92.0",
++        "@oxlint/binding-linux-x64-musl": "1.92.0",
++        "@oxlint/binding-openharmony-arm64": "1.92.0",
++        "@oxlint/binding-win32-arm64-msvc": "1.92.0",
++        "@oxlint/binding-win32-ia32-msvc": "1.92.0",
++        "@oxlint/binding-win32-x64-msvc": "1.92.0"
++      },
++      "peerDependencies": {
++        "oxlint-tsgolint": ">=7.0.2005",
++        "vite-plus": "*"
++      },
++      "peerDependenciesMeta": {
++        "oxlint-tsgolint": {
++          "optional": true
++        },
++        "vite-plus": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/picocolors": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
++      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
++      "dev": true,
++      "license": "ISC"
++    },
++    "node_modules/picomatch": {
++      "version": "4.0.7",
++      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz",
++      "integrity": "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/jonschlinkert"
++      }
++    },
++    "node_modules/postcss": {
++      "version": "8.5.32",
++      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.32.tgz",
++      "integrity": "sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/postcss/"
++        },
++        {
++          "type": "tidelift",
++          "url": "https://tidelift.com/funding/github/npm/postcss"
++        },
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "dependencies": {
++        "nanoid": "^3.3.20",
++        "picocolors": "^1.1.1",
++        "source-map-js": "^1.2.2"
++      },
++      "engines": {
++        "node": "^10 || ^12 || >=14"
++      }
++    },
++    "node_modules/react": {
++      "version": "19.3.1",
++      "resolved": "https://registry.npmjs.org/react/-/react-19.3.1.tgz",
++      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/react-dom": {
++      "version": "19.3.1",
++      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.1.tgz",
++      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
++      "license": "MIT",
++      "dependencies": {
++        "scheduler": "^0.28.0"
++      },
++      "peerDependencies": {
++        "react": "^19.3.1"
++      }
++    },
++    "node_modules/rolldown": {
++      "version": "1.2.16",
++      "resolved": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.16.tgz",
++      "integrity": "sha512-bWvlMpFKiTfDKfnK7FC2MPgPeWCf/Kpwsq49ApdW+FQaBZb6O6dZ4MAPbPUjp7hYQrw/RobqCzn64BRrQecGHw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@oxc-project/types": "=0.156.0",
++        "@rolldown/pluginutils": "^1.0.0"
++      },
++      "bin": {
++        "rolldown": "bin/cli.mjs"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "optionalDependencies": {
++        "@rolldown/binding-android-arm-eabi": "1.2.16",
++        "@rolldown/binding-android-arm64": "1.2.16",
++        "@rolldown/binding-darwin-arm64": "1.2.16",
++        "@rolldown/binding-darwin-x64": "1.2.16",
++        "@rolldown/binding-freebsd-x64": "1.2.16",
++        "@rolldown/binding-linux-arm-gnueabihf": "1.2.16",
++        "@rolldown/binding-linux-arm64-gnu": "1.2.16",
++        "@rolldown/binding-linux-arm64-musl": "1.2.16",
++        "@rolldown/binding-linux-ppc64-gnu": "1.2.16",
++        "@rolldown/binding-linux-s390x-gnu": "1.2.16",
++        "@rolldown/binding-linux-x64-gnu": "1.2.16",
++        "@rolldown/binding-linux-x64-musl": "1.2.16",
++        "@rolldown/binding-openharmony-arm64": "1.2.16",
++        "@rolldown/binding-win32-arm64-msvc": "1.2.16",
++        "@rolldown/binding-win32-x64-msvc": "1.2.16"
++      }
++    },
++    "node_modules/scheduler": {
++      "version": "0.28.0",
++      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.28.0.tgz",
++      "integrity": "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==",
++      "license": "MIT"
++    },
++    "node_modules/source-map-js": {
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
++      "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==",
++      "dev": true,
++      "license": "BSD-3-Clause",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/tinyglobby": {
++      "version": "0.2.17",
++      "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz",
++      "integrity": "sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.4"
++      },
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/SuperchupuDev"
++      }
++    },
++    "node_modules/vite": {
++      "version": "8.3.6",
++      "resolved": "https://registry.npmjs.org/vite/-/vite-8.3.6.tgz",
++      "integrity": "sha512-UI7dK29NnS54Fk+mmo7o+jI6U8Fp7hDl+X5Q1k45WH+d4dSlbLVUETGQ+hfkNgvLQGyoElPj837nZyv4MBc0VA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "lightningcss": "^1.33.0",
++        "picomatch": "^4.0.7",
++        "postcss": "^8.5.32",
++        "rolldown": "~1.2.16",
++        "tinyglobby": "^0.2.17"
++      },
++      "bin": {
++        "vite": "bin/vite.js"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/vitejs/vite?sponsor=1"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      },
++      "peerDependencies": {
++        "@types/node": "^20.19.0 || >=22.12.0",
++        "@vitejs/devtools": "^0.7.1 || ^0.8.0",
++        "esbuild": "^0.27.0 || ^0.28.0",
++        "jiti": ">=1.21.0",
++        "less": "^4.0.0",
++        "sass": "^1.70.0",
++        "sass-embedded": "^1.70.0",
++        "stylus": ">=0.54.8",
++        "sugarss": "^5.0.0",
++        "terser": "^5.16.0",
++        "tsx": "^4.8.1",
++        "yaml": "^2.4.2"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        },
++        "@vitejs/devtools": {
++          "optional": true
++        },
++        "esbuild": {
++          "optional": true
++        },
++        "jiti": {
++          "optional": true
++        },
++        "less": {
++          "optional": true
++        },
++        "sass": {
++          "optional": true
++        },
++        "sass-embedded": {
++          "optional": true
++        },
++        "stylus": {
++          "optional": true
++        },
++        "sugarss": {
++          "optional": true
++        },
++        "terser": {
++          "optional": true
++        },
++        "tsx": {
++          "optional": true
++        },
++        "yaml": {
++          "optional": true
++        }
++      }
++    }
++  }
++}
+diff --git a/frontend/app/package.json b/frontend/app/package.json
+new file mode 100644
+index 0000000..ba2593f
+--- /dev/null
++++ b/frontend/app/package.json
+@@ -0,0 +1,23 @@
++{
++  "name": "app",
++  "private": true,
++  "version": "0.0.0",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "vite build",
++    "lint": "oxlint",
++    "preview": "vite preview"
++  },
++  "dependencies": {
++    "react": "^19.3.1",
++    "react-dom": "^19.3.1"
++  },
++  "devDependencies": {
++    "@types/react": "^19.3.0",
++    "@types/react-dom": "^19.3.0",
++    "@vitejs/plugin-react": "^6.1.2",
++    "oxlint": "^1.90.0",
++    "vite": "^8.3.6"
++  }
++}
+diff --git a/frontend/app/public/favicon.svg b/frontend/app/public/favicon.svg
+new file mode 100644
+index 0000000..6893eb1
+--- /dev/null
++++ b/frontend/app/public/favicon.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
+\ No newline at end of file
+diff --git a/frontend/app/public/icons.svg b/frontend/app/public/icons.svg
+new file mode 100644
+index 0000000..e952219
+--- /dev/null
++++ b/frontend/app/public/icons.svg
+@@ -0,0 +1,24 @@
++<svg xmlns="http://www.w3.org/2000/svg">
++  <symbol id="bluesky-icon" viewBox="0 0 16 17">
++    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
++    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
++  </symbol>
++  <symbol id="discord-icon" viewBox="0 0 20 19">
++    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
++  </symbol>
++  <symbol id="documentation-icon" viewBox="0 0 21 20">
++    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
++    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
++    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
++  </symbol>
++  <symbol id="github-icon" viewBox="0 0 19 19">
++    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
++  </symbol>
++  <symbol id="social-icon" viewBox="0 0 20 20">
++    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
++    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
++  </symbol>
++  <symbol id="x-icon" viewBox="0 0 19 19">
++    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
++  </symbol>
++</svg>
+diff --git a/frontend/app/src/App.css b/frontend/app/src/App.css
+new file mode 100644
+index 0000000..8fa0a1d
+--- /dev/null
++++ b/frontend/app/src/App.css
+@@ -0,0 +1,310 @@
++.app-shell {
++  max-width: 1180px;
++  margin: 0 auto;
++  padding: 30px 24px 24px;
++}
++
++.topbar,
++.brand,
++.section-heading {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++}
++
++.topbar {
++  margin-bottom: 30px;
++  gap: 20px;
++}
++
++.brand {
++  justify-content: flex-start;
++  gap: 13px;
++}
++
++.brand-mark {
++  display: grid;
++  width: 44px;
++  height: 44px;
++  place-items: center;
++  border-radius: 14px;
++  background: #e7f0e9;
++  color: #42604c;
++  font-family: Georgia, serif;
++  font-size: 1.4rem;
++  font-weight: 700;
++}
++
++.eyebrow {
++  margin: 0 0 4px;
++  color: #718174;
++  font-size: 0.72rem;
++  font-weight: 700;
++  letter-spacing: 0.09em;
++  text-transform: uppercase;
++}
++
++.topbar h1 {
++  margin: 0;
++  color: #28352d;
++  font-family: Georgia, 'Times New Roman', serif;
++  font-size: 1.8rem;
++  font-weight: 600;
++  letter-spacing: -0.035em;
++}
++
++.dashboard {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr);
++  gap: 18px;
++}
++
++.panel {
++  padding: 23px;
++  border: 1px solid #e6e9e3;
++  border-radius: 15px;
++  background: rgba(255, 255, 252, 0.92);
++  box-shadow: 0 4px 16px rgba(49, 63, 49, 0.035);
++}
++
++.panel h2 {
++  margin: 0;
++  color: #2f3b32;
++  font-family: Georgia, 'Times New Roman', serif;
++  font-size: 1.27rem;
++  font-weight: 600;
++}
++
++.muted,
++.empty-state {
++  color: #7c857d;
++  font-size: 0.9rem;
++}
++
++.muted {
++  margin: 7px 0 0;
++}
++
++textarea,
++button {
++  font: inherit;
++}
++
++textarea {
++  width: 100%;
++  border: 1px solid #dfe4dc;
++  border-radius: 10px;
++  background: #fff;
++  color: #303a32;
++  outline: none;
++  transition: border-color 0.15s ease, box-shadow 0.15s ease;
++}
++
++textarea {
++  min-height: 126px;
++  padding: 14px 15px;
++  resize: vertical;
++  line-height: 1.55;
++}
++
++textarea:focus {
++  border-color: #9eae9d;
++  box-shadow: 0 0 0 3px rgba(125, 151, 127, 0.13);
++}
++
++.section-heading {
++  margin-bottom: 17px;
++  gap: 14px;
++}
++
++.query-panel > .section-heading {
++  align-items: flex-end;
++}
++
++.new-question {
++  padding: 8px 12px;
++  border: 1px solid #dfe5dc;
++  border-radius: 8px;
++  background: #fff;
++  color: #536e59;
++  cursor: pointer;
++  font-size: 0.82rem;
++  font-weight: 650;
++}
++
++.new-question:hover {
++  background: #f5f7f2;
++}
++
++.language-picker {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 8px;
++  margin: 0 0 14px;
++}
++
++.language-chip {
++  padding: 7px 11px;
++  border: 1px solid #e2e7df;
++  border-radius: 999px;
++  background: #f8f9f5;
++  color: #657268;
++  font-size: 0.78rem;
++  transition: background 0.15s ease, border-color 0.15s ease;
++}
++
++.language-chip:hover {
++  border-color: #bdcbbd;
++  background: #f0f4ee;
++}
++
++.language-chip.selected {
++  border-color: #879d88;
++  background: #eaf0e8;
++  color: #405d45;
++  font-weight: 700;
++}
++
++.primary {
++  margin-top: 17px;
++  padding: 11px 20px;
++  border: 1px solid #536e59;
++  border-radius: 9px;
++  background: #536e59;
++  color: #fff;
++  cursor: pointer;
++  font-size: 0.9rem;
++  font-weight: 650;
++  transition: background 0.15s ease, transform 0.15s ease;
++}
++
++.primary:hover:not(:disabled) {
++  transform: translateY(-1px);
++  background: #435d49;
++}
++
++.primary:disabled {
++  cursor: not-allowed;
++  opacity: 0.58;
++}
++
++.results-heading {
++  margin-bottom: 18px;
++}
++
++.answer-summary {
++  margin-bottom: 18px;
++  padding: 15px 16px;
++  border: 1px solid #e6ebe2;
++  border-radius: 10px;
++  background: #f8faf6;
++}
++
++.answer-summary p:not(.eyebrow) {
++  margin: 0;
++  color: #465348;
++  font-size: 0.92rem;
++}
++
++.answer-summary .eyebrow {
++  margin: 0 0 5px;
++}
++
++.answer-divider {
++  height: 1px;
++  margin: 12px 0;
++  background: #e5e9e1;
++}
++
++.result-count {
++  padding: 6px 10px;
++  border-radius: 999px;
++  background: #edf3ec;
++  color: #516c56;
++  font-size: 0.8rem;
++  font-weight: 650;
++}
++
++.table-wrap {
++  overflow: auto;
++  border: 1px solid #e7eae4;
++  border-radius: 10px;
++}
++
++table {
++  width: 100%;
++  border-collapse: collapse;
++  text-align: left;
++}
++
++th,
++td {
++  padding: 12px 14px;
++  border-bottom: 1px solid #edf0ea;
++  color: #48534a;
++  font-size: 0.87rem;
++  white-space: nowrap;
++}
++
++th {
++  background: #f5f7f2;
++  color: #687568;
++  font-size: 0.75rem;
++  font-weight: 700;
++  text-transform: capitalize;
++}
++
++tbody tr:last-child td {
++  border-bottom: 0;
++}
++
++tbody tr:hover {
++  background: #fafbf8;
++}
++
++.empty-state {
++  margin: 0;
++  padding: 28px 12px;
++  text-align: center;
++}
++
++.message {
++  margin-bottom: 14px;
++  padding: 11px 13px;
++  border: 1px solid #edd3ce;
++  border-radius: 9px;
++  background: #fff7f5;
++  color: #984f43;
++  font-size: 0.88rem;
++}
++
++footer {
++  padding: 22px 4px 0;
++  color: #89928a;
++  font-size: 0.78rem;
++  text-align: center;
++}
++
++@media (max-width: 640px) {
++  .app-shell {
++    padding: 20px 14px;
++  }
++
++  .topbar {
++    align-items: flex-start;
++  }
++
++  .topbar h1 {
++    font-size: 1.5rem;
++  }
++
++  .panel {
++    padding: 18px;
++  }
++
++  .query-panel > .section-heading {
++    align-items: flex-start;
++    flex-direction: column;
++  }
++
++}
+diff --git a/frontend/app/src/App.jsx b/frontend/app/src/App.jsx
+new file mode 100644
+index 0000000..45550f7
+--- /dev/null
++++ b/frontend/app/src/App.jsx
+@@ -0,0 +1,206 @@
++import { useRef, useState } from 'react'
++import './App.css'
++
++const API_BASE_URL = 'http://localhost:8000'
++const languageExamples = {
++  English: 'Show PM-KISAN beneficiaries by state',
++  Hindi: 'राज्य के अनुसार पीएम-किसान लाभार्थियों की संख्या दिखाएं',
++  Bengali: 'রাজ্য অনুযায়ী পিএম-কিষাণ সুবিধাভোগীর সংখ্যা দেখান',
++  Tamil: 'மாநில வாரியாக பிஎம் கிசான் பயனாளர்களின் எண்ணிக்கையைக் காட்டுங்கள்',
++  Telugu: 'రాష్ట్రాల వారీగా పీఎం కిసాన్ లబ్ధిదారుల సంఖ్యను చూపించండి',
++  Marathi: 'राज्यानुसार पीएम-किसान लाभार्थ्यांची संख्या दाखवा',
++  Hinglish: 'State ke hisaab se PM-KISAN beneficiaries dikhao',
++}
++const localizedAnswers = {
++  English: (count) => `Found ${count} ${count === 1 ? 'record' : 'records'}. See the table below for the data.`,
++  Hindi: (count) => `${count} रिकॉर्ड मिले। डेटा के लिए नीचे दी गई तालिका देखें।`,
++  Bengali: (count) => `${count}টি রেকর্ড পাওয়া গেছে। তথ্যের জন্য নিচের সারণি দেখুন।`,
++  Tamil: (count) => `${count} பதிவுகள் கிடைத்தன. தரவைக் காண கீழே உள்ள அட்டவணையைப் பார்க்கவும்.`,
++  Telugu: (count) => `${count} రికార్డులు లభించాయి. డేటా కోసం దిగువ పట్టికను చూడండి.`,
++  Marathi: (count) => `${count} नोंदी मिळाल्या. डेटासाठी खालील तक्ता पहा.`,
++  Hinglish: (count) => `${count} records mile. Data ke liye neeche table dekhein.`,
++}
++const languageByCode = {
++  en: 'English',
++  hi: 'Hindi',
++  bn: 'Bengali',
++  ta: 'Tamil',
++  te: 'Telugu',
++  mr: 'Marathi',
++  'hi-en': 'Hinglish',
++}
++
++function App() {
++  const [selectedLanguage, setSelectedLanguage] = useState('English')
++  const [query, setQuery] = useState(languageExamples.English)
++  const [result, setResult] = useState(null)
++  const [loading, setLoading] = useState(false)
++  const [error, setError] = useState('')
++  const queryInput = useRef(null)
++
++  const fetchJson = async (url, options = {}) => {
++    const response = await fetch(url, {
++      ...options,
++      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
++    })
++    const data = await response.json().catch(() => ({}))
++
++    if (!response.ok) {
++      throw new Error(data.detail || data.error || 'Request failed')
++    }
++
++    return data
++  }
++
++  const handleRunQuery = async () => {
++    if (!query.trim()) {
++      setError('Enter a question to search the data.')
++      return
++    }
++
++    setLoading(true)
++    setError('')
++    setResult(null)
++    try {
++      const data = await fetchJson(`${API_BASE_URL}/query`, {
++        method: 'POST',
++        body: JSON.stringify({ query }),
++      })
++      if (languageByCode[data.detected_language]) {
++        setSelectedLanguage(languageByCode[data.detected_language])
++      }
++      setResult(data.execution_result || { columns: [], rows: [], row_count: 0 })
++    } catch (err) {
++      setError(err.message)
++    } finally {
++      setLoading(false)
++    }
++  }
++
++  const columns = result?.columns || []
++  const rows = result?.rows || []
++  const resultCount = result?.row_count ?? rows.length
++
++  const handleNewQuestion = () => {
++    setQuery('')
++    setResult(null)
++    setError('')
++    queryInput.current?.focus()
++  }
++
++  return (
++    <div className="app-shell">
++      <header className="topbar">
++        <div className="brand">
++          <span className="brand-mark" aria-hidden="true">B</span>
++          <div>
++            <p className="eyebrow">IndicSQL data explorer</p>
++            <h1>BharatQuery</h1>
++          </div>
++        </div>
++      </header>
++
++      <main className="dashboard">
++        <section className="panel query-panel">
++          <div className="section-heading">
++            <div>
++              <p className="eyebrow">Search public data</p>
++              <h2>What would you like to find?</h2>
++            </div>
++            {result ? (
++              <button type="button" className="new-question" onClick={handleNewQuestion}>
++                New question
++              </button>
++            ) : null}
++          </div>
++          <div className="language-picker" aria-label="Choose a query language">
++            {Object.keys(languageExamples).map((language) => (
++              <button
++                key={language}
++                type="button"
++                className={`language-chip${selectedLanguage === language ? ' selected' : ''}`}
++                aria-pressed={selectedLanguage === language}
++                onClick={() => {
++                  setSelectedLanguage(language)
++                  setQuery(languageExamples[language])
++                }}
++              >
++                {language}
++              </button>
++            ))}
++          </div>
++          <textarea
++            ref={queryInput}
++            value={query}
++            onChange={(event) => setQuery(event.target.value)}
++            rows={4}
++            placeholder="Type a new question about the available datasets…"
++            aria-label={`Question in ${selectedLanguage}`}
++          />
++          <button
++            type="button"
++            className="primary"
++            onClick={handleRunQuery}
++            disabled={loading}
++          >
++            {loading ? 'Searching data…' : 'Search data'}
++          </button>
++        </section>
++
++        <section className="panel results-panel" aria-live="polite">
++          <div className="section-heading results-heading">
++            <div>
++              <p className="eyebrow">Results</p>
++              <h2>Fetched data</h2>
++            </div>
++            {result ? (
++              <span className="result-count">
++                {resultCount} {resultCount === 1 ? 'record' : 'records'}
++              </span>
++            ) : null}
++          </div>
++
++          {error ? <div className="message error">{error}</div> : null}
++
++          {result ? (
++            <div className="answer-summary">
++              <p className="eyebrow">Answer · {selectedLanguage}</p>
++              <p>{localizedAnswers[selectedLanguage](resultCount)}</p>
++              <div className="answer-divider" />
++              <p className="eyebrow">English</p>
++              <p>{localizedAnswers.English(resultCount)}</p>
++            </div>
++          ) : null}
++
++          {result && columns.length > 0 && rows.length > 0 ? (
++            <div className="table-wrap">
++              <table>
++                <thead>
++                  <tr>{columns.map((column) => <th key={column}>{column.replaceAll('_', ' ')}</th>)}</tr>
++                </thead>
++                <tbody>
++                  {rows.map((row, rowIndex) => (
++                    <tr key={rowIndex}>
++                      {columns.map((column, columnIndex) => (
++                        <td key={`${column}-${columnIndex}`}>
++                          {row[columnIndex] == null ? '—' : String(row[columnIndex])}
++                        </td>
++                      ))}
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </div>
++          ) : result ? (
++            <p className="empty-state">No matching records were returned. Try a different question.</p>
++          ) : (
++            <p className="empty-state">Your fetched records will appear here.</p>
++          )}
++        </section>
++      </main>
++      <footer>IndicSQL · Government data, made easier to explore</footer>
++    </div>
++  )
++}
++
++export default App
+diff --git a/frontend/app/src/assets/hero.png b/frontend/app/src/assets/hero.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..02251f4b956c55af2d76fd0788124d7eee2b45eb
+GIT binary patch
+literal 13057
+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
+P00000NkvXXu0mjft=yBf
+
+literal 0
+HcmV?d00001
+
+diff --git a/frontend/app/src/assets/react.svg b/frontend/app/src/assets/react.svg
+new file mode 100644
+index 0000000..6c87de9
+--- /dev/null
++++ b/frontend/app/src/assets/react.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+\ No newline at end of file
+diff --git a/frontend/app/src/assets/vite.svg b/frontend/app/src/assets/vite.svg
+new file mode 100644
+index 0000000..5101b67
+--- /dev/null
++++ b/frontend/app/src/assets/vite.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="77" height="47" fill="none" aria-labelledby="vite-logo-title" viewBox="0 0 77 47"><title id="vite-logo-title">Vite</title><style>.parenthesis{fill:#000}@media (prefers-color-scheme:dark){.parenthesis{fill:#fff}}</style><path fill="#9135ff" d="M40.151 45.71c-.663.844-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.493c-.92 0-1.457-1.04-.92-1.788l7.479-10.471c1.07-1.498 0-3.578-1.842-3.578H15.443c-.92 0-1.456-1.04-.92-1.788l9.696-13.576c.213-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.472c-1.07 1.497 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.087.89 1.83L40.153 45.712z"/><mask id="a" width="48" height="47" x="14" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M40.047 45.71c-.663.843-2.02.374-2.02-.699V34.708a2.26 2.26 0 0 0-2.262-2.262H24.389c-.92 0-1.457-1.04-.92-1.788l7.479-10.472c1.07-1.497 0-3.578-1.842-3.578H15.34c-.92 0-1.456-1.04-.92-1.788l9.696-13.575c.213-.297.556-.474.92-.474H53.93c.92 0 1.456 1.04.92 1.788L47.37 13.03c-1.07 1.498 0 3.578 1.842 3.578h11.376c.944 0 1.474 1.088.89 1.831L40.049 45.712z"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#eee6ff" rx="5.508" ry="14.704" transform="rotate(269.814 20.96 11.29)scale(-1 1)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#eee6ff" rx="10.399" ry="29.851" transform="rotate(89.814 -16.902 -8.275)scale(1 -1)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#8900ff" rx="5.508" ry="30.487" transform="rotate(89.814 -19.197 -7.127)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.928 4.177)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#8900ff" rx="5.508" ry="30.599" transform="rotate(89.814 -25.738 5.52)scale(1 -1)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#eee6ff" rx="14.072" ry="22.078" transform="rotate(93.35 31.245 55.578)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#8900ff" rx="3.47" ry="21.501" transform="rotate(89.009 35.419 55.202)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx="14.592" cy="9.743" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(39.51 14.592 9.743)"/></g><g filter="url(#k)"><ellipse cx="61.728" cy="-5.321" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 61.728 -5.32)"/></g><g filter="url(#l)"><ellipse cx="55.618" cy="7.104" fill="#00c2ff" rx="5.971" ry="9.665" transform="rotate(37.892 55.618 7.104)"/></g><g filter="url(#m)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#n)"><ellipse cx="12.326" cy="39.103" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 12.326 39.103)"/></g><g filter="url(#o)"><ellipse cx="49.857" cy="30.678" fill="#8900ff" rx="4.407" ry="29.108" transform="rotate(37.892 49.857 30.678)"/></g><g filter="url(#p)"><ellipse cx="52.623" cy="33.171" fill="#00c2ff" rx="5.971" ry="15.297" transform="rotate(37.892 52.623 33.17)"/></g></g><path d="M6.919 0c-9.198 13.166-9.252 33.575 0 46.789h6.215c-9.25-13.214-9.196-33.623 0-46.789zm62.424 0h-6.215c9.198 13.166 9.252 33.575 0 46.789h6.215c9.25-13.214 9.196-33.623 0-46.789" class="parenthesis"/><defs><filter id="b" width="60.045" height="41.654" x="-5.564" y="16.92" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-40.407" y="-6.762" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-35.435" y="2.801" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-30.84" y="20.8" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-29.307" y="21.949" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="29.961" y="-17.13" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="37.754" y="3.055" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-13.43" y="-22.082" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="34.321" y="-37.644" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="38.847" y="-10.552" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-15.081" y="6.78" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="22.45" y="-1.645" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="32.919" y="11.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17286" stdDeviation="4.596"/></filter></defs></svg>
+diff --git a/frontend/app/src/index.css b/frontend/app/src/index.css
+new file mode 100644
+index 0000000..495fcda
+--- /dev/null
++++ b/frontend/app/src/index.css
+@@ -0,0 +1,34 @@
++:root {
++  font-family: 'Segoe UI', Arial, sans-serif;
++  line-height: 1.5;
++  font-weight: 400;
++  color: #39443b;
++  background: #f3f5f0;
++  font-synthesis: none;
++  text-rendering: optimizeLegibility;
++  -webkit-font-smoothing: antialiased;
++  -moz-osx-font-smoothing: grayscale;
++}
++
++* {
++  box-sizing: border-box;
++}
++
++body {
++  min-width: 320px;
++  min-height: 100vh;
++  margin: 0;
++  background:
++    radial-gradient(ellipse at 50% -20%, #edf1e8 0, transparent 56%),
++    #f3f5f0;
++}
++
++#root {
++  min-height: 100vh;
++}
++
++button,
++input,
++textarea {
++  font: inherit;
++}
+diff --git a/frontend/app/src/main.jsx b/frontend/app/src/main.jsx
+new file mode 100644
+index 0000000..b9a1a6d
+--- /dev/null
++++ b/frontend/app/src/main.jsx
+@@ -0,0 +1,10 @@
++import { StrictMode } from 'react'
++import { createRoot } from 'react-dom/client'
++import './index.css'
++import App from './App.jsx'
++
++createRoot(document.getElementById('root')).render(
++  <StrictMode>
++    <App />
++  </StrictMode>,
++)
+diff --git a/frontend/app/vite.config.js b/frontend/app/vite.config.js
+new file mode 100644
+index 0000000..9982072
+--- /dev/null
++++ b/frontend/app/vite.config.js
+@@ -0,0 +1,7 @@
++import react from '@vitejs/plugin-react'
++import { defineConfig } from 'vite'
++
++// https://vite.dev/config/
++export default defineConfig({
++  plugins: [react()],
++})
+diff --git a/indicsql/agents/sql_synthesizer.py b/indicsql/agents/sql_synthesizer.py
+index 2337c3a..722b333 100644
+--- a/indicsql/agents/sql_synthesizer.py
++++ b/indicsql/agents/sql_synthesizer.py
+@@ -203,6 +203,29 @@ def _build_candidates(state: IndicSQLState) -> List[Dict[str, Any]]:
+ 
+     # --- Default PM-KISAN ---
+     if not candidates:
++        state_breakdown_requested = any(
++            phrase in lower or phrase in raw
++            for phrase in [
++                "by state",
++                "per state",
++                "state-wise",
++                "state wise",
++                "राज्य",
++                "রাজ্য",
++                "மாநில",
++                "రాష్ట్ర",
++            ]
++        )
++        state_breakdown = _cand(
++            f"SELECT state_name, SUM(farmer_beneficiaries) AS total_farmers, "
++            f"SUM(amount_inr) AS total_amount "
++            f"FROM ndap_pm_kisan_disbursement WHERE {sf} GROUP BY state_name;",
++            agg=True, filt=bool(sf != "1=1"), join=False
++        )
++
++        if state_breakdown_requested:
++            candidates.append(state_breakdown)
++
+         if any(k in lower or k in raw for k in ["నిధులు", "amount", "total_amount", "पैसे", "रुपये"]):
+             candidates.append(_cand(
+                 f"SELECT SUM(amount_inr) FROM ndap_pm_kisan_disbursement WHERE {sf};",
+@@ -216,12 +239,8 @@ def _build_candidates(state: IndicSQLState) -> List[Dict[str, Any]]:
+             agg=True, filt=bool(sf != "1=1"), join=False
+         ))
+         # Grouped-by-state variant for richer insight
+-        candidates.append(_cand(
+-            f"SELECT state_name, SUM(farmer_beneficiaries) AS total_farmers, "
+-            f"SUM(amount_inr) AS total_amount "
+-            f"FROM ndap_pm_kisan_disbursement WHERE {sf} GROUP BY state_name;",
+-            agg=True, filt=bool(sf != "1=1"), join=False
+-        ))
++        if not state_breakdown_requested:
++            candidates.append(state_breakdown)
+ 
+     return candidates
+ 
+diff --git a/indicsql/api/server.py b/indicsql/api/server.py
+index 5e606a6..d0d0339 100644
+--- a/indicsql/api/server.py
++++ b/indicsql/api/server.py
+@@ -6,6 +6,7 @@ Exposes endpoints for natural language queries, schema inspection, and benchmark
+ from typing import Any, Dict, List, Optional
+ 
+ from fastapi import FastAPI, HTTPException
++from fastapi.middleware.cors import CORSMiddleware
+ from pydantic import BaseModel, Field
+ 
+ from indicsql import __version__
+@@ -18,6 +19,20 @@ app = FastAPI(
+     version=__version__,
+ )
+ 
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=[
++        "http://localhost:5173",
++        "http://127.0.0.1:5173",
++        "http://localhost:3000",
++        "http://127.0.0.1:3000",
++        "*",
++    ],
++    allow_credentials=True,
++    allow_methods=["*"],
++    allow_headers=["*"],
++)
++
+ 
+ class QueryRequest(BaseModel):
+     query: str = Field(..., description="Natural language question in Indic language or Hinglish")
+diff --git a/indicsql/benchmark/evaluator.py b/indicsql/benchmark/evaluator.py
+index 8d69174..ac1ddd6 100644
+--- a/indicsql/benchmark/evaluator.py
++++ b/indicsql/benchmark/evaluator.py
+@@ -157,11 +157,11 @@ class IndicDBEvaluator:
+         results: List[BenchmarkResult] = []
+         total = len(queries)
+ 
+-        print(f"🚀 Evaluating {total} IndicDB Benchmark Queries across 7 Languages...")
++        print(f"Evaluating {total} IndicDB Benchmark Queries across 7 Languages...")
+         for i, q in enumerate(queries, start=1):
+             res = self.evaluate_query(q)
+             results.append(res)
+-            status_icon = "✓" if res.execution_match else "✗"
++            status_icon = "OK" if res.execution_match else "FAIL"
+             print(
+                 f"   [{i}/{total}] {status_icon} [{q.language}] {q.query[:45]}... ({res.execution_time_ms:.1f}ms)"
+             )
+@@ -226,6 +226,6 @@ class IndicDBEvaluator:
+             report_path = RESULTS_DIR / f"indicdb_eval_{timestamp}.json"
+             with open(report_path, "w", encoding="utf-8") as f:
+                 json.dump(report, f, ensure_ascii=False, indent=2)
+-            print(f"\n📊 Detailed Benchmark Report saved: {report_path}")
++            print(f"\nDetailed Benchmark Report saved: {report_path}")
+ 
+         return report
+diff --git a/indicsql/schema/ingest_ndap.py b/indicsql/schema/ingest_ndap.py
+index 5ed184a..9c22b0e 100644
+--- a/indicsql/schema/ingest_ndap.py
++++ b/indicsql/schema/ingest_ndap.py
+@@ -473,7 +473,7 @@ def ingest_and_export_all_ndap_databases(
+         "tables": {},
+     }
+ 
+-    print(f"🚀 Starting Ingestion for all {len(tables)} NDAP Databases...")
++    print(f"Starting Ingestion for all {len(tables)} NDAP Databases...")
+ 
+     for tbl in tables:
+         schema = NDAPCatalog.get_table_schema(tbl)
+@@ -500,7 +500,7 @@ def ingest_and_export_all_ndap_databases(
+             "columns": schema.get("columns"),
+             "primary_key": schema.get("primary_key", []),
+         }
+-        print(f"   ✓ Ingested '{tbl}': {len(df):,} records -> {parquet_path.name}")
++        print(f"   Ingested '{tbl}': {len(df):,} records -> {parquet_path.name}")
+ 
+     # Write master catalog metadata
+     metadata_path = catalog_dir / "catalog_metadata.json"
+@@ -508,10 +508,10 @@ def ingest_and_export_all_ndap_databases(
+         json.dump(master_metadata, f, indent=2)
+ 
+     print(
+-        f"\n✨ Ingestion Complete: {sum(summary.values()):,} total records across 20 NDAP databases."
++        f"\nIngestion Complete: {sum(summary.values()):,} total records across 20 NDAP databases."
+     )
+-    print(f"📁 Parquet Stores: {parquet_dir}")
+-    print(f"📁 Catalog DDLs: {catalog_dir}")
++    print(f"Parquet Stores: {parquet_dir}")
++    print(f"Catalog DDLs: {catalog_dir}")
+     return summary
+ 
+ 
+diff --git a/indicsql/schema/ingest_real_gov_data.py b/indicsql/schema/ingest_real_gov_data.py
+index 45201f9..d73e1d9 100644
+--- a/indicsql/schema/ingest_real_gov_data.py
++++ b/indicsql/schema/ingest_real_gov_data.py
+@@ -1031,7 +1031,7 @@ def ingest_all_20_ndap_databases(
+             target_path = parquet_dir / f"{table_name}.parquet"
+             df.to_parquet(target_path, index=False)
+             summary[table_name] = len(df)
+-            print(f"✅ Ingested {len(df):>7} records -> {target_path.name}")
++            print(f"Ingested {len(df):>7} records -> {target_path.name}")
+         except Exception as e:
+             logger.error(f"Error ingesting table {table_name}: {e}")
+             print(f"❌ Failed to ingest {table_name}: {e}")
+diff --git a/tests/test_agents.py b/tests/test_agents.py
+index 8707c8a..f4b9b48 100644
+--- a/tests/test_agents.py
++++ b/tests/test_agents.py
+@@ -2,6 +2,7 @@ import unittest
+ 
+ from indicsql.agents.critic import validate_sql_security
+ from indicsql.agents.schema_linker import schema_linker_node
++from indicsql.agents.sql_synthesizer import generate_aggregation_sql
+ from indicsql.agents.supervisor import detect_indic_script, identify_language_code
+ from indicsql.sandbox.validator import validate_and_limit_sql
+ 
+@@ -34,6 +35,16 @@ class TestAgentNodes(unittest.TestCase):
+         self.assertTrue(len(result["pruned_schema"]) > 0)
+         self.assertEqual(result["pruned_schema"][0]["table_name"], "ndap_pm_kisan_disbursement")
+ 
++    def test_pm_kisan_by_state_query_returns_grouped_rows(self):
++        sql = generate_aggregation_sql(
++            {
++                "raw_query": "Show PM-KISAN beneficiaries by state",
++                "target_database": "ndap_pm_kisan_disbursement",
++            }
++        )
++        self.assertIn("GROUP BY state_name", sql)
++        self.assertIn("state_name", sql.split("FROM", maxsplit=1)[0])
++
+     def test_critic_and_ast_validator(self):
+         safe_sql = (
+             "SELECT state_name, SUM(amount_inr) FROM ndap_pm_kisan_disbursement GROUP BY state_name"
+-- 
+2.55.0.windows.5
+

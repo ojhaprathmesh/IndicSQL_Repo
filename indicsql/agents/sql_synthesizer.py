@@ -203,6 +203,29 @@ def _build_candidates(state: IndicSQLState) -> List[Dict[str, Any]]:
 
     # --- Default PM-KISAN ---
     if not candidates:
+        state_breakdown_requested = any(
+            phrase in lower or phrase in raw
+            for phrase in [
+                "by state",
+                "per state",
+                "state-wise",
+                "state wise",
+                "राज्य",
+                "রাজ্য",
+                "மாநில",
+                "రాష్ట్ర",
+            ]
+        )
+        state_breakdown = _cand(
+            f"SELECT state_name, SUM(farmer_beneficiaries) AS total_farmers, "
+            f"SUM(amount_inr) AS total_amount "
+            f"FROM ndap_pm_kisan_disbursement WHERE {sf} GROUP BY state_name;",
+            agg=True, filt=bool(sf != "1=1"), join=False
+        )
+
+        if state_breakdown_requested:
+            candidates.append(state_breakdown)
+
         if any(k in lower or k in raw for k in ["నిధులు", "amount", "total_amount", "पैसे", "रुपये"]):
             candidates.append(_cand(
                 f"SELECT SUM(amount_inr) FROM ndap_pm_kisan_disbursement WHERE {sf};",
@@ -216,12 +239,8 @@ def _build_candidates(state: IndicSQLState) -> List[Dict[str, Any]]:
             agg=True, filt=bool(sf != "1=1"), join=False
         ))
         # Grouped-by-state variant for richer insight
-        candidates.append(_cand(
-            f"SELECT state_name, SUM(farmer_beneficiaries) AS total_farmers, "
-            f"SUM(amount_inr) AS total_amount "
-            f"FROM ndap_pm_kisan_disbursement WHERE {sf} GROUP BY state_name;",
-            agg=True, filt=bool(sf != "1=1"), join=False
-        ))
+        if not state_breakdown_requested:
+            candidates.append(state_breakdown)
 
     return candidates
 
