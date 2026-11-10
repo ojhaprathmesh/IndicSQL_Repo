@@ -12,6 +12,7 @@ interface QueryComposerProps {
   onSubmit: (query: string) => void;
   isLoading: boolean;
   disabled?: boolean;
+  showSamples?: boolean;
 }
 
 export function QueryComposer({
@@ -20,6 +21,7 @@ export function QueryComposer({
   onSubmit,
   isLoading,
   disabled = false,
+  showSamples = true,
 }: QueryComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -97,8 +99,9 @@ export function QueryComposer({
               isLoading={isLoading}
               size="md"
               className="rounded-xl px-4 py-2 font-semibold shadow"
+              aria-label="Ask IndicSQL"
             >
-              <span className="hidden sm:inline">Ask BharatQuery</span>
+              <span className="hidden sm:inline">Ask IndicSQL</span>
               <ArrowUp className="w-4 h-4 sm:hidden" />
             </Button>
           </div>
@@ -106,14 +109,15 @@ export function QueryComposer({
       </div>
 
       {/* Suggested Query Chips */}
-      <SampleQuestions
-        onSelectQuestion={(q) => {
-          onChange(q);
-          if (textareaRef.current) textareaRef.current.focus();
-        }}
-        disabled={isLoading || disabled}
-      />
+      {showSamples && (
+        <SampleQuestions
+          onSelectQuestion={(q) => {
+            onChange(q);
+            if (textareaRef.current) textareaRef.current.focus();
+          }}
+          disabled={isLoading || disabled}
+        />
+      )}
     </div>
   );
 }
-

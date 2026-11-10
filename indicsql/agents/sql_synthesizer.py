@@ -176,6 +176,7 @@ def _build_dynamic_fallback(
     """
     cols = table_schema.get("columns", {})
     where_clauses = []
+    lower = raw_query.lower()
 
     if "state_name" in cols and "state_name" in entities:
         where_clauses.append(f"state_name = '{entities['state_name']}'")
@@ -213,7 +214,6 @@ def _build_dynamic_fallback(
         return f"SELECT district_name, {func}({target_measure}) AS {alias} FROM {table_name}{where_str} GROUP BY district_name ORDER BY {alias} {order_dir} LIMIT {limit_n};"
 
     # Check for lowest / highest superlative in query with script boundaries
-    lower = raw_query.lower()
     is_min = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['lowest', 'min', 'minimum', 'sabse kam']) or any(
         re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
         for w in ['कम', 'குறைவாக', 'తక్కువ', 'అత్యల్పంగా', 'কম', 'कमी']

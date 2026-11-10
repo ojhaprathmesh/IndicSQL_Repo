@@ -10,6 +10,7 @@ interface DatabaseDrawerProps {
   onClose: () => void;
   schemas: SchemasResponse | null;
   isLoading: boolean;
+  error?: string | null;
 }
 
 const SECTORS: Array<"All" | SectorType> = [
@@ -25,6 +26,7 @@ export function DatabaseDrawer({
   onClose,
   schemas,
   isLoading,
+  error,
 }: DatabaseDrawerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSector, setSelectedSector] = useState<"All" | SectorType>("All");
@@ -141,6 +143,11 @@ export function DatabaseDrawer({
                 <Database className="w-8 h-8 animate-pulse text-ashoka-800 mx-auto mb-2 opacity-50" />
                 Loading registered catalogs...
               </div>
+            ) : error ? (
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                <p className="font-semibold">Schema catalog unavailable</p>
+                <p className="mt-1">{error}</p>
+              </div>
             ) : filteredTables.length === 0 ? (
               <div className="text-center py-12 text-sm text-slate-500">
                 No datasets matched your filter.
@@ -237,4 +244,3 @@ export function DatabaseDrawer({
     </div>
   );
 }
-

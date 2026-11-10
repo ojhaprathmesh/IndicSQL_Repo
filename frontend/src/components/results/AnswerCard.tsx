@@ -11,16 +11,19 @@ interface AnswerCardProps {
 
 export function AnswerCard({ data }: AnswerCardProps) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [stopAudioFn, setStopAudioFn] = useState<(() => void) | null>(null);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(data.verbalized_response);
       setCopied(true);
+      setCopyError(null);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // ignore
+      setCopyError("Clipboard access is unavailable in this browser.");
     }
   };
 
@@ -32,6 +35,7 @@ export function AnswerCard({ data }: AnswerCardProps) {
       return;
     }
 
+    setAudioError(null);
     setIsPlayingAudio(true);
     const stopFn = await playTextToSpeech(
       data.verbalized_response,
@@ -40,9 +44,10 @@ export function AnswerCard({ data }: AnswerCardProps) {
         setIsPlayingAudio(false);
         setStopAudioFn(null);
       },
-      () => {
+      (message) => {
         setIsPlayingAudio(false);
         setStopAudioFn(null);
+        setAudioError(message || "Speech playback could not be completed.");
       }
     );
     setStopAudioFn(() => stopFn);
@@ -130,7 +135,11 @@ export function AnswerCard({ data }: AnswerCardProps) {
           )}
         </button>
       </div>
+      {(audioError || copyError) && (
+        <p role="status" className="text-right text-xs text-rose-700">
+          {audioError || copyError}
+        </p>
+      )}
     </div>
   );
 }
-

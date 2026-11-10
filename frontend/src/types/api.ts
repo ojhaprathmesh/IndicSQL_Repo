@@ -16,6 +16,11 @@ export interface AuditStep {
   matched_table?: string;
   matched_columns?: string[];
   confidence?: number;
+  is_safe?: boolean;
+  status?: "success" | "error";
+  error?: string;
+  execution_time_ms?: number;
+  row_count?: number;
   [key: string]: unknown;
 }
 
@@ -25,6 +30,7 @@ export interface QueryResponse {
   detected_language: string;
   detected_script: string;
   generated_sql: string;
+  raw_stochastic_sql?: string;
   verbalized_response: string;
   execution_result: ExecutionResult | null;
   audit_trace?: AuditStep[];
@@ -83,4 +89,3 @@ export interface SchemasResponse {
   count: number;
   tables: Record<string, TableMetadata>;
 }
-

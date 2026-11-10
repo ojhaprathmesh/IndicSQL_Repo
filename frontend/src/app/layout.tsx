@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BharatQuery — Cross-Lingual Public Data Explorer",
+  title: "IndicSQL Studio — Multilingual Database Intelligence",
   description:
-    "Autonomous Multi-Agent Cross-Lingual Text-to-SQL Swarm for Indian Open Government Data (NDAP). Ask questions in your mother tongue and get verified answers.",
-  icons: {
-    icon: "/favicon.ico",
-  },
+    "Ask questions about public datasets in English, Hindi, Hinglish, Bengali, Tamil, Telugu, or Marathi. Powered by the IndicSQL query pipeline.",
 };
 
 export default function RootLayout({
@@ -23,4 +20,3 @@ export default function RootLayout({
     </html>
   );
 }
-

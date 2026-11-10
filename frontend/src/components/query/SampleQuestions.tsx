@@ -10,6 +10,11 @@ interface SampleQuestionsProps {
 
 const SAMPLE_CHIPS = [
   {
+    lang: "English",
+    query: "Show total PM-Kisan beneficiaries in Maharashtra.",
+    icon: "📊",
+  },
+  {
     lang: "Marathi",
     query: "महाराष्ट्रात पीएम-किसानचे लाभार्थी किती आहेत?",
     icon: "🌾",
@@ -18,6 +23,11 @@ const SAMPLE_CHIPS = [
     lang: "Hindi",
     query: "बिहार में महिला साक्षरता दर कितनी है?",
     icon: "📚",
+  },
+  {
+    lang: "Bengali",
+    query: "পশ্চিমবঙ্গে পিএম-কিষান প্রকল্পের মোট উপকারভোগীর সংখ্যা কত?",
+    icon: "🌾",
   },
   {
     lang: "Hinglish",
@@ -66,4 +76,3 @@ export function SampleQuestions({
     </div>
   );
 }
-

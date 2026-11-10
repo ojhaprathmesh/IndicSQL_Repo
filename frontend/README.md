@@ -1,12 +1,12 @@
-# 🇮🇳 BharatQuery Cockpit (Frontend)
+# IndicSQL Studio (Frontend)
 
-> **Production-grade Next.js 14 Web Cockpit for IndicSQL — Autonomous Cross-Lingual Text-to-SQL Swarm for Indian Open Government Data (NDAP)**
+> **Next.js 14 conversational frontend for IndicSQL's multilingual Text-to-SQL pipeline.**
 
 ---
 
 ## 📌 Architecture Overview
 
-BharatQuery Cockpit is built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, and **Recharts**. It is engineered to provide an intuitive, transparent, and accessible mother-tongue data exploration interface for 1.4 billion citizens across **7 Indian languages** (*Hindi, Marathi, Bengali, Tamil, Telugu, Hinglish, English*).
+IndicSQL Studio is built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, and **Recharts**. The home screen is a chat-first interface for the seven languages routed by the backend: English, Hindi, Hinglish, Bengali, Tamil, Telugu, and Marathi. Language selection is automatic because the current `/query` request accepts only a question and does not accept a language override.
 
 ### ✨ Key Features
 
@@ -18,12 +18,12 @@ BharatQuery Cockpit is built with **Next.js 14 (App Router)**, **TypeScript**, *
    - **🔊 Text-to-Speech (Speaker):** Read aloud in native mother-tongue accents with one click.
    - Instant copy action.
 3. **🤖 Agent Swarm Transparency Stepper:**
-   - Live visual audit of all 5 execution stages:
+   - Displays pipeline stages and reports validation status only when it is present in the backend audit trace:
      - Language & Script detection (`SupervisorAgent`)
      - Schema Linking (`SchemaLinkerAgent` -> NDAP Table)
      - Dialect SQL Generation with expandable formatted code view
-     - AST Security Critic (`Read-Only SELECT Verified`)
-     - DuckDB In-Memory Execution Latency (e.g., `0.67 ms`)
+     - AST Security Critic (status from `CriticNode.is_safe`)
+     - DuckDB in-memory execution (latency/status from the query response)
 4. **📊 Dynamic Visualizer & Civic Data Grid:**
    - **Visual Charts:** Auto Bar/Line charts using Recharts for categorical or temporal distributions. Bold KPI Metric cards for single scalar answers.
    - **Data Table:** Dynamic columns, right-aligned numbers, and client-side pagination.
@@ -32,7 +32,20 @@ BharatQuery Cockpit is built with **Next.js 14 (App Router)**, **TypeScript**, *
    - Slide-over drawer categorized across 4 sectors: **Agriculture, Education, Health and Demographics, Rural Development**.
    - Live table schema, record counts, and column definitions populated directly from `GET /schemas`.
 6. **Honest Connectivity State:**
-   - Live status indicator displaying whether the local backend (`localhost:8000`) is connected or disconnected.
+   - Live status indicator from `GET /health`; schema catalog errors are surfaced separately.
+7. **Navigation:**
+   - Hamburger navigation exposes the requested product areas. Modules without a current backend/API integration are explicitly marked unavailable, not populated with sample metrics.
+
+### Backend API currently used
+
+The frontend calls only the routes present in `indicsql/api/server.py`:
+
+- `GET /health` — backend connectivity
+- `GET /schemas` — live table/schema catalog
+- `POST /query` — generated SQL, execution result, verbalized response, and audit trace
+- `POST /voice/transcribe` and `POST /voice/synthesize` — optional Sarvam-backed audio
+
+There are no query-history, standalone SQL review/execute, benchmark analytics, or historical pipeline endpoints. Those navigation areas are placeholders until their data/API contracts are implemented. The current backend `/query` operation automatically detects language; it does not support a frontend language override or edited-SQL execution.
 
 ---
 
@@ -241,4 +254,3 @@ frontend/
 ├── tsconfig.json
 └── README.md
 ```
-

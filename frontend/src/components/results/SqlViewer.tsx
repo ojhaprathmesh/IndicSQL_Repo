@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Copy, Code2, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, Copy, Code2, ChevronDown, ChevronUp, Download } from "lucide-react";
 
 interface SqlViewerProps {
   sql: string;
@@ -10,15 +10,26 @@ interface SqlViewerProps {
 export function SqlViewer({ sql }: SqlViewerProps) {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(sql);
       setCopied(true);
+      setCopyError(null);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
+      setCopyError("Clipboard access is unavailable in this browser.");
     }
+  };
+
+  const handleDownload = () => {
+    const url = URL.createObjectURL(new Blob([sql], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "indicsql-query.sql";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   if (!sql) return null;
@@ -52,6 +63,14 @@ export function SqlViewer({ sql }: SqlViewerProps) {
             )}
           </button>
           <button
+            onClick={handleDownload}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+            title="Download SQL"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download</span>
+          </button>
+          <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200"
             aria-label={isExpanded ? "Collapse SQL" : "Expand SQL"}
@@ -64,6 +83,11 @@ export function SqlViewer({ sql }: SqlViewerProps) {
           </button>
         </div>
       </div>
+      {copyError && (
+        <p role="status" className="border-b border-slate-700 px-4 py-2 text-xs text-rose-300">
+          {copyError}
+        </p>
+      )}
 
       {/* Code Body */}
       <div
@@ -78,4 +102,3 @@ export function SqlViewer({ sql }: SqlViewerProps) {
     </div>
   );
 }
-

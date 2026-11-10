@@ -14,6 +14,74 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html.dark body {
+  --foreground-rgb: 226, 232, 240;
+  --background-rgb: 11, 18, 32;
+}
+
+.dark .workspace-background {
+  background-color: #0b1220;
+}
+
+.dark .bg-white,
+.dark .bg-white\/95,
+.dark .bg-white\/90 {
+  background-color: #111b2e;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/80 {
+  background-color: #172338;
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-100\/80 {
+  background-color: #1d2b42;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: #29374d;
+}
+
+.dark .text-slate-950,
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #e2e8f0;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8;
+}
+
+.dark input,
+.dark textarea {
+  color: #e2e8f0;
+}
+
+.nav-drawer-enter {
+  animation: nav-drawer-enter 180ms ease-out both;
+}
+
+@keyframes nav-drawer-enter {
+  from {
+    opacity: 0.75;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -33,3 +101,6 @@ body {
   background: #94a3b8;
 }
 
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}

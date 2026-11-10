@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import {
-  CheckCircle2,
+  CircleHelp,
+  CircleX,
   Clock,
   ShieldCheck,
   Code2,
@@ -26,7 +27,16 @@ export function ExecutionPipeline({ data }: ExecutionPipelineProps) {
   const schemaStep = data.audit_trace?.find(
     (s) => s.agent === "SchemaLinkerAgent" || s.action === "cross_lingual_lookup"
   );
-  const matchedTable = schemaStep?.matched_table || "NDAP Dataset Linked";
+  const languageStep = data.audit_trace?.find(
+    (s) => s.agent === "SupervisorRouter" || s.action === "normalize_and_detect"
+  );
+  const criticStep = data.audit_trace?.find(
+    (s) => s.agent === "CriticNode" || s.action === "ast_security_validation"
+  );
+  const executionStep = data.audit_trace?.find(
+    (s) => s.agent === "SandboxExecutionAgent" || s.action === "duckdb_in_memory_run"
+  );
+  const matchedTable = schemaStep?.matched_table || "Not reported";
   const latency = data.execution_result?.execution_time_ms;
 
   const stages = [
@@ -34,36 +44,56 @@ export function ExecutionPipeline({ data }: ExecutionPipelineProps) {
       id: "lang",
       title: "Language & Script",
       icon: <Languages className="w-4 h-4 text-ashoka-700" />,
-      detail: `${data.detected_language?.toUpperCase() || "INDIC"} (${data.detected_script || "Script"})`,
-      status: "completed",
+      detail: data.detected_language
+        ? `${data.detected_language.toUpperCase()} (${data.detected_script || "script unavailable"})`
+        : "Not reported",
+      status: languageStep ? "completed" : "unknown",
     },
     {
       id: "schema",
       title: "Schema Linking",
       icon: <Database className="w-4 h-4 text-ashoka-700" />,
       detail: matchedTable,
-      status: "completed",
+      status: schemaStep ? "completed" : "unknown",
     },
     {
       id: "sql",
       title: "SQL Synthesis",
       icon: <Code2 className="w-4 h-4 text-emerald-600" />,
-      detail: data.generated_sql ? "Dialect SQL Generated" : "Failed",
+      detail: data.generated_sql ? "SQL returned" : "No SQL returned",
       status: data.generated_sql ? "completed" : "failed",
     },
     {
       id: "security",
       title: "AST Security Critic",
       icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />,
-      detail: "Read-Only Verified (SELECT)",
-      status: "completed",
+      detail:
+        criticStep?.is_safe === true
+          ? "Read-only SQL passed"
+          : criticStep?.is_safe === false
+            ? "SQL rejected by validator"
+            : "Validation status not reported",
+      status:
+        criticStep?.is_safe === true
+          ? "completed"
+          : criticStep?.is_safe === false
+            ? "failed"
+            : "unknown",
     },
     {
       id: "duckdb",
       title: "DuckDB Execution",
       icon: <Clock className="w-4 h-4 text-ashoka-700" />,
-      detail: `${formatLatency(latency)} (${data.execution_result?.row_count ?? data.execution_result?.rows?.length ?? 0} rows)`,
-      status: data.execution_result ? "completed" : "failed",
+      detail: data.execution_result
+        ? `${formatLatency(latency)} (${data.execution_result.row_count ?? data.execution_result.rows?.length ?? 0} rows)`
+        : executionStep?.status === "error"
+          ? "Execution failed"
+          : "No execution result",
+      status: data.execution_result
+        ? "completed"
+        : executionStep?.status === "error"
+          ? "failed"
+          : "unknown",
     },
   ];
 
@@ -99,7 +129,13 @@ export function ExecutionPipeline({ data }: ExecutionPipelineProps) {
               <span className="p-1 rounded bg-white shadow-2xs border border-slate-200/60">
                 {stage.icon}
               </span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              {stage.status === "completed" ? (
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              ) : stage.status === "failed" ? (
+                <CircleX className="w-3.5 h-3.5 text-rose-600" />
+              ) : (
+                <CircleHelp className="w-3.5 h-3.5 text-slate-400" />
+              )}
             </div>
             <p className="text-[11px] font-semibold text-slate-500">
               {stage.title}
@@ -120,4 +156,3 @@ export function ExecutionPipeline({ data }: ExecutionPipelineProps) {
     </div>
   );
 }
-
