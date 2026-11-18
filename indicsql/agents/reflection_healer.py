@@ -1,7 +1,7 @@
 """
 Reflective Self-Correction Node.
-Parses runtime errors or zero-row returns, formulates feedback, and adjusts candidate SQL.
-Implements the self-healing cycle up to 3 attempts.
+Parses runtime execution errors, formulates targeted diagnostic feedback,
+and passes remediation guidance to the SQL Synthesizer for neural healing.
 """
 
 from typing import Any, Dict
@@ -13,11 +13,11 @@ from indicsql.events.schemas import ReflectionTriggeredEvent
 
 def reflection_healer_node(state: IndicSQLState) -> Dict[str, Any]:
     """
-    Diagnoses DuckDB execution error or empty set and generates corrected SQL.
+    Diagnoses DuckDB execution error and constructs actionable feedback
+    for the SQL Synthesizer to self-heal the query.
     Emits ReflectionTriggeredEvent on the EventBus.
     """
     attempts = state.get("reflection_attempts", 0) + 1
-    current_sql = state.get("generated_sql", "")
     err = state.get("execution_error", "") or ""
 
     EventBus.publish(
@@ -28,14 +28,17 @@ def reflection_healer_node(state: IndicSQLState) -> Dict[str, Any]:
         )
     )
 
-    # Example heuristic: if casing mismatch or syntax issue, patch query
-    corrected_sql = current_sql
-    if "does not exist" in err.lower():
-        corrected_sql = (
-            "SELECT SUM(farmer_beneficiaries) AS total_farmers, "
-            "SUM(amount_inr) AS total_amount "
-            "FROM ndap_pm_kisan_disbursement;"
+    if state.get("schema_validation_error"):
+        feedback = (
+            f"{err} Correct the SQL using only the allowed tables and columns listed "
+            "in the database schema. Do not execute or invent missing identifiers."
         )
+    else:
+        feedback = f"Query execution failed: {err}."
+    if "does not exist" in err.lower() and not state.get("schema_validation_error"):
+        feedback += " Please ensure all referenced table and column names exist in the schema DDL."
+    elif "syntax error" in err.lower():
+        feedback += " Please ensure standard DuckDB SQL syntax and remove any non-SQL tokens."
 
     audit_entry = {
         "step": 4.5,
@@ -43,13 +46,14 @@ def reflection_healer_node(state: IndicSQLState) -> Dict[str, Any]:
         "action": "self_heal_sql",
         "attempt": attempts,
         "error_diagnosed": err,
+        "feedback_generated": feedback,
     }
 
     current_trace = list(state.get("audit_trace", []))
     current_trace.append(audit_entry)
 
     return {
-        "generated_sql": corrected_sql,
+        "reflection_feedback": feedback,
         "reflection_attempts": attempts,
         "execution_error": None,
         "audit_trace": current_trace,
