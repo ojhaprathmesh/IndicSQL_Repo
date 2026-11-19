@@ -3,18 +3,24 @@ FastAPI Server Gateway for IndicSQL Swarm.
 Exposes endpoints for natural language queries, schema inspection, and benchmark execution.
 """
 
-from typing import Any, Dict, List, Optional
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from pathlib import Path
 
 from indicsql import __version__
+from indicsql.agents.critic import validate_sql_security
+from indicsql.agents.sandbox_executor import _sandbox
 from indicsql.graph.workflow import execute_indicsql_pipeline
 from indicsql.models.sarvam_client import SarvamAPIError, SarvamClient
+from indicsql.sandbox.validator import validate_and_limit_sql
 from indicsql.schema.catalog import NDAPCatalog
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 app = FastAPI(
     title="IndicSQL API Gateway",
@@ -34,6 +40,10 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     query: str = Field(..., description="Natural language question in Indic language or Hinglish")
+    language: Optional[Literal["en", "hi", "hi-en", "mr", "bn", "ta", "te"]] = Field(
+        default=None,
+        description="Optional supported language override; omitted means automatic detection.",
+    )
     session_id: Optional[str] = Field(
         default=None, description="Optional persistent session identifier"
     )
@@ -49,6 +59,10 @@ class QueryResponse(BaseModel):
     verbalized_response: str
     execution_result: Optional[Dict[str, Any]] = None
     audit_trace: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class SqlInspectRequest(BaseModel):
+    sql: str = Field(..., description="Read-only SQL to validate and run in the NDAP sandbox")
 
 
 @app.get("/")
@@ -83,6 +97,74 @@ def list_schemas():
     }
 
 
+@app.get("/analytics")
+def get_project_analytics():
+    """Returns checked-in benchmark and failure artifacts for dashboard views."""
+    artifact_paths = {
+        "benchmark": REPOSITORY_ROOT / "data" / "benchmarks" / "unseen_140_evaluation_report.json",
+        "models": REPOSITORY_ROOT / "data" / "benchmarks" / "baseline_models_matrix.json",
+        "failures": REPOSITORY_ROOT / "reports" / "e2e_failure_audit.json",
+        "benchmark_queries": REPOSITORY_ROOT / "data" / "benchmarks" / "indicdb_unseen_suite_140.json",
+    }
+    missing = [str(path) for path in artifact_paths.values() if not path.is_file()]
+    if missing:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Analytics artifacts are missing: {', '.join(missing)}",
+        )
+
+    try:
+        return {
+            key: json.loads(path.read_text(encoding="utf-8"))
+            for key, path in artifact_paths.items()
+        }
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Could not load project analytics: {exc}"
+        ) from exc
+
+
+@app.post("/sql/inspect")
+def inspect_sql(request: SqlInspectRequest):
+    """Validates and executes a read-only SQL statement in the existing sandbox."""
+    if not request.sql.strip():
+        raise HTTPException(status_code=400, detail="SQL cannot be empty.")
+
+    if not validate_sql_security(request.sql):
+        return {
+            "valid": False,
+            "sql": request.sql,
+            "message": "SQL was rejected: only a valid read-only SELECT or WITH statement is allowed.",
+            "execution_result": None,
+        }
+
+    is_valid, sanitized_sql = validate_and_limit_sql(request.sql)
+    if not is_valid:
+        return {
+            "valid": False,
+            "sql": request.sql,
+            "message": sanitized_sql,
+            "execution_result": None,
+        }
+
+    try:
+        result = _sandbox.execute_query(sanitized_sql)
+    except Exception as exc:
+        return {
+            "valid": False,
+            "sql": sanitized_sql,
+            "message": f"SQL passed read-only checks but could not execute: {exc}",
+            "execution_result": None,
+        }
+
+    return {
+        "valid": True,
+        "sql": sanitized_sql,
+        "message": "Read-only SQL validated and executed successfully.",
+        "execution_result": result,
+    }
+
+
 @app.post("/query", response_model=QueryResponse)
 def run_query(request: QueryRequest):
     """
@@ -92,7 +174,7 @@ def run_query(request: QueryRequest):
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    result_state = execute_indicsql_pipeline(request.query)
+    result_state = execute_indicsql_pipeline(request.query, language=request.language)
 
     return QueryResponse(
         query_id=result_state.get("query_id", ""),

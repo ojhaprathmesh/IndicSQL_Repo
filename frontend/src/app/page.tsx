@@ -13,9 +13,9 @@ import { DatabaseDrawer } from "@/components/layout/DatabaseDrawer";
 import { QueryComposer } from "@/components/query/QueryComposer";
 import { SampleQuestions } from "@/components/query/SampleQuestions";
 import { ResultsWorkspace } from "@/components/results/ResultsWorkspace";
-import { Button } from "@/components/ui/Button";
+import { WorkspaceModule } from "@/components/layout/WorkspaceModule";
 import { apiClient, ApiError } from "@/lib/api-client";
-import { QueryResponse, SchemasResponse } from "@/types/api";
+import { QueryResponse, SchemasResponse, StoredQuery } from "@/types/api";
 
 interface ConversationTurn {
   id: string;
@@ -43,22 +43,6 @@ const MODULE_TITLES: Record<string, string> = {
   about: "About IndicSQL",
 };
 
-const MODULE_DESCRIPTIONS: Record<string, string> = {
-  overview: "Project-wide metrics and evaluation charts are not exposed by the current API.",
-  "query-history": "The current backend does not provide a query-history endpoint or persistent query store.",
-  "sql-quality": "The backend validates generated SQL inside the query pipeline, but does not expose a standalone SQL review endpoint.",
-  "ai-reviewer": "No standalone AI SQL reviewer endpoint is available in the current backend.",
-  "sql-inspector": "The existing API returns generated SQL as part of a live query response. Paste-and-inspect is not currently supported.",
-  "pipeline-explorer": "Pipeline trace details are available for queries run in AI Chat. Historical traces are not stored by the current API.",
-  "benchmark-dashboard": "Benchmark metrics are available as repository evaluation artifacts, but the backend does not expose them as an API.",
-  "benchmark-explorer": "The current backend does not expose benchmark query browsing or filtering endpoints.",
-  "language-analytics": "The current backend does not expose per-language live evaluation metrics.",
-  "model-comparison": "Model evaluation artifacts exist in the repository, but no model comparison API is available.",
-  "failure-analysis": "The backend does not expose an aggregated failure-analysis endpoint.",
-  research: "Project architecture, datasets, and development notes are documented in the repository README and documentation.",
-  about: "IndicSQL is a multilingual text-to-SQL project for exploring NDAP public data using seven supported languages.",
-};
-
 export default function Home() {
   const [query, setQuery] = useState("");
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
@@ -68,6 +52,9 @@ export default function Home() {
   const [schemas, setSchemas] = useState<SchemasResponse | null>(null);
   const [isLoadingSchemas, setIsLoadingSchemas] = useState(false);
   const [schemasError, setSchemasError] = useState<string | null>(null);
+  const [history, setHistory] = useState<StoredQuery[]>([]);
+  const [historyReady, setHistoryReady] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeModule, setActiveModule] = useState("chat");
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -111,6 +98,39 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("indicsql-query-history");
+      if (saved) {
+        const parsed = JSON.parse(saved) as StoredQuery[];
+        if (Array.isArray(parsed)) setHistory(parsed);
+      }
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error ? error.message : "Could not read saved query history."
+      );
+    } finally {
+      setHistoryReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!historyReady) return;
+    try {
+      window.localStorage.setItem("indicsql-query-history", JSON.stringify(history));
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error ? error.message : "Could not save query history."
+      );
+    }
+  }, [history, historyReady]);
+
+  useEffect(() => {
+    const openSchemas = () => setIsDrawerOpen(true);
+    window.addEventListener("indicsql:open-schemas", openSchemas);
+    return () => window.removeEventListener("indicsql:open-schemas", openSchemas);
+  }, []);
+
+  useEffect(() => {
     if (isAtBottom) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [turns, isAtBottom]);
 
@@ -131,6 +151,15 @@ export default function Home() {
 
     try {
       const response = await apiClient.submitQuery(question, controller.signal);
+      const record: StoredQuery = {
+        id: response.query_id || id,
+        question,
+        createdAt: new Date().toISOString(),
+        language: response.detected_language,
+        status: response.execution_result ? "success" : "failure",
+        response,
+      };
+      setHistory((current) => [record, ...current.filter((item) => item.id !== record.id)].slice(0, 50));
       setTurns((current) =>
         current.map((turn) =>
           turn.id === id ? { ...turn, response, isLoading: false } : turn
@@ -148,6 +177,16 @@ export default function Home() {
           turn.id === id ? { ...turn, error: message, isLoading: false } : turn
         )
       );
+      setHistory((current) => [
+        {
+          id,
+          question,
+          createdAt: new Date().toISOString(),
+          status: "failure" as const,
+          error: message,
+        },
+        ...current,
+      ].slice(0, 50));
       if (error instanceof ApiError && error.status === 0) {
         setBackendStatus("disconnected");
       }
@@ -166,6 +205,26 @@ export default function Home() {
     if (module === "dataset-explorer" || module === "schema-explorer") {
       setIsDrawerOpen(true);
     }
+  };
+
+  const reuseHistoryRecord = (record: StoredQuery) => {
+    setActiveModule("chat");
+    setQuery(record.question);
+    setIsAtBottom(true);
+    setTurns((current) => {
+      const matching = current.find((turn) => turn.id === record.id);
+      if (matching) return current;
+      return [
+        ...current,
+        {
+          id: record.id,
+          question: record.question,
+          response: record.response,
+          error: record.error,
+          isLoading: false,
+        },
+      ];
+    });
   };
 
   const moduleTitle = MODULE_TITLES[activeModule];
@@ -309,50 +368,24 @@ export default function Home() {
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
               {moduleTitle}
             </h1>
-            <div className="mt-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-                {activeModule === "dataset-explorer" || activeModule === "schema-explorer" ? (
-                  <Database className="h-5 w-5" />
-                ) : (
-                  <MessageSquareText className="h-5 w-5" />
-                )}
-              </div>
-              <h2 className="mt-5 text-lg font-semibold text-slate-900">
-                {activeModule === "dataset-explorer" || activeModule === "schema-explorer"
-                  ? isLoadingSchemas
-                    ? "Loading live schema catalog…"
-                    : `${schemas?.count ?? 0} tables available from the backend`
-                  : "This module is not connected yet"}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                {schemasError &&
-                (activeModule === "dataset-explorer" ||
-                  activeModule === "schema-explorer")
-                  ? schemasError
-                  : MODULE_DESCRIPTIONS[activeModule] ||
-                  "This module is not implemented in the current backend."}
+            {historyError && (
+              <p role="status" className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                Query history storage issue: {historyError}
               </p>
-              {(activeModule === "dataset-explorer" ||
-                activeModule === "schema-explorer") && (
-                <Button
-                  className="mt-5"
-                  onClick={() => setIsDrawerOpen(true)}
-                  disabled={!schemas}
-                >
-                  <Database className="h-4 w-4" />
-                  Browse live schemas
-                </Button>
+            )}
+            {(activeModule === "dataset-explorer" || activeModule === "schema-explorer") &&
+              schemasError && (
+                <p role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                  {schemasError}
+                </p>
               )}
-              {activeModule === "research" && (
-                <a
-                  href="https://github.com/JHANKARBANSAL/INDIC_LANGUAGE"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 inline-flex text-sm font-semibold text-violet-700 hover:text-violet-900"
-                >
-                  Open project repository
-                </a>
-              )}
+            <div className="mt-7">
+              <WorkspaceModule
+                module={activeModule}
+                history={history}
+                schemasCount={schemas?.count || 0}
+                onReuseQuery={reuseHistoryRecord}
+              />
             </div>
             <button
               type="button"

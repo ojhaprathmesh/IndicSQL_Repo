@@ -38,6 +38,7 @@ export interface QueryResponse {
 
 export interface QueryRequest {
   query: string;
+  language?: "en" | "hi" | "hi-en" | "mr" | "bn" | "ta" | "te";
   session_id?: string;
 }
 
@@ -88,4 +89,107 @@ export interface TableMetadata {
 export interface SchemasResponse {
   count: number;
   tables: Record<string, TableMetadata>;
+}
+
+export interface BenchmarkLanguageMetrics {
+  total_queries: number;
+  grounding_accuracy_pct: number;
+  table_routing_accuracy_pct: number;
+  execution_accuracy_pct: number;
+  verbalization_accuracy_pct: number;
+  avg_latency_ms: number;
+  failures: unknown[];
+}
+
+export interface ProjectAnalytics {
+  benchmark: {
+    timestamp: string;
+    total_queries: number;
+    overall_metrics: {
+      grounding_accuracy_pct: number;
+      table_routing_accuracy_pct: number;
+      execution_accuracy_pct: number;
+      verbalization_accuracy_pct: number;
+      avg_latency_ms: number;
+      total_benchmark_seconds: number;
+    };
+    language_scorecards: Record<string, BenchmarkLanguageMetrics>;
+  };
+  models: {
+    benchmark_metadata: {
+      benchmark_name: string;
+      release_date: string;
+      databases_covered: number;
+      languages: string[];
+    };
+    models: Record<
+      string,
+      {
+        model_name: string;
+        provider: string;
+        model_type: string;
+        parameter_size: string;
+        execution_accuracy_pct: Record<string, number>;
+        indic_avg_ex_pct: number;
+        indic_to_english_gap_delta_pct: number;
+        schema_f1: number;
+        avg_latency_ms: number;
+        cost_per_1k_queries_usd: number;
+      }
+    >;
+  };
+  failures: {
+    total_audited_failures: number;
+    benchmark_summary: {
+      total_queries: number;
+      passed_queries: number;
+      failed_queries: number;
+      execution_accuracy_pct: number;
+      grounding_accuracy_pct: number;
+      table_routing_accuracy_pct: number;
+      verbalization_accuracy_pct: number;
+    };
+    failure_category_counts: Record<string, number>;
+    traces: FailureTrace[];
+  };
+  benchmark_queries: BenchmarkQuery[];
+}
+
+export interface FailureTrace {
+  query_id: string;
+  original_question: string;
+  language_detected: string;
+  selected_table: string;
+  generated_sql: string;
+  exact_failure_reason: string;
+  primary_category: string;
+}
+
+export interface BenchmarkQuery {
+  query_id: string;
+  query: string;
+  language: string;
+  script: string;
+  domain: string;
+  target_table: string;
+  gold_sql: string;
+  difficulty: string;
+  target_columns: string[];
+}
+
+export interface SqlInspectResponse {
+  valid: boolean;
+  sql: string;
+  message: string;
+  execution_result: ExecutionResult | null;
+}
+
+export interface StoredQuery {
+  id: string;
+  question: string;
+  createdAt: string;
+  language?: string;
+  status: "success" | "failure";
+  response?: QueryResponse;
+  error?: string;
 }

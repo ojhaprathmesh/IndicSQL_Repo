@@ -2,7 +2,11 @@ import unittest
 
 from indicsql.agents.critic import validate_sql_security
 from indicsql.agents.schema_linker import schema_linker_node
-from indicsql.agents.supervisor import detect_indic_script, identify_language_code
+from indicsql.agents.supervisor import (
+    detect_indic_script,
+    identify_language_code,
+    supervisor_node,
+)
 from indicsql.sandbox.validator import validate_and_limit_sql
 
 
@@ -22,6 +26,18 @@ class TestAgentNodes(unittest.TestCase):
             identify_language_code("How many farmers received benefits", "Latin"), "en"
         )
         self.assertEqual(identify_language_code("महाराष्ट्रात किती शेतकऱ्यांना", "Devanagari"), "mr")
+
+    def test_requested_language_overrides_automatic_detection(self):
+        state = supervisor_node(
+            {
+                "raw_query": "Show all farmers",
+                "requested_lang": "hi",
+                "audit_trace": [],
+            }
+        )
+
+        self.assertEqual(state["detected_lang"], "hi")
+        self.assertEqual(state["audit_trace"][-1]["language_source"], "user")
 
     def test_schema_linker(self):
         state = {

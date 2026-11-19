@@ -1,7 +1,9 @@
 import {
   BackendHealthResponse,
+  ProjectAnalytics,
   QueryResponse,
   SchemasResponse,
+  SqlInspectResponse,
   VoiceSynthesizeRequest,
   VoiceSynthesizeResponse,
   VoiceTranscribeResponse,
@@ -60,6 +62,18 @@ export const apiClient = {
 
   fetchSchemas(): Promise<SchemasResponse> {
     return request<SchemasResponse>("/schemas");
+  },
+
+  fetchAnalytics(): Promise<ProjectAnalytics> {
+    return request<ProjectAnalytics>("/analytics");
+  },
+
+  inspectSql(sql: string): Promise<SqlInspectResponse> {
+    return request<SqlInspectResponse>("/sql/inspect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sql }),
+    });
   },
 
   submitQuery(query: string, signal?: AbortSignal): Promise<QueryResponse> {

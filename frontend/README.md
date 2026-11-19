@@ -33,19 +33,23 @@ IndicSQL Studio is built with **Next.js 14 (App Router)**, **TypeScript**, **Tai
    - Live table schema, record counts, and column definitions populated directly from `GET /schemas`.
 6. **Honest Connectivity State:**
    - Live status indicator from `GET /health`; schema catalog errors are surfaced separately.
-7. **Navigation:**
-   - Hamburger navigation exposes the requested product areas. Modules without a current backend/API integration are explicitly marked unavailable, not populated with sample metrics.
+7. **Product workspaces:**
+   - Overview, benchmark and language scorecards, model comparison, benchmark query browser, failure traces, and research pages use checked-in project artifacts.
+   - Query history is saved in browser local storage. SQL inspection uses backend AST safety checks and the bounded DuckDB sandbox.
+   - The AI SQL Reviewer view reports only deterministic safety/execution checks; it does not claim semantic LLM review.
 
-### Backend API currently used
+### Backend API
 
-The frontend calls only the routes present in `indicsql/api/server.py`:
+The frontend calls these routes in `indicsql/api/server.py`:
 
 - `GET /health` — backend connectivity
 - `GET /schemas` — live table/schema catalog
 - `POST /query` — generated SQL, execution result, verbalized response, and audit trace
+- `GET /analytics` — checked-in unseen evaluation, model matrix, failure audit, and benchmark queries
+- `POST /sql/inspect` — AST safety validation followed by bounded execution in the existing read-only sandbox
 - `POST /voice/transcribe` and `POST /voice/synthesize` — optional Sarvam-backed audio
 
-There are no query-history, standalone SQL review/execute, benchmark analytics, or historical pipeline endpoints. Those navigation areas are placeholders until their data/API contracts are implemented. The current backend `/query` operation automatically detects language; it does not support a frontend language override or edited-SQL execution.
+Query history stores up to 50 entries in the current browser and is not synchronized to the backend. The AI reviewer is not a semantic/LLM review; it surfaces only deterministic validation and execution. The current `/query` operation automatically detects language and does not accept a language override.
 
 ---
 

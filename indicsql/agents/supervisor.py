@@ -78,7 +78,7 @@ def supervisor_node(state: IndicSQLState) -> Dict[str, Any]:
     """
     raw_query = state.get("raw_query", "").strip()
     script = detect_indic_script(raw_query)
-    lang = identify_language_code(raw_query, script)
+    lang = state.get("requested_lang") or identify_language_code(raw_query, script)
 
     EventBus.publish(
         QueryInitiatedEvent(
@@ -95,6 +95,7 @@ def supervisor_node(state: IndicSQLState) -> Dict[str, Any]:
         "action": "normalize_and_detect",
         "detected_script": script,
         "detected_language": lang,
+        "language_source": "user" if state.get("requested_lang") else "automatic",
     }
 
     current_trace = list(state.get("audit_trace", []))
@@ -103,6 +104,7 @@ def supervisor_node(state: IndicSQLState) -> Dict[str, Any]:
     return {
         "detected_script": script,
         "detected_lang": lang,
+        "requested_lang": state.get("requested_lang"),
         "canonical_query": raw_query,
         "reflection_attempts": state.get("reflection_attempts", 0),
         "audit_trace": current_trace,
