@@ -147,8 +147,7 @@ IndicSQL_Repo/
 ├── .gitignore                    # Git ignore rules for Python, models & artifacts
 ├── PLAN.md                       # Comprehensive 760+ line research & project plan
 ├── pyproject.toml                # Project packaging and dependency specifications
-├── README.md                     # Project documentation (current file)
-└── requirements.txt              # Production dependencies
+└── README.md                     # Project documentation (current file)
 ```
 
 ---
@@ -185,10 +184,11 @@ cd IndicSQL_Repo
 uv venv .venv
 source .venv/bin/activate
 
-# Install dependencies using uv
-uv pip install -r requirements.txt
-# (Optional) Install editable package
+# Install dependencies using uv or pip
 uv pip install -e .
+
+# (Optional) Install with local ML fine-tuning & evaluation extras
+uv pip install -e ".[ml,eval]"
 ```
 
 ### 2. Configure Environment Variables
