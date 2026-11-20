@@ -85,7 +85,11 @@ def create_indicsql_graph(checkpointer: Optional[Any] = None):
         return None
 
 
-def execute_indicsql_pipeline(query: str, query_id: Optional[str] = None) -> IndicSQLState:
+def execute_indicsql_pipeline(
+    query: str,
+    query_id: Optional[str] = None,
+    language: Optional[str] = None,
+) -> IndicSQLState:
     """
     Executes the multi-agent swarm for a given query, supporting both LangGraph and native execution.
     """
@@ -95,6 +99,7 @@ def execute_indicsql_pipeline(query: str, query_id: Optional[str] = None) -> Ind
     state: IndicSQLState = {
         "query_id": query_id,
         "raw_query": query,
+        "requested_lang": language,
         "reflection_attempts": 0,
         "audit_trace": [],
     }

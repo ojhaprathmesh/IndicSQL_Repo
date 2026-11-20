@@ -35,6 +35,7 @@ class IndicSQLState(TypedDict, total=False):
     # 1. Input & Normalization
     query_id: str
     raw_query: str
+    requested_lang: Optional[str]
     detected_lang: str  # 'hi', 'bn', 'ta', 'te', 'mr', 'hi-en', 'en'
     detected_script: str  # 'Devanagari', 'Tamil', 'Telugu', 'Bengali', 'Latin'
     canonical_query: str  # Transliterated / Normalized text
@@ -45,6 +46,7 @@ class IndicSQLState(TypedDict, total=False):
 
     # 3. SQL Synthesis & AST Verification
     generated_sql: str
+    raw_stochastic_sql: Optional[str]
     syntax_valid: bool
 
     # 4. Sandbox Execution & Self-Healing Reflection

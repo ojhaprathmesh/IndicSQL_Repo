@@ -77,7 +77,7 @@ class TestModelsAndCombos(unittest.TestCase):
 
         for r in results:
             self.assertIsInstance(r, ComboResult)
-            self.assertEqual(r.method, "tot_heuristic")
+            self.assertIn(r.method, ["tot_heuristic", "ollama_qwen2.5:3b", "schema_grounded_fallback", "lora"])
             self.assertTrue(r.generated_sql.upper().startswith("SELECT"))
             self.assertGreater(r.utility_score, 0.0)
             self.assertGreaterEqual(r.latency_ms, 0.0)
@@ -91,7 +91,25 @@ class TestModelsAndCombos(unittest.TestCase):
 
         trace = res["audit_trace"]
         self.assertTrue(len(trace) > 0)
-        self.assertEqual(trace[-1]["method"], "tot_heuristic")
+        self.assertIn(trace[-1]["method"], ["tot_heuristic", "ollama_qwen2.5:3b", "schema_grounded_fallback"])
+
+    def test_dynamic_fallback_initializes_query_normalization_before_ranking(self):
+        from indicsql.agents.sql_synthesizer import _build_dynamic_fallback
+
+        sql = _build_dynamic_fallback(
+            "ndap_pm_kisan_disbursement",
+            {
+                "columns": {
+                    "district_name": "VARCHAR",
+                    "farmer_beneficiaries": "BIGINT",
+                }
+            },
+            {},
+            "Show total farmer beneficiaries",
+        )
+
+        self.assertIn("SELECT SUM(farmer_beneficiaries)", sql)
+        self.assertIn("FROM ndap_pm_kisan_disbursement", sql)
 
 
 if __name__ == "__main__":

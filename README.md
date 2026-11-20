@@ -97,6 +97,8 @@ IndicSQL_Repo/
 │       └── queries.json
 ├── frontend/                     # Web Cockpit (Next.js 14)
 │   └── README.md                 # UI architecture and setup roadmap
+├── mobile/                       # Native Flutter app for Android and iOS
+│   └── lib/                      # Chat, SQL workspace, schema and analytics
 ├── indicsql/                     # Core IndicSQL Python Package
 │   ├── agents/                   # Specialized agent nodes
 │   │   ├── __init__.py
@@ -260,9 +262,55 @@ uv run python -m unittest discover tests
 ### 7. Launch the FastAPI Gateway
 
 ```bash
-uv run uvicorn indicsql.api.server:app --reload --port 8000
+uv run uvicorn indicsql.api.server:app --reload --host 0.0.0.0 --port 8000
 ```
 Visit `http://localhost:8000/docs` to test interactive Swagger documentation.
+
+### 8. Run the native mobile app (Flutter; no Node.js)
+
+Install Flutter with Puro and ensure Android Studio's Android SDK is installed:
+
+```powershell
+winget install --id pingbird.Puro --exact
+puro use stable
+puro flutter doctor
+puro flutter doctor --android-licenses
+```
+
+If Flutter cannot locate Android Studio's Java runtime, set it in the current
+PowerShell session before building:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+```
+
+In another terminal, launch the API using step 7, then start the mobile app:
+
+```powershell
+Set-Location mobile
+puro flutter pub get
+puro flutter run
+```
+
+The Android emulator connects to `http://10.0.2.2:8000` by default. For a physical
+phone, use **Settings → FastAPI base URL** to enter the development computer's LAN
+IP (for example `http://192.168.1.25:8000`) and keep both devices on the same
+network. The backend must listen on `0.0.0.0`. HTTP is enabled for local development;
+use HTTPS for non-local deployments.
+
+The mobile app is built with Flutter/Dart and does not require Node.js. The
+`frontend/` directory is a separate, optional web client. See
+[mobile/README.md](mobile/README.md) for additional setup and device notes.
+
+Mobile checks and release APK:
+
+```powershell
+Set-Location mobile
+puro flutter analyze
+puro flutter test
+puro flutter build apk --release
+```
 
 ---
 
