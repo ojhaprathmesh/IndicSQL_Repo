@@ -8,18 +8,9 @@ relative time expressions, and all non-temporal WHERE conditions.
 """
 
 import unittest
-from pathlib import Path
-
-import sqlglot
-from sqlglot import exp
 
 from indicsql.benchmark.evaluator import are_tabular_results_equivalent
 from indicsql.models.temporal_guard import (
-    TABLE_TEMPORAL_METADATA,
-    TEMPORAL_COLUMN_NAMES,
-    TemporalIntent,
-    extract_temporal_intent,
-    is_temporal_predicate_supported,
     sanitize_temporal_predicates,
 )
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox

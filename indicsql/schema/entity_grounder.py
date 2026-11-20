@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set
 
 try:
     import duckdb
@@ -401,8 +401,8 @@ class DynamicEntityGrounder:
             # 1. Collect all distinct states (UPPERCASE)
             try:
                 states = con.execute("""
-                    SELECT DISTINCT UPPER(state_name) 
-                    FROM ndap_pm_kisan_disbursement 
+                    SELECT DISTINCT UPPER(state_name)
+                    FROM ndap_pm_kisan_disbursement
                     WHERE state_name IS NOT NULL
                 """).fetchall()
                 self.known_states = {s[0] for s in states if s[0]}
@@ -413,7 +413,7 @@ class DynamicEntityGrounder:
             try:
                 dist_state_rows = con.execute("""
                     SELECT DISTINCT district_name, UPPER(state_name)
-                    FROM read_parquet('data/parquet_stores/*.parquet', union_by_name=true) 
+                    FROM read_parquet('data/parquet_stores/*.parquet', union_by_name=true)
                     WHERE district_name IS NOT NULL AND length(trim(district_name)) > 1
                 """).fetchall()
                 for d, s in dist_state_rows:
@@ -468,7 +468,6 @@ class DynamicEntityGrounder:
         Returns a dictionary with canonical keys: 'state_name', 'district_name', 'commodity'.
         """
         entities: Dict[str, str] = {}
-        q_lower = query.lower()
 
         # Step 1: Direct native script phrase extraction (longest keys first)
         for indic_token, latin_value in sorted(INDIC_SCRIPT_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):

@@ -6,11 +6,10 @@ realistic data covering ALL 28 States and 8 Union Territories (36 entities total
 Strictly adheres to NDAP schema catalog metadata and relational constraints.
 """
 
-import json
 import logging
 import random
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import duckdb
 import numpy as np

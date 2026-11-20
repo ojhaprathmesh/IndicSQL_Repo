@@ -494,7 +494,6 @@ def build_real_midday_meal_scheme() -> pd.DataFrame:
                 inst = int(800 + (hash(f"{dist}_pmposhan") % 1400))
                 pri_stu = int(45_000 + (hash(f"{dist}_{fy}_pri") % 65_000))
                 up_pri_stu = int(30_000 + (hash(f"{dist}_{fy}_up") % 45_000))
-                total_stu = pri_stu + up_pri_stu
                 # Standard PM POSHAN norm: ~100g/day primary, ~150g/day upper primary
                 foodgrains_mt = round((pri_stu * 0.022 + up_pri_stu * 0.033), 2)
 
@@ -1020,10 +1019,10 @@ def ingest_all_20_ndap_databases(
         ("ndap_gram_panchayat_finance", build_real_gram_panchayat_finance),
     ]
 
-    print(f"\n===========================================================================")
-    print(f"🇮🇳 IndicSQL Authentic Data Ingestion: 20 NDAP Benchmark Databases")
+    print("\n===========================================================================")
+    print("🇮🇳 IndicSQL Authentic Data Ingestion: 20 NDAP Benchmark Databases")
     print(f"   Target Directory: {parquet_dir}")
-    print(f"===========================================================================\n")
+    print("===========================================================================\n")
 
     for table_name, task_func in pipeline_tasks:
         try:

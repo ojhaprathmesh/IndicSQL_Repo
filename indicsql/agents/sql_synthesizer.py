@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from indicsql.core.state import IndicSQLState
 from indicsql.events.bus import EventBus
 from indicsql.events.schemas import SQLSynthesizedEvent
-from indicsql.models.ollama_client import OllamaClient, prune_unrequested_temporal_filters
 from indicsql.models.metric_guard import sanitize_metric_aggregations
+from indicsql.models.ollama_client import OllamaClient, prune_unrequested_temporal_filters
 from indicsql.schema.catalog import NDAPCatalog
 from indicsql.schema.entity_grounder import dynamic_entity_grounder
 from indicsql.schema.phonetic import transliterate_indic_to_latin
@@ -227,6 +227,13 @@ def _build_dynamic_fallback(
         target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
         order_dir = "ASC" if is_min else "DESC"
         return f"SELECT district_name, {target_measure} FROM {table_name}{where_str} ORDER BY {target_measure} {order_dir} LIMIT 1;"
+
+    if table_name == "ndap_pm_kisan_disbursement" and (
+        ("farmer" in lower or "beneficiar" in lower or "किसान" in raw_query or "शेतकऱ्यां" in raw_query)
+        and ("amount" in lower or "disbursement" in lower or "रुपये" in raw_query or "राशि" in raw_query or "निधులు" in raw_query)
+        or ("farmer_beneficiaries" in (matched_cols or []) and "amount_inr" in (matched_cols or []))
+    ):
+        return f"SELECT SUM(farmer_beneficiaries) AS total_farmers, SUM(amount_inr) AS total_amount FROM ndap_pm_kisan_disbursement{where_str};"
 
     if numeric_cols:
         target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])

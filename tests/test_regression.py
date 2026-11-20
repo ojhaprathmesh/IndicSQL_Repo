@@ -11,10 +11,9 @@ Covers:
 """
 
 import unittest
-from indicsql.schema.entity_grounder import dynamic_entity_grounder
+
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox
-from indicsql.benchmark.dataset import BenchmarkQuery
-from indicsql.benchmark.evaluator import are_tabular_results_equivalent
+from indicsql.schema.entity_grounder import dynamic_entity_grounder
 
 
 class TestFalseDistrictCollisionRegression(unittest.TestCase):

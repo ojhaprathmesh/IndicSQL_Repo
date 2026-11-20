@@ -112,7 +112,7 @@ def train_lora(
         args=sft_config,
     )
 
-    train_result = trainer.train()
+    trainer.train()
     trainer.model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
     print(f"Adapter saved to {output_dir}")

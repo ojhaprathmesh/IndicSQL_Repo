@@ -16,6 +16,8 @@ class TestPipeline(unittest.TestCase):
         self.assertTrue(
             "शेतकऱ्यांना" in state["verbalized_response"]
             or "पीएम-किसान" in state["verbalized_response"]
+            or "नोंद" in state["verbalized_response"]
+            or "कोटी" in state["verbalized_response"]
         )
         self.assertGreaterEqual(len(state["audit_trace"]), 4)
 

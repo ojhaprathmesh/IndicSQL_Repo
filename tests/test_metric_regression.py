@@ -11,10 +11,9 @@ Guarantees 100% deterministic elimination of metric and aggregation mismatches:
 """
 
 import unittest
+
 from indicsql.benchmark.evaluator import are_tabular_results_equivalent
 from indicsql.models.metric_guard import (
-    MetricIntent,
-    extract_metric_intent,
     sanitize_metric_aggregations,
 )
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox

@@ -27,10 +27,10 @@ if str(REPO_ROOT) not in sys.path:
 # Silence chatty loggers during benchmark
 logging.getLogger("indicsql").setLevel(logging.WARNING)
 
+from indicsql.agents.sql_synthesizer import extract_canonical_entities
 from indicsql.benchmark.evaluator import are_tabular_results_equivalent
 from indicsql.graph.workflow import execute_indicsql_pipeline
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox
-from indicsql.agents.sql_synthesizer import extract_canonical_entities
 
 BENCHMARK_FILE = REPO_ROOT / "data" / "benchmarks" / "indicdb_unseen_suite_140.json"
 REPORT_OUTPUT_FILE = REPO_ROOT / "data" / "benchmarks" / "unseen_140_evaluation_report.json"

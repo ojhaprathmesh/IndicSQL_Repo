@@ -51,13 +51,13 @@ def main():
     print("📦 [1/6] Building DIM_GEOGRAPHY (Normalized Geo Hierarchy)...")
     con.execute("""
     CREATE OR REPLACE SEQUENCE seq_geo_id START 1;
-    
+
     CREATE OR REPLACE TABLE dim_geography AS
-    SELECT 
+    SELECT
         nextval('seq_geo_id') AS geo_id,
         state_name,
         COALESCE(district_name, 'All Districts') AS district_name,
-        CASE 
+        CASE
             WHEN UPPER(state_name) IN ('PUNJAB', 'HARYANA', 'DELHI', 'UTTAR PRADESH', 'HIMACHAL PRADESH', 'UTTARAKHAND', 'JAMMU AND KASHMIR', 'LADAKH', 'CHANDIGARH') THEN 'North'
             WHEN UPPER(state_name) IN ('TAMIL NADU', 'KERALA', 'KARNATAKA', 'ANDHRA PRADESH', 'TELANGANA', 'PUDUCHERRY') THEN 'South'
             WHEN UPPER(state_name) IN ('MAHARASHTRA', 'GUJARAT', 'GOA', 'RAJASTHAN', 'DADRA AND NAGAR HAVELI AND DAMAN AND DIU') THEN 'West'
@@ -66,7 +66,7 @@ def main():
             ELSE 'North-East'
         END AS zone
     FROM (
-        SELECT DISTINCT UPPER(state_name) AS state_name, district_name 
+        SELECT DISTINCT UPPER(state_name) AS state_name, district_name
         FROM read_parquet('data/parquet_stores/*.parquet', union_by_name=true)
         WHERE state_name IS NOT NULL
     );
@@ -82,13 +82,13 @@ def main():
     CREATE OR REPLACE SEQUENCE seq_time_id START 1;
 
     CREATE OR REPLACE TABLE dim_time AS
-    SELECT 
+    SELECT
         nextval('seq_time_id') AS time_id,
         financial_year,
         calendar_year,
         season
     FROM (
-        SELECT DISTINCT 
+        SELECT DISTINCT
             COALESCE(financial_year, '2023-24') AS financial_year,
             2024 AS calendar_year,
             'Rabi' AS season
@@ -106,17 +106,17 @@ def main():
     CREATE OR REPLACE SEQUENCE seq_fact_pmkisan START 1;
 
     CREATE OR REPLACE TABLE fact_pm_kisan_disbursement AS
-    SELECT 
+    SELECT
         nextval('seq_fact_pmkisan') AS fact_id,
         g.geo_id,
         t.time_id,
         raw.farmer_beneficiaries,
         raw.amount_inr
     FROM read_parquet('data/parquet_stores/ndap_pm_kisan_disbursement.parquet') raw
-    JOIN dim_geography g 
-        ON UPPER(raw.state_name) = g.state_name 
+    JOIN dim_geography g
+        ON UPPER(raw.state_name) = g.state_name
        AND COALESCE(raw.district_name, 'All Districts') = g.district_name
-    JOIN dim_time t 
+    JOIN dim_time t
         ON COALESCE(raw.financial_year, '2023-24') = t.financial_year;
     """)
     pmk_count = con.execute("SELECT COUNT(*) FROM fact_pm_kisan_disbursement").fetchone()[0]
@@ -130,7 +130,7 @@ def main():
     CREATE OR REPLACE SEQUENCE seq_fact_crop START 1;
 
     CREATE OR REPLACE TABLE fact_crop_production AS
-    SELECT 
+    SELECT
         nextval('seq_fact_crop') AS fact_id,
         g.geo_id,
         t.time_id,
@@ -139,8 +139,8 @@ def main():
         raw.production_tonnes,
         raw.yield_kg_per_hectare
     FROM read_parquet('data/parquet_stores/ndap_crop_production_census.parquet') raw
-    JOIN dim_geography g 
-        ON UPPER(raw.state_name) = g.state_name 
+    JOIN dim_geography g
+        ON UPPER(raw.state_name) = g.state_name
        AND COALESCE(raw.district_name, 'All Districts') = g.district_name
     CROSS JOIN (SELECT time_id FROM dim_time LIMIT 1) t;
     """)
@@ -155,7 +155,7 @@ def main():
     CREATE OR REPLACE SEQUENCE seq_fact_edu START 1;
 
     CREATE OR REPLACE TABLE fact_education_stats AS
-    SELECT 
+    SELECT
         nextval('seq_fact_edu') AS fact_id,
         g.geo_id,
         t.time_id,
@@ -164,8 +164,8 @@ def main():
         raw.female_literacy_rate,
         raw.pupil_teacher_ratio
     FROM read_parquet('data/parquet_stores/ndap_education_stats.parquet') raw
-    JOIN dim_geography g 
-        ON UPPER(raw.state_name) = g.state_name 
+    JOIN dim_geography g
+        ON UPPER(raw.state_name) = g.state_name
        AND COALESCE(raw.district_name, 'All Districts') = g.district_name
     CROSS JOIN (SELECT time_id FROM dim_time LIMIT 1) t;
     """)

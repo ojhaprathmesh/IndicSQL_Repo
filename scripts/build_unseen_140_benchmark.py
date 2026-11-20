@@ -20,7 +20,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-import duckdb
 from indicsql.sandbox.duckdb_engine import DuckDBSandbox
 
 OUTPUT_FILE = REPO_ROOT / "data" / "benchmarks" / "indicdb_unseen_suite_140.json"

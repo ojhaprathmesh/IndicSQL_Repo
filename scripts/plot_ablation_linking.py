@@ -7,6 +7,7 @@ Saves to benchmark_results/ablation_dynamic_linking_chart.png.
 """
 
 from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 

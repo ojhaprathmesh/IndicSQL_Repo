@@ -7,7 +7,6 @@ Connects to Sarvam AI official endpoints for:
 - Chat Completion & Dialect Normalization (Sarvam-2B)
 """
 
-import base64
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union

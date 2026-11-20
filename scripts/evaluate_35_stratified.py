@@ -9,6 +9,7 @@ import json
 import sys
 import time
 from pathlib import Path
+
 from tabulate import tabulate
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

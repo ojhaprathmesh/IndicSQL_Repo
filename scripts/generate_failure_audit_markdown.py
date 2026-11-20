@@ -6,7 +6,6 @@ Provides complete forensic traceability, tables, and ranked recommendations.
 """
 
 import json
-import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -63,7 +62,7 @@ def main():
     md.append("| Primary Category | Failure Count | Share (%) | Primary Archetypes Involved |")
     md.append("| :--- | :---: | :---: | :--- |")
 
-    sorted_cats = sorted(cat_counts.items(), key=lambda x: x[1], reverse=True)
+    sorted(cat_counts.items(), key=lambda x: x[1], reverse=True)
     archetype_by_cat = {
         "Temporal filter handling": "Archetypes 012, 013, 016, 017",
         "Metric/aggregation selection": "Archetypes 005 (MR/TE), 006 (TA), 008, 010 (TE), 018, 019, 020",
@@ -120,10 +119,10 @@ def main():
         md.append(f"- **Target Columns (Schema Linker):** `{t['selected_metric_columns']}`")
         md.append("")
         md.append("```sql")
-        md.append(f"-- PREDICTED SQL (IndicSQL Generated)")
+        md.append("-- PREDICTED SQL (IndicSQL Generated)")
         md.append(f"{t['generated_sql']}")
         md.append("")
-        md.append(f"-- GOLD SQL (Benchmark Ground Truth)")
+        md.append("-- GOLD SQL (Benchmark Ground Truth)")
         md.append(f"{t['gold_sql_and_result']['gold_sql']}")
         md.append("```")
         md.append("")

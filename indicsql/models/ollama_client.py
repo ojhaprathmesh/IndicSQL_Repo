@@ -11,17 +11,21 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 from indicsql.core.config import settings
+from indicsql.models.metric_guard import sanitize_metric_aggregations
+from indicsql.models.temporal_guard import (
+    prune_unrequested_temporal_filters,
+    sanitize_temporal_predicates,
+)
 from indicsql.schema.phonetic import transliterate_indic_to_latin
 
 logger = logging.getLogger(__name__)
 
-from indicsql.models.temporal_guard import (
-    extract_temporal_intent,
-    has_temporal_intent,
-    prune_unrequested_temporal_filters,
-    sanitize_temporal_predicates,
-)
-from indicsql.models.metric_guard import sanitize_metric_aggregations
+__all__ = [
+    "OllamaClient",
+    "prune_unrequested_temporal_filters",
+    "sanitize_temporal_predicates",
+    "sanitize_metric_aggregations",
+]
 
 
 class OllamaClient:

@@ -14,8 +14,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import duckdb
+
 from indicsql.agents.sql_synthesizer import _DISTRICT_LEXICON
 from indicsql.schema.entity_grounder import dynamic_entity_grounder
+
 
 def verify_entity_grounder():
     print("=" * 80)
@@ -81,7 +83,7 @@ def verify_star_schema():
 
     print("\n🚀 3. LIVE 2-JOIN SQL QUERY EXECUTION (AFTER):")
     sql = """
-    SELECT 
+    SELECT
         g.zone,
         g.state_name,
         t.financial_year,

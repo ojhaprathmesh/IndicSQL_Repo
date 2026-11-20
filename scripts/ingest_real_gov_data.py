@@ -9,7 +9,7 @@ Usage:
 """
 
 import argparse
-import sys
+
 from indicsql.schema.ingest_real_gov_data import ingest_all_20_ndap_databases
 
 

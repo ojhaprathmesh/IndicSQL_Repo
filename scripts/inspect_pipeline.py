@@ -22,13 +22,13 @@ import json
 import sys
 import time
 from pathlib import Path
+
 from tabulate import tabulate
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from indicsql.benchmark.dataset import BenchmarkQuery
 from indicsql.benchmark.evaluator import IndicDBEvaluator, are_tabular_results_equivalent
 from indicsql.graph.workflow import execute_indicsql_pipeline
 from indicsql.schema.entity_grounder import dynamic_entity_grounder
@@ -45,18 +45,18 @@ def inspect_single_query(query_text: str, gold_sql: str = None, query_id: str = 
 
     # 1. Transliteration Bridge
     latin_bridge = transliterate_indic_to_latin(query_text)
-    print(f"\n[STEP 1: PHONETIC TRANSLITERATION BRIDGE]")
+    print("\n[STEP 1: PHONETIC TRANSLITERATION BRIDGE]")
     print(f"  • Transliterated Latin (ITRANS): \"{latin_bridge}\"")
 
     # 2. Dynamic Entity Grounding
     grounded = dynamic_entity_grounder.ground_entities(query_text)
-    print(f"\n[STEP 2: DYNAMIC ENTITY GROUNDING]")
+    print("\n[STEP 2: DYNAMIC ENTITY GROUNDING]")
     print(f"  • Grounded State     : {grounded.get('state_name', 'None')}")
     print(f"  • Grounded District  : {grounded.get('district_name', 'None')}")
     print(f"  • Grounded Commodity : {grounded.get('commodity', 'None')}")
 
     # 3. Pipeline Execution
-    print(f"\n[STEP 3: MULTI-AGENT SWARM EXECUTION]")
+    print("\n[STEP 3: MULTI-AGENT SWARM EXECUTION]")
     start = time.perf_counter()
     evaluator = IndicDBEvaluator()
     state = execute_indicsql_pipeline(query_text, query_id=query_id)
@@ -72,13 +72,13 @@ def inspect_single_query(query_text: str, gold_sql: str = None, query_id: str = 
     print(f"  • Swarm Latency     : {latency_ms:.1f}ms")
 
     # 4. Side-by-side SQL comparison
-    print(f"\n[STEP 4: SIDE-BY-SIDE SQL COMPARISON]")
+    print("\n[STEP 4: SIDE-BY-SIDE SQL COMPARISON]")
     if gold_sql:
         print(f"  🎯 GOLD SQL (Ground Truth):\n     {gold_sql}")
     print(f"  🤖 PREDICTED SQL (IndicSQL Swarm):\n     {pred_sql}")
 
     # 5. Live DuckDB Execution on Real Parquet Stores
-    print(f"\n[STEP 5: REAL DUCKDB DATABASE EXECUTION (SOURCE OF TRUTH)]")
+    print("\n[STEP 5: REAL DUCKDB DATABASE EXECUTION (SOURCE OF TRUTH)]")
     pred_res = evaluator.sandbox.execute_query(pred_sql) if pred_sql else None
 
     if gold_sql:
@@ -100,11 +100,11 @@ def inspect_single_query(query_text: str, gold_sql: str = None, query_id: str = 
     # 6. Verbalized Response
     verbalized = state.get("verbalized_response")
     if verbalized:
-        print(f"\n[STEP 6: CITIZEN VERBALIZED RESPONSE]")
+        print("\n[STEP 6: CITIZEN VERBALIZED RESPONSE]")
         print(f"  🔊 \"{verbalized}\"")
 
     # 7. Forensic Audit Trace
-    print(f"\n[STEP 7: COMPLETE FORENSIC AUDIT TRACE]")
+    print("\n[STEP 7: COMPLETE FORENSIC AUDIT TRACE]")
     audit_trace = state.get("audit_trace", [])
     audit_table = []
     for entry in audit_trace:

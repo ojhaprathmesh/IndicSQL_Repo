@@ -17,9 +17,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from tabulate import tabulate
-from indicsql.sandbox.duckdb_engine import DuckDBSandbox
+
 from indicsql.agents.sql_synthesizer import _DISTRICT_LEXICON
+from indicsql.sandbox.duckdb_engine import DuckDBSandbox
 from indicsql.schema.entity_grounder import dynamic_entity_grounder
+
 
 def run_ablation():
     db = DuckDBSandbox()
@@ -148,8 +150,10 @@ def run_ablation():
 
         # Format rows for table
         def fmt(v):
-            if v is None: return "NULL"
-            if isinstance(v, (int, float)): return f"{v:,}"
+            if v is None:
+                return "NULL"
+            if isinstance(v, (int, float)):
+                return f"{v:,}"
             return str(v)
 
         rows.append([

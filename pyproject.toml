@@ -85,10 +85,22 @@ include = ["indicsql*"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+exclude = [
+    ".git",
+    ".venv",
+    "notebooks",
+    "temp",
+    "build",
+    "dist",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E402", "E741"]
+"tests/*" = ["E741"]
 
 [dependency-groups]
 dev = [

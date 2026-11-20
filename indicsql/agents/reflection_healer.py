@@ -18,7 +18,6 @@ def reflection_healer_node(state: IndicSQLState) -> Dict[str, Any]:
     Emits ReflectionTriggeredEvent on the EventBus.
     """
     attempts = state.get("reflection_attempts", 0) + 1
-    current_sql = state.get("generated_sql", "")
     err = state.get("execution_error", "") or ""
 
     EventBus.publish(

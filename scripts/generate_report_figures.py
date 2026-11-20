@@ -5,8 +5,9 @@ Generates publication-quality figures for the academic project report.
 """
 
 from pathlib import Path
-import matplotlib.pyplot as plt
+
 import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "figures"
@@ -37,12 +38,12 @@ def generate_fig_6_1_accuracy_comparison():
     width = 0.16
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    
-    rects1 = ax.bar(x - 2*width, paper_avg, width, label="Paper Avg (Table 1)", color="#94a3b8")
-    rects2 = ax.bar(x - width, qwen3_8b, width, label="Qwen3 8B (DIN-SQL)", color="#cbd5e1")
-    rects3 = ax.bar(x, llama3_70b, width, label="Llama 3.3 70B (DIN-SQL)", color="#60a5fa")
-    rects4 = ax.bar(x + width, deepseek_v32, width, label="DeepSeek V3.2 671B", color="#3b82f6")
-    rects5 = ax.bar(x + 2*width, indicsql, width, label="IndicSQL (Our Neuro-Symbolic)", color="#10b981", edgecolor="#047857", linewidth=1.2)
+
+    ax.bar(x - 2*width, paper_avg, width, label="Paper Avg (Table 1)", color="#94a3b8")
+    ax.bar(x - width, qwen3_8b, width, label="Qwen3 8B (DIN-SQL)", color="#cbd5e1")
+    ax.bar(x, llama3_70b, width, label="Llama 3.3 70B (DIN-SQL)", color="#60a5fa")
+    ax.bar(x + width, deepseek_v32, width, label="DeepSeek V3.2 671B", color="#3b82f6")
+    ax.bar(x + 2*width, indicsql, width, label="IndicSQL (Our Neuro-Symbolic)", color="#10b981", edgecolor="#047857", linewidth=1.2)
 
     ax.set_ylabel("Execution Accuracy (EX %)")
     ax.set_title("Cross-Lingual Execution Accuracy: IndicDBBench Baselines vs. IndicSQL (140-Query Suite)")

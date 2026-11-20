@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import sqlglot
-from sqlglot import exp
 from pydantic import BaseModel, Field
+from sqlglot import exp
 
 from indicsql.benchmark.dataset import BenchmarkQuery
 from indicsql.core.state import TabularResult
@@ -176,15 +176,6 @@ def evaluate_clause_accuracy(
         "order_by": order_match,
         "limit": limit_match,
     }
-    """Normalizes database values for loose equivalence matching."""
-    if val is None:
-        return None
-    if isinstance(val, (int, float)):
-        # Round floating points to 2 decimal places to avoid floating point precision drifts
-        return round(float(val), 2)
-    if isinstance(val, str):
-        return val.strip().upper()
-    return str(val)
 
 
 def are_tabular_results_equivalent(

@@ -163,10 +163,10 @@ def generate_markdown_report(data: Dict[str, Any], output_path: Path):
 
     md = f"""# Comparative Benchmark Evaluation Report: IndicSQL vs. Baseline Models
 
-**Benchmark Suite**: {meta['benchmark_name']}  
-**Release Date**: {meta['release_date']}  
-**Ground Truth Source**: {meta['data_source']} ({meta['databases_covered']} National Databases)  
-**Domains Covered**: {', '.join(meta['domains'])}  
+**Benchmark Suite**: {meta['benchmark_name']}
+**Release Date**: {meta['release_date']}
+**Ground Truth Source**: {meta['data_source']} ({meta['databases_covered']} National Databases)
+**Domains Covered**: {', '.join(meta['domains'])}
 **Evaluation Scope**: 7 Languages (English, Hinglish, Marathi, Hindi, Bengali, Tamil, Telugu)
 
 ---

@@ -16,7 +16,6 @@ Outputs:
 """
 
 import json
-import math
 import struct
 import zlib
 from pathlib import Path

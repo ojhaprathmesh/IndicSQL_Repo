@@ -13,15 +13,15 @@ in DOCX format strictly adhering to BML Munjal University specifications:
 - Chapter 3 preserved exactly as required
 """
 
-import sys
 import shutil
 from pathlib import Path
+
 import docx
-from docx.shared import Pt, Inches, RGBColor
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
+from docx.shared import Inches, Pt, RGBColor
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIGURES_DIR = REPO_ROOT / "figures"
@@ -69,7 +69,7 @@ def add_chapter_heading(doc, chapter_num, title):
     p.paragraph_format.space_after = Pt(4)
     run = p.add_run(f"Chapter {chapter_num}")
     format_run(run, font_name="Times New Roman", size_pt=16, bold=True, color_rgb=(15, 23, 42))
-    
+
     p2 = doc.add_paragraph()
     p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p2.paragraph_format.space_before = Pt(0)
@@ -164,10 +164,10 @@ def build_report():
     # PRELIMINARY PAGES
     # -------------------------------------------------------------------------
     # Candidate's Declaration
-    p = add_p(doc, "CANDIDATE’S DECLARATION", align=WD_ALIGN_PARAGRAPH.CENTER, size_pt=16, bold=True, space_before=24, space_after=18)
+    add_p(doc, "CANDIDATE’S DECLARATION", align=WD_ALIGN_PARAGRAPH.CENTER, size_pt=16, bold=True, space_before=24, space_after=18)
     add_body_p(doc, "I hereby certify that the work on the project entitled, “IndicSQL: Autonomous Neuro-Symbolic Multi-Agent Framework for Cross-Lingual Text-to-SQL on Indian National Data Catalogs”, in partial fulfillment of requirements for the award of Degree of Bachelor of Technology in School of Engineering and Technology at BML Munjal University, having University Roll No. 230538, is an authentic record of my own work carried out during a period from July 2026 to December 2026 under the supervision of Dr. Faculty Supervisor.")
     add_p(doc, "", space_after=24)
-    p_sig = add_p(doc, "Jhankar Bansal\nUniversity Roll No. 230538\nB.Tech (Computer Science & Engineering)\nSchool of Engineering and Technology\nBML Munjal University, Gurugram", align=WD_ALIGN_PARAGRAPH.RIGHT, size_pt=12, bold=True, space_after=24)
+    add_p(doc, "Jhankar Bansal\nUniversity Roll No. 230538\nB.Tech (Computer Science & Engineering)\nSchool of Engineering and Technology\nBML Munjal University, Gurugram", align=WD_ALIGN_PARAGRAPH.RIGHT, size_pt=12, bold=True, space_after=24)
 
     # Supervisor's Declaration
     doc.add_page_break()
@@ -383,7 +383,7 @@ def build_report():
 
     add_sec_heading(doc, "4.5", "Use Case Model, Flow Chart, and Data Flow Diagrams")
     add_body_p(doc, "The operational workflow is formally mapped via Data Flow Diagrams. Figure 4.2 presents the Level-1 Data Flow Diagram (DFD) documenting the transformation of raw natural language tokens into verifiable relational data multisets.")
-    
+
     # Insert Figure 4.2
     fig_4_2_path = FIGURES_DIR / "fig_4_2_dfd.png"
     if fig_4_2_path.exists():

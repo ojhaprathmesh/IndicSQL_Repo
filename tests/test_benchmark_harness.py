@@ -82,9 +82,9 @@ class TestBenchmarkHarness(unittest.TestCase):
         self.assertGreaterEqual(result.schema_f1, 0.5)
 
     def test_expanded_dataset_loading(self):
-        from pathlib import Path
         import json
         from collections import Counter
+        from pathlib import Path
         exp_path = Path(__file__).resolve().parent.parent / "data" / "benchmarks" / "indicdb_eval_suite_expanded.json"
         self.assertTrue(exp_path.exists())
         with open(exp_path, "r", encoding="utf-8") as f:
@@ -95,8 +95,8 @@ class TestBenchmarkHarness(unittest.TestCase):
             self.assertEqual(counts[lang], 15)
 
     def test_baseline_models_matrix(self):
-        from pathlib import Path
         import json
+        from pathlib import Path
         matrix_path = Path(__file__).resolve().parent.parent / "data" / "benchmarks" / "baseline_models_matrix.json"
         self.assertTrue(matrix_path.exists())
         with open(matrix_path, "r", encoding="utf-8") as f:

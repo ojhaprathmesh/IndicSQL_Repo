@@ -21,19 +21,19 @@ OUTPUT_DIR = REPO_ROOT / "benchmark_results"
 
 def plot_loss_curves(history_path: Path, output_image: Path):
     trainer_state_path = REPO_ROOT / "models" / "lora_weights" / "qwen_3b_sql" / "checkpoint-36" / "trainer_state.json"
-    
+
     if trainer_state_path.exists():
         logger.info(f"Loading authentic fine-tuning logs from {trainer_state_path}")
         with open(trainer_state_path, "r", encoding="utf-8") as f:
             tdata = json.load(f)
         log_hist = tdata.get("log_history", [])
-        
+
         train_steps = [d["epoch"] for d in log_hist if "loss" in d]
         train_loss = [d["loss"] for d in log_hist if "loss" in d]
-        
+
         eval_steps = [d["epoch"] for d in log_hist if "eval_loss" in d]
         eval_loss = [d["eval_loss"] for d in log_hist if "eval_loss" in d]
-        
+
         epochs = train_steps
     elif history_path.exists():
         with open(history_path, "r", encoding="utf-8") as f:

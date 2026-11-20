@@ -13,14 +13,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from indicsql.agents.sql_synthesizer import extract_canonical_entities, synthesize_sql
+from indicsql.core.state import IndicSQLState
+from indicsql.sandbox.duckdb_engine import DuckDBSandbox
 from indicsql.schema.phonetic import (
     detect_indic_script_scheme,
     transliterate_indic_to_latin,
 )
-from indicsql.schema.entity_grounder import dynamic_entity_grounder
-from indicsql.agents.sql_synthesizer import extract_canonical_entities, synthesize_sql
-from indicsql.core.state import IndicSQLState
-from indicsql.sandbox.duckdb_engine import DuckDBSandbox
 
 TEST_CASES = [
     {

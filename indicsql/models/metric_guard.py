@@ -93,7 +93,6 @@ def extract_metric_intent(query: str) -> MetricIntent:
         return MetricIntent()
 
     clean_q = query.split("\n")[0].strip()
-    lower_q = clean_q.lower()
     intent = MetricIntent()
 
     # 1. Average / Mean Intent

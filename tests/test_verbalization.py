@@ -15,12 +15,12 @@ Covers:
 3. Mathematical precision matching between raw DuckDB results and verbalized prose
 """
 
-import re
 import unittest
+
 from indicsql.agents.response_verbalizer import (
     format_indian_currency_number,
-    verbalize_tabular_result,
     response_verbalizer_node,
+    verbalize_tabular_result,
 )
 from indicsql.core.state import IndicSQLState
 
