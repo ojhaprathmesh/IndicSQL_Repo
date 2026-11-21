@@ -67,6 +67,7 @@ class QueryReply {
   String get script => json['detected_script'] as String? ?? 'unknown';
   String get generatedSql => json['generated_sql'] as String? ?? '';
   String get answer => json['verbalized_response'] as String? ?? '';
+  String get modelTier => json['model_tier'] as String? ?? 'trained_pro';
   Map<String, dynamic>? get executionResult {
     final result = json['execution_result'];
     return result is Map<String, dynamic> ? result : null;

@@ -77,7 +77,11 @@ class _IndicSqlHomeState extends State<IndicSqlHome> {
     }
   }
 
-  Future<QueryReply?> _send(String question, String language) async {
+  Future<QueryReply?> _send(
+    String question,
+    String language, {
+    String modelTier = 'trained_pro',
+  }) async {
     if (_isSending) return null;
     var conversation = _conversation;
     try {
@@ -99,6 +103,7 @@ class _IndicSqlHomeState extends State<IndicSqlHome> {
           question,
           conversationId: conversation.id,
           language: language,
+          modelTier: modelTier,
         );
         await widget.store.addMessage(
           conversationId: conversation.id,

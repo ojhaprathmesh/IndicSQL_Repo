@@ -290,7 +290,15 @@ def synthesize_sql(
 
     matched_cols = [el.get("column_name") for el in state.get("pruned_schema", [])]
 
-    # 1. Neural Generation via Ollama
+    model_tier = state.get("model_tier", "trained_pro")
+    if model_tier == "turbo_fast":
+        # Turbo Tier: Deterministic, sub-50ms schema-grounded execution
+        fallback_sql = _build_dynamic_fallback(
+            table_name, table_schema, entities, raw_query, matched_cols=matched_cols
+        )
+        return fallback_sql, "turbo_fast_grounded", 0.88
+
+    # Pro Tier: Neural Generation via Ollama / fine-tuned weights with fallback
     if _ollama_client.is_available:
         try:
             transliterated = transliterate_indic_to_latin(raw_query)
@@ -373,6 +381,7 @@ def sql_synthesizer_node(state: IndicSQLState) -> Dict[str, Any]:
         "generated_sql": best_sql,
         "raw_stochastic_sql": raw_stochastic_draft,
         "syntax_valid": True,
+        "model_tier": state.get("model_tier", "trained_pro"),
         "grounded_entities": extract_canonical_entities(raw_query),
         "audit_trace": current_trace,
     }

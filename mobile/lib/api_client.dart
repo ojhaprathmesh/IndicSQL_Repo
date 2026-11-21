@@ -92,6 +92,7 @@ class IndicSqlApi {
     String question, {
     required String conversationId,
     String language = 'auto',
+    String modelTier = 'trained_pro',
   }) async {
     final body = await _request(
       '/query',
@@ -99,6 +100,7 @@ class IndicSqlApi {
       body: {
         'query': question,
         'session_id': conversationId,
+        'model_tier': modelTier,
         if (language != 'auto') 'language': language,
       },
     );

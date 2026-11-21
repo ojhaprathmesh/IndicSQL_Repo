@@ -63,7 +63,9 @@ class TestAnalyticsAndSqlInspectionEndpoints(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        execute_pipeline.assert_called_once_with("Show all farmers", language="hi")
+        execute_pipeline.assert_called_once_with(
+            "Show all farmers", language="hi", model_tier="trained_pro"
+        )
         self.assertEqual(response.json()["detected_language"], "hi")
 
     def test_query_endpoint_rejects_unsupported_language(self):

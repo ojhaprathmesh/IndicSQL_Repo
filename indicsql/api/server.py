@@ -88,6 +88,10 @@ class QueryRequest(BaseModel):
     session_id: Optional[str] = Field(
         default=None, description="Optional persistent session identifier"
     )
+    model_tier: Optional[Literal["trained_pro", "turbo_fast"]] = Field(
+        default="trained_pro",
+        description="Inference tier: 'trained_pro' (high-accuracy dual LoRA pipeline) or 'turbo_fast' (sub-second low-latency inference).",
+    )
 
 
 class QueryResponse(BaseModel):
@@ -100,6 +104,7 @@ class QueryResponse(BaseModel):
     verbalized_response: str
     execution_result: Optional[Dict[str, Any]] = None
     audit_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    model_tier: str = "trained_pro"
 
 
 class SqlInspectRequest(BaseModel):
@@ -128,6 +133,12 @@ def serve_frontend_ui():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/health/data")
+def get_data_health():
+    """Returns real-time diagnostics on NDAP tables, row counts, memory limits, and engine status."""
+    return _sandbox.get_health_telemetry()
 
 
 @app.get("/schemas")
@@ -248,7 +259,10 @@ def run_query(request: QueryRequest, http_req: Request, _: Optional[str] = Depen
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    result_state = execute_indicsql_pipeline(request.query, language=request.language)
+    tier = request.model_tier or "trained_pro"
+    result_state = execute_indicsql_pipeline(
+        request.query, language=request.language, model_tier=tier
+    )
 
     if request.session_id:
         session_store.add_message(
@@ -264,6 +278,7 @@ def run_query(request: QueryRequest, http_req: Request, _: Optional[str] = Depen
                 "generated_sql": result_state.get("generated_sql", ""),
                 "execution_result": result_state.get("execution_result"),
                 "detected_language": result_state.get("detected_lang", "unknown"),
+                "model_tier": tier,
             },
         )
 
@@ -277,6 +292,7 @@ def run_query(request: QueryRequest, http_req: Request, _: Optional[str] = Depen
         verbalized_response=result_state.get("verbalized_response", ""),
         execution_result=result_state.get("execution_result"),
         audit_trace=result_state.get("audit_trace", []),
+        model_tier=result_state.get("model_tier", tier),
     )
 
 

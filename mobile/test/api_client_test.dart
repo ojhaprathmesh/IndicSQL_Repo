@@ -37,10 +37,46 @@ void main() {
     expect(jsonDecode(capturedRequest.body), {
       'query': 'कुल कितने रिकॉर्ड हैं?',
       'session_id': 'conversation-1',
+      'model_tier': 'trained_pro',
       'language': 'hi',
     });
     expect(reply.generatedSql, 'SELECT 1');
     expect(reply.answer, 'एक परिणाम');
+  });
+
+  test('ask supports turbo_fast model tier', () async {
+    late http.Request capturedRequest;
+    final api = IndicSqlApi(
+      baseUrl: 'http://localhost:8000/',
+      client: MockClient((request) async {
+        capturedRequest = request;
+        return http.Response(
+          jsonEncode({
+            'query_id': 'q-2',
+            'detected_language': 'en',
+            'generated_sql': 'SELECT * FROM ndap_pm_kisan_disbursement',
+            'verbalized_response': 'Results',
+            'model_tier': 'turbo_fast',
+          }),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+
+    final reply = await api.ask(
+      'Show records',
+      conversationId: 'conversation-2',
+      modelTier: 'turbo_fast',
+    );
+
+    expect(capturedRequest.url.path, '/query');
+    expect(jsonDecode(capturedRequest.body), {
+      'query': 'Show records',
+      'session_id': 'conversation-2',
+      'model_tier': 'turbo_fast',
+    });
+    expect(reply.modelTier, 'turbo_fast');
   });
 
   test('ask reports backend validation errors', () async {

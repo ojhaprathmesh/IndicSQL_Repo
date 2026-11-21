@@ -22,7 +22,11 @@ class ChatScreen extends StatefulWidget {
 
   final List<StoredMessage> messages;
   final bool isSending;
-  final Future<QueryReply?> Function(String question, String language) onSend;
+  final Future<QueryReply?> Function(
+    String question,
+    String language, {
+    String modelTier,
+  }) onSend;
   final ValueChanged<String> onOpenSql;
   final bool backendConnected;
 
@@ -36,6 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final SpeechToText _speech = SpeechToText();
   final FlutterTts _tts = FlutterTts();
   String _language = 'auto';
+  String _modelTier = 'trained_pro';
   bool _speechInitialized = false;
   bool _isInitializingSpeech = false;
   bool _isListening = false;
@@ -83,7 +88,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final speakResponse = value == null && _voiceDraft;
     _voiceDraft = false;
     _questionController.clear();
-    final reply = await widget.onSend(question, _language);
+    final reply = await widget.onSend(
+      question,
+      _language,
+      modelTier: _modelTier,
+    );
     if (mounted && speakResponse && reply != null) {
       await _speakResponse(reply.answer, reply.language);
     }
@@ -462,8 +471,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       initialValue: _language,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'Question & speech language',
+                        labelText: 'Language',
                         isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       items: const [
                         DropdownMenuItem(
@@ -485,6 +495,30 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? null
                           : (value) =>
                                 setState(() => _language = value ?? 'auto'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 'trained_pro',
+                        label: Text('Pro 🎯', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        tooltip: 'Accurate Dual-LoRA Tier',
+                      ),
+                      ButtonSegment(
+                        value: 'turbo_fast',
+                        label: Text('Turbo ⚡', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        tooltip: 'Sub-Second Edge Tier',
+                      ),
+                    ],
+                    selected: {_modelTier},
+                    onSelectionChanged: widget.isSending
+                        ? null
+                        : (set) => setState(() => _modelTier = set.first),
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 ],

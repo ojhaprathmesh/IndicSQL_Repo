@@ -89,9 +89,11 @@ def execute_indicsql_pipeline(
     query: str,
     query_id: Optional[str] = None,
     language: Optional[str] = None,
+    model_tier: Optional[str] = "trained_pro",
 ) -> IndicSQLState:
     """
     Executes the multi-agent swarm for a given query, supporting both LangGraph and native execution.
+    Supports dual inference tiers: 'trained_pro' (high accuracy) and 'turbo_fast' (sub-second low latency).
     """
     if not query_id:
         query_id = f"ind-q-{uuid.uuid4().hex[:8]}"
@@ -100,6 +102,7 @@ def execute_indicsql_pipeline(
         "query_id": query_id,
         "raw_query": query,
         "requested_lang": language,
+        "model_tier": model_tier or "trained_pro",
         "reflection_attempts": 0,
         "audit_trace": [],
     }
