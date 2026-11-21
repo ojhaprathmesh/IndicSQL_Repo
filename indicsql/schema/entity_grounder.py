@@ -50,8 +50,10 @@ INDIC_SCRIPT_PHONETICS: Dict[str, str] = {   'अमृतसर': 'Amritsar',
     'कोयंबटूर': 'Coimbatore',
     'कोल्हापूर': 'Kolhapur',
     'गन्ना': 'SUGARCANE',
+    'गव्हा': 'WHEAT',
     'गव्हाचा': 'WHEAT',
     'गव्हाची': 'WHEAT',
+    'गव्हाचे': 'WHEAT',
     'गहू': 'WHEAT',
     'गुजरात': 'GUJARAT',
     'गुजरातमध्ये': 'GUJARAT',
@@ -168,6 +170,8 @@ INDIC_SCRIPT_PHONETICS: Dict[str, str] = {   'अमृतसर': 'Amritsar',
     'ஆந்திராவில்': 'ANDHRA PRADESH',
     'ஈரோடு': 'Erode',
     'உத்தர பிரதேசம்': 'UTTAR PRADESH',
+    'உத்தர பிரதேசத்தில்': 'UTTAR PRADESH',
+    'உத்தரப் பிரதேசத்தில்': 'UTTAR PRADESH',
     'உத்தரபிரதேசத்தில்': 'UTTAR PRADESH',
     'உத்தரபிரதேசம்': 'UTTAR PRADESH',
     'ஒடிசா': 'ODISHA',
@@ -285,15 +289,37 @@ INDIC_SCRIPT_PHONETICS: Dict[str, str] = {   'अमृतसर': 'Amritsar',
     'వరి పంట': 'RICE',
     'విజయవాడ': 'Vijayawada',
     'విశాఖపట్నం': 'Visakhapatnam',
+    'वेरुशेनग': 'GROUNDNUT',
     'వేరుశనగ': 'GROUNDNUT',
     'సోయాబీన్': 'SOYBEAN',
     'హర్యానా': 'HARYANA',
-    'హర్యానాలో': 'HARYANA'}
+    'హర్యానాలో': 'HARYANA',
+    'ऊस': 'SUGARCANE',
+    'ऊसाची': 'SUGARCANE',
+    'कापसाचे': 'COTTON',
+    'भुईमुगाचे': 'GROUNDNUT',
+    'युरिया': 'UREA',
+    'टोमॅटो': 'TOMATO',
+    'टोमॅटोचा': 'TOMATO',
+    'कांदा': 'ONION',
+    'मिर्ची': 'CHILLI',
+    'ইউরিয়া': 'UREA',
+    'পেঁয়াজ': 'ONION',
+    'পেঁয়াজের': 'ONION',
+    'আখ': 'SUGARCANE',
+    'চিনাবাদাম': 'GROUNDNUT',
+    'யூரியா': 'UREA',
+    'நிலக்கடலை': 'GROUNDNUT',
+    'வெங்காயத்தின்': 'ONION',
+    'మిర్చి': 'CHILLI',
+    'మిరప': 'CHILLI',
+    'చెరకు': 'SUGARCANE',
+    'ఉల్లిపాయ': 'ONION'}
 
 # Standard Indian commodities to distinguish cleanly from administrative states
 KNOWN_COMMODITIES: Set[str] = {
     "WHEAT", "RICE", "COTTON", "SOYBEAN", "SUGARCANE", "MUSTARD", "GROUNDNUT",
-    "MAIZE", "JUTE", "ONION", "UREA", "DAP"
+    "MAIZE", "JUTE", "ONION", "UREA", "DAP", "CHILLI", "TOMATO"
 }
 
 # State abbreviations recognized across natural and code-mixed queries
@@ -470,8 +496,10 @@ class DynamicEntityGrounder:
         entities: Dict[str, str] = {}
 
         # Step 1: Direct native script phrase extraction (longest keys first)
+        # Mask Telugu 'ఉత్పత్తి' (production) so 'పత్తి' (cotton) does not falsely match as a suffix
+        safe_native_query = query.replace("ఉత్పత్తి", " ")
         for indic_token, latin_value in sorted(INDIC_SCRIPT_PHONETICS.items(), key=lambda x: len(x[0]), reverse=True):
-            if indic_token in query:
+            if indic_token in safe_native_query:
                 if latin_value in KNOWN_COMMODITIES or latin_value in self.known_commodities:
                     if "commodity" not in entities:
                         entities["commodity"] = latin_value
@@ -566,7 +594,9 @@ class DynamicEntityGrounder:
         # Step 7: Automatically infer state if district is grounded but state is omitted
         if "district_name" in entities and "state_name" not in entities:
             dist = entities["district_name"]
-            if dist in self.district_to_state:
+            if dist == "Aurangabad" and any(w in query for w in ["जिल्ह्यात", "किती", "झाले", "आहे", "महाराष्ट्रा"]):
+                entities["state_name"] = "MAHARASHTRA"
+            elif dist in self.district_to_state:
                 entities["state_name"] = self.district_to_state[dist]
 
         return entities

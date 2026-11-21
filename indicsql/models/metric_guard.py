@@ -127,11 +127,11 @@ def extract_metric_intent(query: str) -> MetricIntent:
 
     # 4. Highest / Maximum Intent
     highest_patterns = [
-        r'\b(?:highest|maximum|most|max|peak|greatest|top|best)\b',
-        r'सबसे\s*ज्यादा', r'अधिकतम', r'सर्वाधिक',
+        r'\b(?:highest|maximum|most|max|peak|greatest|top|best|sabse\s*zyada|sab\s*se\s*zyada)\b',
+        r'सबसे\s*ज्यादा', r'सबसे\s*अधिक', r'अधिकतम', r'सर्वाधिक',
         r'सर्वात\s*जास्त', r'कमाल', r'जास्त',
         r'সবচেয়ে\s*বেশি', r'সর্বাধিক',
-        r'மிக\s*அதிக', r'அதிகபட்ச', r'அதிகமாக',
+        r'மிக\s*அதிக', r'அதிகபட்ச', r'அதிகமாக', r'அதிக\s+வீடுகள்', r'அதிக',
         r'అత్యధికంగా', r'అత్యధిక', r'గరిష్ట',
     ]
     if any(re.search(p, clean_q, re.IGNORECASE) for p in highest_patterns):

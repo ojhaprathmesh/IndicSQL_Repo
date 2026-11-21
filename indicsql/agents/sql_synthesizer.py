@@ -55,23 +55,25 @@ _STATE_LEXICON: List[Tuple[List[str], str]] = [
     (["झारखंड", "jharkhand"], "JHARKHAND"),
     (["मध्य प्रदेश", "madhya pradesh", "mp"], "MADHYA PRADESH"),
     (["छत्तीसगढ़", "chhattisgarh"], "CHHATTISGARH"),
-    # North-East
+    # North-East & UTs
     (["असम", "assam", "অসম"], "ASSAM"),
     (["मेघालय", "meghalaya"], "MEGHALAYA"),
     (["त्रिपुरा", "tripura"], "TRIPURA"),
+    (["चंडीगढ़", "chandigarh"], "CHANDIGARH"),
+    (["लद्दाख", "ladakh"], "LADAKH"),
 ]
 
 _DISTRICT_LEXICON: List[Tuple[List[str], str]] = [
     (["पुणे", "pune"], "Pune"),
     (["नाशिक", "nashik"], "Nashik"),
-    (["नागपुर", "nagpur"], "Nagpur"),
+    (["नागपुर", "नागपूर", "nagpur"], "Nagpur"),
     (["पटना", "patna"], "Patna"),
     (["वाराणसी", "varanasi", "kashi", "banaras"], "Varanasi"),
     (["लखनऊ", "lucknow"], "Lucknow"),
     (["कानपुर", "kanpur"], "Kanpur"),
     (["மதுரை", "madurai"], "Madurai"),
     (["சென்னை", "chennai"], "Chennai"),
-    (["கோவை", "coimbatore"], "Coimbatore"),
+    (["கோவை", "கோயம்புத்தூர்", "coimbatore"], "Coimbatore"),
     (["విశాఖపట్నం", "visakhapatnam", "vizag"], "Visakhapatnam"),
     (["గుంటూరు", "guntur"], "Guntur"),
     (["ముర్షిదాబాద్", "মুর্শিদাবাদ", "murshidabad"], "Murshidabad"),
@@ -88,16 +90,19 @@ _DISTRICT_LEXICON: List[Tuple[List[str], str]] = [
 ]
 
 _COMMODITY_LEXICON: List[Tuple[List[str], str]] = [
-    (["गेहूं", "গম", "wheat", "godhumai"], "WHEAT"),
+    (["गेहूं", "गव्हाचा", "गव्हाची", "गव्हाचे", "गव्हा", "गहू", "গম", "গমের", "கோதுமை", "గోధుమ", "wheat", "godhumai"], "WHEAT"),
     (["चावल", "धान", "వరి", "நெல்", "rice", "চাল"], "RICE"),
-    (["कापूस", "cotton", "பருத்தி", "कपास"], "COTTON"),
-    (["गन्ना", "sugarcane", "कரும்பு"], "SUGARCANE"),
-    (["सोयाबीन", "soybean"], "SOYBEAN"),
-    (["मक्का", "maize", "corn"], "MAIZE"),
+    (["कापूस", "कापसाचे", "cotton", "பருத்தி", "పత్తి", "कपास"], "COTTON"),
+    (["गन्ना", "ऊसाची", "ऊस", "sugarcane", "கரும்பு", "చెరకు", "আখ"], "SUGARCANE"),
+    (["सोयाबीन", "सয়াবিন", "சோயாபீன்", "సోయాబీన్", "soybean"], "SOYBEAN"),
+    (["मक्का", "మొక్కజొన్న", "maize", "corn"], "MAIZE"),
     (["सरसों", "mustard"], "MUSTARD"),
-    (["मूंगफली", "groundnut", "peanut"], "GROUNDNUT"),
-    (["डीएपी", "డీఏపీ", "dap"], "DAP"),
-    (["यूरिया", "urea"], "UREA"),
+    (["मूंगफली", "भुईमुगाचे", "भुईमूग", "நிலக்கடலை", "వేరుశనగ", "চিনাবাদাম", "groundnut", "peanut"], "GROUNDNUT"),
+    (["डीएपी", "டிஏபி", "డీఏపీ", "ডিএপি", "dap"], "DAP"),
+    (["यूरिया", "युरिया", "யூரியா", "యూరియా", "ইউরিয়া", "urea"], "UREA"),
+    (["कांदा", "प्याज", "வெங்காயத்தின்", "வெங்காயம்", "ఉల్లిపాయ", "পেঁয়াজের", "পেঁয়াজ", "onion"], "ONION"),
+    (["మిర్చి", "మిరప", "मिर्ची", "மிளகாய்", "লঙ্কা", "chilli"], "CHILLI"),
+    (["टोमॅटोचा", "टोमॅटो", "टमाटर", "தக்காளி", "టమాటా", "টমেটো", "tomato"], "TOMATO"),
 ]
 
 
@@ -148,13 +153,15 @@ def extract_canonical_entities(raw_query: str) -> Dict[str, str]:
                 break
 
     if "commodity" not in entities:
+        safe_comm_query = raw_query.replace("ఉత్పత్తి", " ")
+        safe_lower = lower.replace("ఉత్పత్తి", " ")
         for keywords, commodity in _COMMODITY_LEXICON:
             for k in keywords:
                 if len(k) <= 3:
-                    if re.search(r'\b' + re.escape(k) + r'\b', lower):
+                    if re.search(r'\b' + re.escape(k) + r'\b', safe_lower):
                         entities["commodity"] = commodity
                         break
-                elif k in lower or k in raw_query:
+                elif k in safe_lower or k in safe_comm_query:
                     entities["commodity"] = commodity
                     break
             if "commodity" in entities:
@@ -188,6 +195,15 @@ def _build_dynamic_fallback(
         where_clauses.append(f"fertilizer_type = '{entities['commodity'].upper()}'")
     if "commodity" in cols and "commodity" in entities:
         where_clauses.append(f"commodity = '{entities['commodity'].capitalize()}'")
+    if "sector_skill_council" in cols:
+        if any(w in lower or w in raw_query for w in ["automotive", "ऑटोमोटिव्ह", "ऑटोमोबाइल"]):
+            where_clauses.append("sector_skill_council = 'Automotive'")
+        elif any(w in lower or w in raw_query for w in ["healthcare", "आरोग्य सेवा", "स्वास्थ्य सेवा"]):
+            where_clauses.append("sector_skill_council = 'Healthcare'")
+        elif any(w in lower or w in raw_query for w in ["it-ites", "it sector", "ఐటీ రంగంలో", "ఐటీ", "आईटी"]):
+            where_clauses.append("sector_skill_council = 'IT-ITeS'")
+        elif any(w in lower or w in raw_query for w in ["agriculture", "कृषि", "விவசாய", "কৃষি"]):
+            where_clauses.append("sector_skill_council = 'Agriculture'")
 
     where_str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
@@ -200,7 +216,9 @@ def _build_dynamic_fallback(
     ]
 
     # Check for top N / bottom N ranking
-    top_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च)\s*(\d+)\b', lower)
+    top_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च)\s*(\d+)\b', lower) or re.search(
+        r'(?:सबसे\s+अधिक|सर्वाधिक|अधिक|সর্বাধিক)[^0-9]*?(\d+)\s*(?:जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা|districts)', raw_query
+    )
     bottom_match = re.search(r'\b(?:bottom|lowest|least)\s*(\d+)\b', lower)
     if (top_match or bottom_match) and "district_name" in cols and numeric_cols:
         limit_n = int(top_match.group(1)) if top_match else int(bottom_match.group(1))
@@ -208,6 +226,8 @@ def _build_dynamic_fallback(
         target_measure = "farmer_beneficiaries" if table_name == "ndap_pm_kisan_disbursement" and "amount" not in lower else (
             next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
         )
+        if table_name == "ndap_nfhs5_health_indicators":
+            return f"SELECT district_name, {target_measure} FROM {table_name}{where_str} ORDER BY {target_measure} {order_dir} LIMIT {limit_n};"
         is_avg = "pct" in target_measure or "_rate" in target_measure
         func = "AVG" if is_avg else "SUM"
         alias = f"avg_{target_measure}" if is_avg else f"total_{target_measure}"
@@ -220,27 +240,50 @@ def _build_dynamic_fallback(
     )
     is_max = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['highest', 'max', 'maximum', 'sabse zyada']) or any(
         re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
-        for w in ['ज्यादा', 'सर्वाधिक', 'सर्वাধিক', 'अधिक', 'అత్యధిక']
+        for w in ['ज्यादा', 'सर्वाधिक', 'सर्वাধিক', 'अधिक', 'అత్యధిక', 'सर्वात जास्त', 'जास्त', 'அதிகமாக', 'அதிக', 'সর্বাধিক']
     )
 
     if (is_min or is_max) and "district_name" in cols and numeric_cols:
         target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
         order_dir = "ASC" if is_min else "DESC"
+        if table_name in ("ndap_pmay_rural_housing", "ndap_school_infrastructure", "ndap_jal_jeevan_tap_water") and not (
+            "pct" in target_measure or "_rate" in target_measure
+        ):
+            alias = f"total_{target_measure}"
+            return f"SELECT district_name, SUM({target_measure}) AS {alias} FROM {table_name}{where_str} GROUP BY district_name ORDER BY {alias} {order_dir} LIMIT 1;"
         return f"SELECT district_name, {target_measure} FROM {table_name}{where_str} ORDER BY {target_measure} {order_dir} LIMIT 1;"
 
-    if table_name == "ndap_pm_kisan_disbursement" and (
-        ("farmer" in lower or "beneficiar" in lower or "किसान" in raw_query or "शेतकऱ्यां" in raw_query)
-        and ("amount" in lower or "disbursement" in lower or "रुपये" in raw_query or "राशि" in raw_query or "निधులు" in raw_query)
-        or ("farmer_beneficiaries" in (matched_cols or []) and "amount_inr" in (matched_cols or []))
-    ):
-        return f"SELECT SUM(farmer_beneficiaries) AS total_farmers, SUM(amount_inr) AS total_amount FROM ndap_pm_kisan_disbursement{where_str};"
+    # Strip scheme title before checking if both farmer count and disbursement amount are explicitly requested
+    query_no_scheme = re.sub(
+        r'पीएम-किसान|पीएम\s+किसान|pm-kisan|pm\s+kisan|పీఎం-కిసాన్|পিএম-কিষানের|পিএম-কিষাণ|பிஎம்-கிசான்',
+        ' ',
+        raw_query,
+        flags=re.IGNORECASE,
+    )
+    lower_no_scheme = query_no_scheme.lower()
+    has_farmer_intent = any(w in lower_no_scheme or w in query_no_scheme for w in ["farmer", "beneficiar", "किसान", "लाभार्थि", "शेतकऱ्यां", "రైతు", "விவசாயி", "কৃষক"])
+    has_amount_intent = any(w in lower_no_scheme or w in query_no_scheme for w in ["amount", "disbursement", "disbursed", "distribute", "रुपये", "राशि", "धनराशि", "निधी", "रक्कम", "నిధులు", "பணம்", "টাকা", "অর্থ"])
+    if table_name == "ndap_pm_kisan_disbursement":
+        if has_farmer_intent and has_amount_intent:
+            return f"SELECT SUM(farmer_beneficiaries) AS total_farmers, SUM(amount_inr) AS total_amount FROM ndap_pm_kisan_disbursement{where_str};"
+        if has_amount_intent and not has_farmer_intent:
+            return f"SELECT SUM(amount_inr) AS total_metric FROM ndap_pm_kisan_disbursement{where_str};"
 
     if numeric_cols:
         target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
+        if table_name == "ndap_nfhs5_health_indicators" and "district_name" in entities:
+            return f"SELECT {target_measure} FROM {table_name}{where_str};"
+        if target_measure == "max_price_inr":
+            return f"SELECT MAX({target_measure}) AS total_metric FROM {table_name}{where_str};"
+        if target_measure == "min_price_inr":
+            return f"SELECT MIN({target_measure}) AS total_metric FROM {table_name}{where_str};"
         is_avg = (
             "pct" in target_measure
             or "_rate" in target_measure
             or target_measure.startswith("rate_")
+            or "_mmr" in target_measure
+            or "_imr" in target_measure
+            or "ratio" in target_measure
             or "price" in target_measure
             or "avg" in lower
             or "average" in lower

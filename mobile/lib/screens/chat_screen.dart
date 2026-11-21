@@ -51,9 +51,10 @@ class _ChatScreenState extends State<ChatScreen> {
   List<LocaleName> _speechLocales = [];
 
   static const _examples = [
-    'Show total PM-Kisan beneficiaries in Maharashtra.',
-    'बिहार में महिला साक्षरता दर कितनी है?',
-    'தமிழ்நாட்டில் ஊரக சாலை வளர்ச்சி எப்படி உள்ளது?',
+    'What is the total number of farmer beneficiaries under PM-KISAN in Andhra Pradesh?',
+    'ఆంధ్రప్రదేశ్‌లో పీఎం-కిసాన్ పథకం ద్వారా ఎంతమంది రైతులకు లబ్ధి చేకూరింది?',
+    'पंजाब में गेहूं का कुल उत्पादन कितने टन हुआ?',
+    'பஞ்சாபில் கோதுமையின் மொத்த உற்பத்தி எத்தனை டன்?',
   ];
 
   @override
@@ -723,11 +724,24 @@ class _MessageCard extends StatelessWidget {
                   if (payload['detected_language'] case final String language)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Chip(
-                        label: Text(
-                          'Detected language: ${language.toUpperCase()}',
-                        ),
-                        visualDensity: VisualDensity.compact,
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Chip(
+                            label: Text(
+                              'Language: ${language.toUpperCase()}${payload['detected_script'] != null ? ' (${payload['detected_script']})' : ''}',
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          if (payload['model_tier'] case final String tier)
+                            Chip(
+                              label: Text(
+                                tier == 'turbo_fast' ? 'Turbo ⚡' : 'Pro 🎯',
+                              ),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                        ],
                       ),
                     ),
                   if (sql.isNotEmpty) ...[

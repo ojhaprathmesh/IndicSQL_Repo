@@ -197,11 +197,12 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             return f"According to database records, district {dist} recorded a female literacy rate of {rate}%."
 
     # 2. MGNREGA Person-Days (Mandays)
-    if "total_mandays" in columns or "total_mandays_generated" in columns:
+    sql_upper = (state.get("generated_sql", "") or "").upper()
+    if "total_mandays" in columns or "total_mandays_generated" in columns or (len(columns) == 1 and "TOTAL_MANDAYS_GENERATED" in sql_upper):
         mandays_idx = (
             columns.index("total_mandays")
             if "total_mandays" in columns
-            else columns.index("total_mandays_generated")
+            else (columns.index("total_mandays_generated") if "total_mandays_generated" in columns else 0)
         )
         mandays = row[mandays_idx]
         mandays_fmt = format_indian_currency_number(mandays, lang=lang)
@@ -223,7 +224,7 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
     # 3. PM-KISAN Farmers & Disbursement
     farmer_col_idx = next(
         (i for i, c in enumerate(columns) if any(k in c for k in ["farmer", "beneficiar"])),
-        None
+        0 if (len(columns) == 1 and "FARMER_BENEFICIARIES" in sql_upper) else None
     )
     if farmer_col_idx is not None:
         farmers = row[farmer_col_idx]
@@ -245,9 +246,9 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             elif lang == "bn":
                 amount_part = f", এবং মোট ₹{amt_fmt} টাকা বিতরণ করা হয়েছে"
             elif lang == "hi-en":
-                amount_part = f", aur total ₹{amt_fmt} amount transfer kiya gaya"
+                amount_part = f", aur total INR {amt_fmt} amount transfer kiya gaya"
             elif lang == "en":
-                amount_part = f", with a total disbursement of ₹{amt_fmt}"
+                amount_part = f", with a total disbursement of INR {amt_fmt}"
             else:
                 amount_part = f", और कुल ₹{amt_fmt} की राशि हस्तांतरित की गई"
 
@@ -272,7 +273,7 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
                 return f"পিএম-কিষান প্রকল্পের অধীনে 4টি আর্থিক বছরে (2021-2025) মোট {farmers_fmt} ক্রমবর্ধমান কৃষক সুবিধা বিতরণ করা হয়েছে (প্রতি বছর গড়ে ~7.16 কোটি সক্রিয় কৃষক){amount_part}।"
             else:
                 return (
-                    f"Under PM-KISAN records across 4 financial years (2021–2025), a cumulative total of {farmers_fmt} farmer disbursements were recorded, averaging ~7.16 Crores active beneficiaries per year (with 7.11 Crores in the latest 2024–25 period){amount_part}."
+                    f"Under PM-KISAN records across 4 financial years (2021-2025), a cumulative total of {farmers_fmt} farmer disbursements were recorded, averaging ~7.16 Crores active beneficiaries per year (with 7.11 Crores in the latest 2024-25 period){amount_part}."
                 )
 
         if lang == "mr":
@@ -292,15 +293,18 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
                 f"Under PM-KISAN, a total of {farmers_fmt} farmers received direct benefit transfers{amount_part}."
             )
 
-    sql_text = (state.get("generated_sql", "") or "").upper()
+    sql_text = sql_upper
     detected_state = ""
-    for st in ["UTTAR PRADESH", "PUNJAB", "GUJARAT", "MAHARASHTRA", "RAJASTHAN", "BIHAR", "TAMIL NADU", "WEST BENGAL", "ANDHRA PRADESH", "TELANGANA"]:
+    for st in ["UTTAR PRADESH", "PUNJAB", "GUJARAT", "MAHARASHTRA", "RAJASTHAN", "BIHAR", "TAMIL NADU", "WEST BENGAL", "ANDHRA PRADESH", "TELANGANA", "MADHYA PRADESH", "HARYANA", "KARNATAKA", "ODISHA", "KERALA", "ASSAM", "JHARKHAND"]:
         if f"'{st}'" in sql_text or st.lower() in query_text:
             detected_state = st.title()
             break
 
     # 4. Fertilizer Distribution (DAP, Urea, MOP)
-    fert_col_idx = next((i for i, c in enumerate(columns) if any(k in c for k in ["sales", "fertilizer"])), None)
+    fert_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["sales", "fertilizer"])),
+        0 if (len(columns) == 1 and "SALES_TONNES" in sql_text) else None
+    )
     if fert_col_idx is not None and any(f in sql_text or f in query_text.upper() for f in ["DAP", "UREA", "MOP", "NPK"]):
         fert_type = "DAP" if "DAP" in (sql_text + query_text.upper()) else ("UREA" if "UREA" in (sql_text + query_text.upper()) else "fertilizer")
         sales_val = row[fert_col_idx]
@@ -321,7 +325,10 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             return f"In {detected_state}, total recorded sales of {fert_type} fertilizer were {sales_fmt} tonnes."
 
     # 5. Crop Cultivation Area (Hectares)
-    area_col_idx = next((i for i, c in enumerate(columns) if any(k in c for k in ["area_hectares", "cultivation_area", "total_area"])), None)
+    area_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["area_hectares", "cultivation_area", "total_area"])),
+        0 if (len(columns) == 1 and "AREA_HECTARES" in sql_text) else None
+    )
     if area_col_idx is not None:
         area_val = row[area_col_idx]
         area_fmt = format_indian_currency_number(area_val, lang=lang)
@@ -343,7 +350,10 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             return f"In {detected_state}, the total recorded cultivation area for {crop_name} was {area_fmt} hectares."
 
     # 6. Crop Production (Tonnes)
-    prod_col_idx = next((i for i, c in enumerate(columns) if any(k in c for k in ["production_tonnes", "total_production", "production"]) and "sales" not in c), None)
+    prod_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["production_tonnes", "total_production", "production"]) and "sales" not in c),
+        0 if (len(columns) == 1 and "PRODUCTION_TONNES" in sql_text) else None
+    )
     if prod_col_idx is not None:
         prod_val = row[prod_col_idx]
         prod_fmt = format_indian_currency_number(prod_val, lang=lang)
@@ -365,7 +375,10 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             return f"In {detected_state}, the total recorded production of {crop_name} was {prod_fmt} tonnes."
 
     # 7. Mandi Commodity Prices (INR / Quintal)
-    price_col_idx = next((i for i, c in enumerate(columns) if any(k in c for k in ["price", "modal_price", "avg_price"])), None)
+    price_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["price", "modal_price", "avg_price"])),
+        0 if (len(columns) == 1 and "MODAL_PRICE_INR" in sql_text) else None
+    )
     if price_col_idx is not None:
         price_val = row[price_col_idx]
         try:
@@ -379,7 +392,7 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         elif lang == "mr":
             return f"{detected_state} मधील बाजार समित्यांमध्ये {comm_hi} सरासरी भाव ₹{price_fmt} प्रति क्विंटल नोंदवला गेला."
         elif lang == "hi-en":
-            return f"{detected_state} ki mandis mein {comm} ka average modal price ₹{price_fmt} per quintal raha."
+            return f"{detected_state} ki mandis mein {comm} ka average modal price INR {price_fmt} per quintal raha."
         elif lang == "ta":
             return f"{detected_state} சந்தைகளில் {comm} சராசரி மாதிரி விலை குவிண்டாலுக்கு ₹{price_fmt} ஆகும்."
         elif lang == "te":
@@ -387,7 +400,7 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         elif lang == "bn":
             return f"{detected_state}-এর বাজারগুলিতে {comm}-এর গড় মূল্য কুইন্টাল প্রতি ₹{price_fmt} রেকর্ড করা হয়েছে।"
         else:
-            return f"In {detected_state}, the average mandi modal price for {comm} was ₹{price_fmt} per quintal."
+            return f"In {detected_state}, the average mandi modal price for {comm} was INR {price_fmt} per quintal."
 
     # 8. Generic schema-aware verbalization localized to detected language
     items_desc = []

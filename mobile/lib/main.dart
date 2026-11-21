@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,12 +8,15 @@ import 'conversation_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
-  final defaultApiUrl = (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-      ? 'http://10.0.2.2:8000'
-      : 'http://127.0.0.1:8000';
-  final api = IndicSqlApi(
-    baseUrl: preferences.getString('api_base_url') ?? defaultApiUrl,
-  );
+  const definedApiUrl = String.fromEnvironment('API_BASE_URL');
+  const defaultApiUrl = 'http://127.0.0.1:8000';
+  final savedUrl = preferences.getString('api_base_url');
+  final resolvedUrl = definedApiUrl.isNotEmpty
+      ? definedApiUrl
+      : ((savedUrl != null && savedUrl != 'http://10.0.2.2:8000')
+          ? savedUrl
+          : defaultApiUrl);
+  final api = IndicSqlApi(baseUrl: resolvedUrl);
   final store = ConversationStore();
   await store.initialize();
   runApp(IndicSqlApp(api: api, store: store, preferences: preferences));
