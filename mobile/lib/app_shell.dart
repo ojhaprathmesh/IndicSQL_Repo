@@ -423,6 +423,7 @@ class _IndicSqlHomeState extends State<IndicSqlHome> {
       isSending: _isSending,
       onSend: _send,
       onOpenSql: _openSql,
+      backendConnected: _backendConnected,
     ),
     _Module.history => ConversationHistoryScreen(
       store: widget.store,
@@ -432,6 +433,7 @@ class _IndicSqlHomeState extends State<IndicSqlHome> {
       key: ValueKey(_sqlDraft),
       api: widget.api,
       initialSql: _sqlDraft,
+      backendConnected: _backendConnected,
     ),
     _Module.sources => SchemaScreen(api: widget.api),
     _Module.analytics => AnalyticsScreen(api: widget.api, section: 'overview'),

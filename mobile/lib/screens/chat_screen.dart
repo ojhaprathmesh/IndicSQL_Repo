@@ -17,12 +17,14 @@ class ChatScreen extends StatefulWidget {
     required this.isSending,
     required this.onSend,
     required this.onOpenSql,
+    this.backendConnected = true,
   });
 
   final List<StoredMessage> messages;
   final bool isSending;
   final Future<QueryReply?> Function(String question, String language) onSend;
   final ValueChanged<String> onOpenSql;
+  final bool backendConnected;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -279,6 +281,28 @@ class _ChatScreenState extends State<ChatScreen> {
     final theme = Theme.of(context);
     return Column(
       children: [
+        if (!widget.backendConnected)
+          Container(
+            width: double.infinity,
+            color: const Color(0xfffff4e5),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.cloud_off, size: 18, color: Color(0xffb76e00)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'IndicSQL backend is offline. Query interactions are paused; saved conversation history is fully available.',
+                    style: TextStyle(
+                      color: Colors.amber.shade900,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Expanded(
           child: widget.messages.isEmpty
               ? _emptyState(theme)
@@ -402,8 +426,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              onTap: widget.isSending ? null : () => _submit(example),
-              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: widget.isSending || !widget.backendConnected ? null : () => _submit(example),
+              trailing: Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: !widget.backendConnected ? theme.disabledColor : null,
+              ),
             ),
           ),
       ],
@@ -468,11 +496,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _questionController,
+                      enabled: widget.backendConnected && !widget.isSending,
                       minLines: 1,
                       maxLines: 5,
                       textInputAction: TextInputAction.newline,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask or dictate a question…',
+                      decoration: InputDecoration(
+                        hintText: !widget.backendConnected
+                            ? 'Backend offline — live questions disabled'
+                            : 'Ask or dictate a question…',
                         alignLabelWithHint: true,
                       ),
                       onSubmitted: (_) => _submit(),
@@ -480,10 +511,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
-                    tooltip: _isListening
-                        ? 'Stop voice input'
-                        : 'Dictate a question',
-                    onPressed: widget.isSending || _isInitializingSpeech
+                    tooltip: !widget.backendConnected
+                        ? 'Backend offline'
+                        : (_isListening ? 'Stop voice input' : 'Dictate a question'),
+                    onPressed: widget.isSending || _isInitializingSpeech || !widget.backendConnected
                         ? null
                         : _toggleListening,
                     style: IconButton.styleFrom(
@@ -508,8 +539,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 4),
                   IconButton.filled(
-                    tooltip: 'Send question',
-                    onPressed: widget.isSending ? null : () => _submit(),
+                    tooltip: !widget.backendConnected ? 'Backend offline' : 'Send question',
+                    onPressed: widget.isSending || !widget.backendConnected ? null : () => _submit(),
                     icon: widget.isSending
                         ? const SizedBox(
                             width: 18,

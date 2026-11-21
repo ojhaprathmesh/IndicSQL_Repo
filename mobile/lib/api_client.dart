@@ -116,5 +116,25 @@ class IndicSqlApi {
     return body;
   }
 
+  Future<List<dynamic>> listConversations() async {
+    final body = await _request('/conversations');
+    if (body is! List) {
+      throw const ApiException('Expected list of conversations from server.');
+    }
+    return body;
+  }
+
+  Future<Map<String, dynamic>> getConversation(String conversationId) async {
+    final body = await _request('/conversations/$conversationId');
+    if (body is! Map<String, dynamic>) {
+      throw const ApiException('Expected conversation details from server.');
+    }
+    return body;
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    await _request('/conversations/$conversationId', method: 'DELETE');
+  }
+
   void close() => _client.close();
 }

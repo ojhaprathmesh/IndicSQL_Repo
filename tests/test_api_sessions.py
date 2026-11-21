@@ -64,6 +64,20 @@ class TestSessionStoreAndAPI(unittest.TestCase):
         del_res = self.client.delete(f"/conversations/{cid}")
         self.assertEqual(del_res.status_code, 200)
 
+    def test_rate_limiting_guard(self):
+        from indicsql.api.server import _client_timestamps
+        _client_timestamps.clear()
+
+        # Fill up rate limit window
+        ip = "testclient"
+        import time
+        _client_timestamps[ip] = [time.time()] * 60
+
+        res = self.client.post("/query", json={"query": "test query"})
+        self.assertEqual(res.status_code, 429)
+        self.assertIn("Rate limit exceeded", res.json()["detail"])
+        _client_timestamps.clear()
+
 
 if __name__ == "__main__":
     unittest.main()

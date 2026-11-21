@@ -5,10 +5,12 @@ Exposes endpoints for natural language queries, schema inspection, and benchmark
 
 import json
 import os
+import time
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import Depends, FastAPI, File, HTTPException, Security, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, Security, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.security.api_key import APIKeyHeader
@@ -30,6 +32,30 @@ app = FastAPI(
     description="Cross-Lingual Text-to-SQL Swarm for Indian Languages (NDAP Benchmark)",
     version=__version__,
 )
+
+# In-memory sliding window rate limiter: 60 requests/min per client IP
+_RATE_LIMIT_PER_MINUTE = int(os.environ.get("INDICSQL_RATE_LIMIT_PER_MINUTE", "60"))
+_RATE_LIMIT_WINDOW = 60.0
+_client_timestamps: Dict[str, List[float]] = defaultdict(list)
+
+
+def check_rate_limit(request: Request) -> None:
+    """Enforces per-client IP sliding window rate limit to guard against resource exhaustion."""
+    if _RATE_LIMIT_PER_MINUTE <= 0:
+        return
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    now = time.time()
+    valid_window = now - _RATE_LIMIT_WINDOW
+    _client_timestamps[client_ip] = [
+        ts for ts in _client_timestamps[client_ip] if ts > valid_window
+    ]
+    if len(_client_timestamps[client_ip]) >= _RATE_LIMIT_PER_MINUTE:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Maximum {_RATE_LIMIT_PER_MINUTE} queries per minute allowed.",
+        )
+    _client_timestamps[client_ip].append(now)
+
 
 # Optional API Key Authentication Header
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -213,11 +239,12 @@ def delete_conversation(conversation_id: str, _: Optional[str] = Depends(verify_
 
 
 @app.post("/query", response_model=QueryResponse)
-def run_query(request: QueryRequest, _: Optional[str] = Depends(verify_api_key)):
+def run_query(request: QueryRequest, http_req: Request, _: Optional[str] = Depends(verify_api_key)):
     """
     Submits a natural language query through the multi-agent pipeline:
     Normalization -> Schema Linking -> SQL Synthesis -> AST Linter -> DuckDB Sandbox -> Verbalizer.
     """
+    check_rate_limit(http_req)
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 

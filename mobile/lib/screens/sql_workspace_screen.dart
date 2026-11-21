@@ -17,10 +17,12 @@ class SqlWorkspaceScreen extends StatefulWidget {
     super.key,
     required this.api,
     this.initialSql = '',
+    this.backendConnected = true,
   });
 
   final IndicSqlApi api;
   final String initialSql;
+  final bool backendConnected;
 
   @override
   State<SqlWorkspaceScreen> createState() => _SqlWorkspaceScreenState();
@@ -137,7 +139,7 @@ class _SqlWorkspaceScreenState extends State<SqlWorkspaceScreen> {
               label: const Text('Copy SQL'),
             ),
             FilledButton.icon(
-              onPressed: _isRunning || _controller.text.trim().isEmpty
+              onPressed: _isRunning || _controller.text.trim().isEmpty || !widget.backendConnected
                   ? null
                   : _execute,
               icon: _isRunning
@@ -147,7 +149,11 @@ class _SqlWorkspaceScreenState extends State<SqlWorkspaceScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.play_arrow),
-              label: Text(_isRunning ? 'Running…' : 'Validate & run'),
+              label: Text(
+                !widget.backendConnected
+                    ? 'Backend offline'
+                    : (_isRunning ? 'Running…' : 'Validate & run'),
+              ),
             ),
           ],
         ),
