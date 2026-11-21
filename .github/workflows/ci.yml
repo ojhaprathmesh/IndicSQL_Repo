@@ -1,0 +1,66 @@
+name: IndicSQL CI
+
+on:
+  push:
+    branches: [main, dev, "feature/**"]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  python-test:
+    name: Python Lint & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install Dependencies
+        run: |
+          uv venv
+          uv pip install -e .
+
+      - name: Run Ruff Lint Check
+        run: |
+          uv run ruff check .
+
+      - name: Run Unit & Regression Tests
+        env:
+          INDICSQL_DEVICE: cpu
+          INDICSQL_OFFLINE: "1"
+        run: |
+          uv run python -m unittest tests/test_benchmark_harness.py tests/test_pipeline.py tests/test_events.py tests/test_schema_linking.py tests/test_agents.py tests/test_regression.py tests/test_temporal_regression.py tests/test_metric_regression.py tests/test_verbalization.py tests/test_ndap_catalogs.py tests/test_api_analytics.py
+
+  flutter-test:
+    name: Mobile Flutter Analysis & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: "3.50.1"
+
+      - name: Install Dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Flutter Analyze
+        working-directory: mobile
+        run: flutter analyze
+
+      - name: Flutter Unit Tests
+        working-directory: mobile
+        run: flutter test

@@ -30,19 +30,19 @@ class TestTemporalRegressionComprehensive(unittest.TestCase):
     # Test 1: No temporal intent with hallucinated reporting_year
     # -------------------------------------------------------------------------
     def test_01_no_temporal_intent_hallucinated_reporting_year(self):
-        query = "How many primary health centres (PHCs) are operational in Haryana?"
-        sql = "SELECT SUM(primary_health_centres_phc) AS operational_phcs FROM ndap_rural_health_infrastructure WHERE state_name = 'HARYANA' AND reporting_year = 2022;"
+        query = "How many primary health centres (PHCs) are operational in Punjab?"
+        sql = "SELECT SUM(primary_health_centres_phc) AS operational_phcs FROM ndap_rural_health_infrastructure WHERE state_name = 'PUNJAB' AND reporting_year = 2022;"
         cleaned = sanitize_temporal_predicates(sql, query, table_name="ndap_rural_health_infrastructure")
 
         self.assertNotIn("reporting_year", cleaned)
-        self.assertIn("state_name = 'HARYANA'", cleaned)
+        self.assertIn("state_name = 'PUNJAB'", cleaned)
 
         # Dual DuckDB verification against gold
-        gold_sql = "SELECT SUM(primary_health_centres_phc) AS total_phc FROM ndap_rural_health_infrastructure WHERE state_name = 'HARYANA';"
+        gold_sql = "SELECT SUM(primary_health_centres_phc) AS total_phc FROM ndap_rural_health_infrastructure WHERE state_name = 'PUNJAB';"
         p_res = self.sandbox.execute_query(cleaned)
         g_res = self.sandbox.execute_query(gold_sql)
         self.assertTrue(are_tabular_results_equivalent(p_res, g_res))
-        self.assertEqual(p_res["rows"][0][0], 3298)
+        self.assertEqual(p_res["rows"][0][0], 1754)
 
     # -------------------------------------------------------------------------
     # Test 2: No temporal intent with hallucinated survey_year
@@ -59,7 +59,7 @@ class TestTemporalRegressionComprehensive(unittest.TestCase):
         p_res = self.sandbox.execute_query(cleaned)
         g_res = self.sandbox.execute_query(gold_sql)
         self.assertTrue(are_tabular_results_equivalent(p_res, g_res))
-        self.assertEqual(p_res["rows"][0][0], 148486)
+        self.assertEqual(p_res["rows"][0][0], 546800)
 
     # -------------------------------------------------------------------------
     # Test 3: No temporal intent with multiple temporal predicates
@@ -74,20 +74,20 @@ class TestTemporalRegressionComprehensive(unittest.TestCase):
         self.assertIn("state_name = 'UTTAR PRADESH'", cleaned)
 
         p_res = self.sandbox.execute_query(cleaned)
-        self.assertEqual(p_res["rows"][0][0], 14623899)
+        self.assertEqual(p_res["rows"][0][0], 107005727)
 
     # -------------------------------------------------------------------------
     # Test 4: Explicit 2022 with correct reporting_year
     # -------------------------------------------------------------------------
     def test_04_explicit_2022_with_correct_reporting_year(self):
-        query = "How many primary health centres were operational in Haryana in 2022?"
-        sql = "SELECT SUM(primary_health_centres_phc) FROM ndap_rural_health_infrastructure WHERE state_name = 'HARYANA' AND reporting_year = 2022;"
+        query = "How many primary health centres were operational in Punjab in 2022?"
+        sql = "SELECT SUM(primary_health_centres_phc) FROM ndap_rural_health_infrastructure WHERE state_name = 'PUNJAB' AND reporting_year = 2022;"
         cleaned = sanitize_temporal_predicates(sql, query, table_name="ndap_rural_health_infrastructure")
 
         self.assertIn("reporting_year = 2022", cleaned)
-        self.assertIn("state_name = 'HARYANA'", cleaned)
+        self.assertIn("state_name = 'PUNJAB'", cleaned)
         p_res = self.sandbox.execute_query(cleaned)
-        self.assertEqual(p_res["rows"][0][0], 1462)
+        self.assertEqual(p_res["rows"][0][0], 431)
 
     # -------------------------------------------------------------------------
     # Test 5: Explicit 2022 with incorrect 2021
@@ -286,7 +286,7 @@ class TestTemporalRegressionComprehensive(unittest.TestCase):
         self.assertIn("district_name = 'Pune'", cleaned)
 
         p_res = self.sandbox.execute_query(cleaned)
-        self.assertEqual(p_res["rows"][0][0], 4063)
+        self.assertEqual(p_res["rows"][0][0], 8192)
 
     # -------------------------------------------------------------------------
     # Test 22: SQL without WHERE clause

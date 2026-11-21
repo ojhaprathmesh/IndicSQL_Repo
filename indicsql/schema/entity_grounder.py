@@ -323,7 +323,7 @@ STATE_ABBREVIATIONS: Dict[str, str] = {
 
 INDIC_STOPWORDS: Set[str] = {
     # Question words across Indian languages
-    "kiti", "kitna", "kitne", "kitni", "enta", "entha", "enthamandi", "koyti", "koto", "kata",
+    "kiti", "kitna", "kitne", "kitni", "kitana", "kitane", "kitani", "enta", "entha", "enthamandi", "koyti", "koto", "kata",
     "ethanai", "yavathu", "what", "which", "where", "how", "many", "much", "kaha", "kidhar", "kon",
     # Total, Aggregation & Quantifiers
     "kul", "kula", "kool", "ekun", "mot", "mota", "mottam", "mothham", "motham", "mothathil", "moththa",

@@ -4,17 +4,20 @@ Exposes endpoints for natural language queries, schema inspection, and benchmark
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Security, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel, Field
 
 from indicsql import __version__
 from indicsql.agents.critic import validate_sql_security
 from indicsql.agents.sandbox_executor import _sandbox
+from indicsql.core.session_store import session_store
 from indicsql.graph.workflow import execute_indicsql_pipeline
 from indicsql.models.sarvam_client import SarvamAPIError, SarvamClient
 from indicsql.sandbox.validator import validate_and_limit_sql
@@ -28,7 +31,19 @@ app = FastAPI(
     version=__version__,
 )
 
-# Enable CORS for local frontend clients
+# Optional API Key Authentication Header
+API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(api_key: Optional[str] = Security(API_KEY_HEADER)):
+    """Verifies X-API-Key if INDICSQL_API_KEY environment variable is configured."""
+    expected = os.environ.get("INDICSQL_API_KEY", "").strip()
+    if expected and api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key header.")
+    return api_key
+
+
+# Enable CORS for local and web frontend clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -167,8 +182,38 @@ def inspect_sql(request: SqlInspectRequest):
     }
 
 
+@app.get("/conversations")
+def list_conversations(_: Optional[str] = Depends(verify_api_key)):
+    """Returns all stored multi-turn conversation sessions."""
+    return session_store.list_conversations()
+
+
+@app.post("/conversations")
+def create_conversation(title: str = "New Conversation", _: Optional[str] = Depends(verify_api_key)):
+    """Creates a new conversation session."""
+    return session_store.create_conversation(title=title)
+
+
+@app.get("/conversations/{conversation_id}")
+def get_conversation(conversation_id: str, _: Optional[str] = Depends(verify_api_key)):
+    """Retrieves full conversation turns and messages."""
+    conv = session_store.get_conversation(conversation_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return conv
+
+
+@app.delete("/conversations/{conversation_id}")
+def delete_conversation(conversation_id: str, _: Optional[str] = Depends(verify_api_key)):
+    """Deletes a conversation session."""
+    success = session_store.delete_conversation(conversation_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return {"status": "deleted"}
+
+
 @app.post("/query", response_model=QueryResponse)
-def run_query(request: QueryRequest):
+def run_query(request: QueryRequest, _: Optional[str] = Depends(verify_api_key)):
     """
     Submits a natural language query through the multi-agent pipeline:
     Normalization -> Schema Linking -> SQL Synthesis -> AST Linter -> DuckDB Sandbox -> Verbalizer.
@@ -177,6 +222,23 @@ def run_query(request: QueryRequest):
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     result_state = execute_indicsql_pipeline(request.query, language=request.language)
+
+    if request.session_id:
+        session_store.add_message(
+            conversation_id=request.session_id,
+            role="user",
+            content=request.query,
+        )
+        session_store.add_message(
+            conversation_id=request.session_id,
+            role="assistant",
+            content=result_state.get("verbalized_response", ""),
+            payload={
+                "generated_sql": result_state.get("generated_sql", ""),
+                "execution_result": result_state.get("execution_result"),
+                "detected_language": result_state.get("detected_lang", "unknown"),
+            },
+        )
 
     return QueryResponse(
         query_id=result_state.get("query_id", ""),

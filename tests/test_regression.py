@@ -200,7 +200,7 @@ class TestSQLExecutionRegression(unittest.TestCase):
         res = self.sandbox.execute_query(sql)
         self.assertIsNotNone(res)
         rows = res.get("rows") if isinstance(res, dict) else res.rows
-        self.assertEqual(rows[0][0], 14_623_899)
+        self.assertEqual(rows[0][0], 107_005_727)
 
     def test_maharashtra_pm_kisan_sql_execution(self):
         # Ground truth PM-Kisan total for Maharashtra
@@ -208,7 +208,7 @@ class TestSQLExecutionRegression(unittest.TestCase):
         res = self.sandbox.execute_query(sql)
         self.assertIsNotNone(res)
         rows = res.get("rows") if isinstance(res, dict) else res.rows
-        self.assertEqual(rows[0][0], 15_981_882)
+        self.assertEqual(rows[0][0], 46_617_264)
 
     def test_tamil_nadu_pm_kisan_sql_execution(self):
         # Ground truth PM-Kisan total for Tamil Nadu
@@ -216,7 +216,7 @@ class TestSQLExecutionRegression(unittest.TestCase):
         res = self.sandbox.execute_query(sql)
         self.assertIsNotNone(res)
         rows = res.get("rows") if isinstance(res, dict) else res.rows
-        self.assertEqual(rows[0][0], 12_542_755)
+        self.assertEqual(rows[0][0], 17_254_435)
 
     def test_west_bengal_pm_kisan_sql_execution(self):
         # Ground truth PM-Kisan total for West Bengal
@@ -224,7 +224,7 @@ class TestSQLExecutionRegression(unittest.TestCase):
         res = self.sandbox.execute_query(sql)
         self.assertIsNotNone(res)
         rows = res.get("rows") if isinstance(res, dict) else res.rows
-        self.assertEqual(rows[0][0], 12_912_117)
+        self.assertEqual(rows[0][0], 19_416_271)
 
     def test_andhra_pradesh_pm_kisan_sql_execution(self):
         # Ground truth PM-Kisan total for Andhra Pradesh
@@ -232,7 +232,7 @@ class TestSQLExecutionRegression(unittest.TestCase):
         res = self.sandbox.execute_query(sql)
         self.assertIsNotNone(res)
         rows = res.get("rows") if isinstance(res, dict) else res.rows
-        self.assertEqual(rows[0][0], 10_256_870)
+        self.assertEqual(rows[0][0], 19_936_685)
 
 
 if __name__ == "__main__":

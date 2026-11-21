@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: indicsql-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - INDICSQL_DEVICE=cpu
+      - INDICSQL_OFFLINE=1
+      - INDICSQL_API_KEY=${INDICSQL_API_KEY:-}
+    volumes:
+      - ./data/parquet_stores:/app/data/parquet_stores:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
