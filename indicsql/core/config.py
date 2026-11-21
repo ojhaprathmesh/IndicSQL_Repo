@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     )
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI compatible API key")
 
+    remote_llm_base_url: Optional[str] = Field(default=None, description="Hosted LLM base URL")
+    remote_llm_api_key: Optional[str] = Field(default=None, description="Hosted LLM API key")
+    remote_llm_model: Optional[str] = Field(default=None, description="Hosted LLM model id")
+
     # Embeddings & Vector Store
     embedding_model_name: str = Field(
         default="intfloat/multilingual-e5-large", description="Cross-lingual embedding model"

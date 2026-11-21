@@ -299,6 +299,81 @@ def _build_dynamic_fallback(
     return f"SELECT * FROM {table_name}{where_str} LIMIT 10;"
 
 
+def _all_matches(raw_query: str, lexicon: List[Tuple[List[str], str]]) -> List[str]:
+    """Return every distinct canonical value from a lexicon mentioned in the query."""
+    safe = raw_query.replace("ఉత్పత్తి", " ")
+    lower = safe.lower()
+    found: List[str] = []
+    for keywords, canonical in lexicon:
+        for k in keywords:
+            hit = (
+                re.search(r"\b" + re.escape(k) + r"\b", lower)
+                if len(k) <= 3
+                else (k in lower or k in safe)
+            )
+            if hit:
+                if canonical not in found:
+                    found.append(canonical)
+                break
+    return found
+
+
+def _build_multi_entity_groupby(
+    table_name: str,
+    table_schema: Dict[str, Any],
+    raw_query: str,
+    matched_cols: Optional[List[str]] = None,
+) -> Optional[str]:
+    """
+    When a question names several states and/or crops (e.g. "wheat and rice in Punjab
+    and Haryana separately"), return one row per entity via GROUP BY instead of
+    collapsing everything into a single filtered scalar. Returns None otherwise.
+    """
+    cols = table_schema.get("columns", {})
+    states = _all_matches(raw_query, _STATE_LEXICON) if "state_name" in cols else []
+    commodities = _all_matches(raw_query, _COMMODITY_LEXICON)
+    crop_col = next((c for c in ("crop_name", "fertilizer_type", "commodity") if c in cols), None)
+    if len(states) < 2 and (len(commodities) < 2 or not crop_col):
+        return None
+
+    numeric_cols = [
+        c for c, desc in cols.items()
+        if any(t in desc.upper() for t in ["BIGINT", "DOUBLE", "INTEGER", "FLOAT"])
+        and not c.endswith("_year") and not c.endswith("_id")
+    ]
+    if not numeric_cols:
+        return None
+    measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
+    lower = raw_query.lower()
+    is_avg = (
+        any(t in measure for t in ("pct", "_rate", "price", "ratio"))
+        or any(w in lower or w in raw_query for w in ("average", "avg", "औसत", "सरासरी", "சராசரி", "సగటు", "গড়"))
+    )
+    func = "AVG" if is_avg else "SUM"
+    alias = f"avg_{measure}" if is_avg else f"total_{measure}"
+
+    def lit(v: str) -> str:
+        return v.capitalize() if crop_col == "commodity" else v.upper()
+
+    group_cols: List[str] = []
+    where: List[str] = []
+    if len(states) >= 1 and "state_name" in cols:
+        if len(states) > 1:
+            group_cols.append("state_name")
+        where.append("state_name IN (" + ", ".join(f"'{s}'" for s in states) + ")")
+    if crop_col and commodities:
+        if len(commodities) > 1:
+            group_cols.append(crop_col)
+        where.append(f"{crop_col} IN (" + ", ".join(f"'{lit(c)}'" for c in commodities) + ")")
+    if not group_cols:
+        return None
+    gb = ", ".join(group_cols)
+    return (
+        f"SELECT {gb}, {func}({measure}) AS {alias} FROM {table_name} "
+        f"WHERE {' AND '.join(where)} GROUP BY {gb} ORDER BY {gb};"
+    )
+
+
 def synthesize_sql(
     state: IndicSQLState,
     error_feedback: Optional[str] = None,
@@ -333,6 +408,10 @@ def synthesize_sql(
 
     matched_cols = [el.get("column_name") for el in state.get("pruned_schema", [])]
 
+    multi_sql = _build_multi_entity_groupby(table_name, table_schema, raw_query, matched_cols)
+    if multi_sql:
+        return multi_sql, "schema_grounded_multi_entity", 0.90
+
     model_tier = state.get("model_tier", "trained_pro")
     if model_tier == "turbo_fast":
         # Turbo Tier: Deterministic, sub-50ms schema-grounded execution
@@ -361,8 +440,8 @@ def synthesize_sql(
                 previous_sql=previous_sql,
             )
             if neural_sql and ("SELECT" in neural_sql.upper() or "WITH" in neural_sql.upper()):
-                logger.info("Successfully synthesized neural SQL via Ollama (%s)", _ollama_client.model_name)
-                return neural_sql, f"ollama_{_ollama_client.model_name}", 0.94
+                logger.info("Successfully synthesized neural SQL (%s)", _ollama_client.public_label)
+                return neural_sql, f"ollama_{_ollama_client.public_label}", 0.94
         except Exception as e:
             logger.warning("Neural SQL synthesis error: %s", e)
 

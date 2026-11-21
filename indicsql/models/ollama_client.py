@@ -43,8 +43,49 @@ class OllamaClient:
         self._is_active: Optional[bool] = None
 
     @property
+    def _remote_configured(self) -> bool:
+        return bool(
+            getattr(settings, "remote_llm_base_url", None)
+            and getattr(settings, "remote_llm_model", None)
+        )
+
+    @property
+    def public_label(self) -> str:
+        """Stable label for traces/telemetry; never reveals the hosted model id."""
+        return "neural" if self._remote_configured else self.model_name
+
+    def _generate_remote(self, system_prompt, user_prompt, table_name, query, canonical_entities):
+        headers = {"Content-Type": "application/json"}
+        key = getattr(settings, "remote_llm_api_key", None)
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
+        try:
+            r = httpx.post(
+                f"{settings.remote_llm_base_url.rstrip('/')}/chat/completions",
+                headers=headers,
+                json={
+                    "model": settings.remote_llm_model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "temperature": 0.05,
+                },
+                timeout=self.timeout,
+            )
+            if r.status_code == 200:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                return self._clean_sql(raw, table_name, query, canonical_entities=canonical_entities)
+            logger.warning("Hosted generation returned HTTP %s", r.status_code)
+        except Exception as e:
+            logger.warning("Hosted generation failed: %s", type(e).__name__)
+        return None
+
+    @property
     def is_available(self) -> bool:
-        """Checks if local Ollama daemon is active and responsive."""
+        """Checks if the inference backend is active and responsive."""
+        if self._remote_configured:
+            return True
         if self._is_active is not None:
             return self._is_active
         try:
@@ -155,6 +196,9 @@ class OllamaClient:
             f"<|im_start|>user\n{user_prompt}<|im_end|>\n"
             f"<|im_start|>assistant\n"
         )
+
+        if self._remote_configured:
+            return self._generate_remote(system_prompt, user_prompt, table_name, query, canonical_entities)
 
         try:
             r = httpx.post(
