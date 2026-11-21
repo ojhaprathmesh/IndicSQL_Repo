@@ -16,6 +16,7 @@ from indicsql.events.bus import EventBus
 from indicsql.events.schemas import SQLSynthesizedEvent
 from indicsql.models.metric_guard import sanitize_metric_aggregations
 from indicsql.models.ollama_client import OllamaClient, prune_unrequested_temporal_filters
+from indicsql.models.temporal_guard import extract_temporal_intent
 from indicsql.schema.catalog import NDAPCatalog
 from indicsql.schema.entity_grounder import dynamic_entity_grounder
 from indicsql.schema.phonetic import transliterate_indic_to_latin
@@ -30,23 +31,23 @@ _ollama_client = OllamaClient()
 # ---------------------------------------------------------------------------
 _STATE_LEXICON: List[Tuple[List[str], str]] = [
     # North
-    (["उत्तर प्रदेश", "uttar pradesh", "up"], "UTTAR PRADESH"),
-    (["पंजाब", "punjab", "ਪੰਜਾਬ"], "PUNJAB"),
-    (["हरियाणा", "haryana"], "HARYANA"),
-    (["राजस्थान", "rajasthan"], "RAJASTHAN"),
-    (["हिमाचल", "himachal pradesh", "himachal"], "HIMACHAL PRADESH"),
-    (["उत्तराखंड", "uttarakhand"], "UTTARAKHAND"),
+    (["उत्तर प्रदेश", "uttar pradesh", "uttarpradesh", "up"], "UTTAR PRADESH"),
+    (["पंजाब", "punjab", "punjb", "panjab", "ਪੰਜਾਬ"], "PUNJAB"),
+    (["हरियाणा", "haryana", "haryan", "hariyana", "harayana"], "HARYANA"),
+    (["राजस्थान", "rajasthan", "rajsthan"], "RAJASTHAN"),
+    (["हिमाचल", "himachal pradesh", "himachal", "himanchal"], "HIMACHAL PRADESH"),
+    (["उत्तराखंड", "uttarakhand", "uttrakhand", "uttaranchal"], "UTTARAKHAND"),
     (["जम्मू", "कश्मीर", "jammu", "kashmir"], "JAMMU AND KASHMIR"),
     (["दिल्ली", "delhi", "new delhi"], "DELHI"),
     # South
     (["तमिलनाडु", "தமிழ்நாடு", "tamil nadu", "tamilnadu"], "TAMIL NADU"),
-    (["कर्नाटक", "ಕರ್ನಾಟಕ", "karnataka"], "KARNATAKA"),
-    (["केरल", "kerala", "കേരളം"], "KERALA"),
-    (["आंध्र", "ఆంధ్రప్రదేశ్", "andhra pradesh", "andhra"], "ANDHRA PRADESH"),
-    (["तेलंगाना", "తెలంగాణ", "telangana"], "TELANGANA"),
+    (["कर्नाटक", "ಕರ್ನಾಟಕ", "karnataka", "karnatka"], "KARNATAKA"),
+    (["केरल", "kerala", "keral", "കേരളം"], "KERALA"),
+    (["आंध्र", "ఆంధ్రప్రదేశ్", "andhra pradesh", "andhrapradesh", "andhra"], "ANDHRA PRADESH"),
+    (["तेलंगाना", "తెలంగాణ", "telangana", "telngana", "telengana"], "TELANGANA"),
     # West
-    (["महाराष्ट्र", "maharashtra", "महाराष्ट्रात"], "MAHARASHTRA"),
-    (["गुजरात", "gujarat", "ગુજરાત"], "GUJARAT"),
+    (["महाराष्ट्र", "maharashtra", "maharastra", "maharshtra", "महाराष्ट्रात"], "MAHARASHTRA"),
+    (["गुजरात", "gujarat", "gujrat", "ગુજરાત"], "GUJARAT"),
     (["गोवा", "goa"], "GOA"),
     # East & Central
     (["बिहार", "bihar"], "BIHAR"),
@@ -204,6 +205,33 @@ def _build_dynamic_fallback(
             where_clauses.append("sector_skill_council = 'IT-ITeS'")
         elif any(w in lower or w in raw_query for w in ["agriculture", "कृषि", "விவசாய", "কৃষি"]):
             where_clauses.append("sector_skill_council = 'Agriculture'")
+
+    # Apply explicit or relative temporal filters when requested in the question
+    temp_col = next(
+        (c for c in ("crop_year", "financial_year", "academic_year", "survey_year", "reporting_year", "census_year", "cycle_year", "year") if c in cols),
+        None,
+    )
+    if temp_col:
+        t_intent = extract_temporal_intent(raw_query)
+        if t_intent.relative_type == "last_n_years" and t_intent.last_n_years_count:
+            sub_where = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+            where_clauses.append(
+                f"{temp_col} IN (SELECT DISTINCT {temp_col} FROM {table_name}{sub_where} ORDER BY {temp_col} DESC LIMIT {t_intent.last_n_years_count})"
+            )
+        elif t_intent.relative_type in ("latest", "current"):
+            sub_where = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+            where_clauses.append(
+                f"{temp_col} = (SELECT MAX({temp_col}) FROM {table_name}{sub_where})"
+            )
+        elif t_intent.financial_years and temp_col in ("financial_year", "academic_year", "survey_year"):
+            fy = sorted(t_intent.financial_years)[-1]
+            where_clauses.append(f"{temp_col} = '{fy}'")
+        elif t_intent.year_ranges and temp_col in ("crop_year", "reporting_year", "census_year", "year"):
+            y1, y2 = t_intent.year_ranges[0]
+            where_clauses.append(f"{temp_col} BETWEEN {y1} AND {y2}")
+        elif t_intent.years and not t_intent.financial_years and temp_col in ("crop_year", "reporting_year", "census_year", "year"):
+            yr = sorted(t_intent.years)[-1]
+            where_clauses.append(f"{temp_col} = {yr}")
 
     where_str = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 

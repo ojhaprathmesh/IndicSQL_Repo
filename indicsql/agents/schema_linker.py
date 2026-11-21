@@ -51,6 +51,37 @@ def link_schema_elements(query: str, lang: str = "en") -> List[SchemaElement]:
     scored_elements.sort(key=lambda x: x[0], reverse=True)
     matched_elements = [el for _, el in scored_elements]
 
+    # Morphological stem fallback before defaulting to PM-KISAN
+    if not matched_elements:
+        _stem_routes = [
+            (("produc", "grain", "harvest", "yield", "cereal", "crop"), "ndap_crop_production_census", "production_tonnes", "DOUBLE"),
+            (("cultivat", "hectare", "sown"), "ndap_crop_production_census", "area_hectares", "DOUBLE"),
+            (("fertiliz", "urea", "dap"), "ndap_fertilizer_distribution", "sales_tonnes", "DOUBLE"),
+            (("literac", "educat"), "ndap_education_stats", "female_literacy_rate", "FLOAT"),
+            (("school",), "ndap_school_infrastructure", "schools_with_electricity", "INTEGER"),
+            (("phc", "health", "hospital"), "ndap_rural_health_infrastructure", "primary_health_centres_phc", "INTEGER"),
+            (("water", "tap"), "ndap_jal_jeevan_tap_water", "tap_water_connections", "BIGINT"),
+            (("road", "pmgsy"), "ndap_pmgsy_rural_roads", "completed_road_length_km", "DOUBLE"),
+            (("hous", "pmay"), "ndap_pmay_rural_housing", "houses_completed", "BIGINT"),
+            (("mgnrega", "manday", "employ"), "mgnrega_state_annual_employment", "total_mandays_generated", "BIGINT"),
+            (("mandi", "price"), "ndap_mandi_commodity_prices", "modal_price_inr", "DOUBLE"),
+            (("soil",), "ndap_soil_health_records", "samples_tested", "BIGINT"),
+            (("skill", "train", "vocational"), "ndap_vocational_skill_training", "certified_candidates", "BIGINT"),
+        ]
+        for stems, tbl, col, dtype in _stem_routes:
+            if any(st in search_space for st in stems):
+                matched_elements.append(
+                    {
+                        "table_name": tbl,
+                        "column_name": col,
+                        "data_type": dtype,
+                        "indic_synonyms": list(stems[:3]),
+                        "is_foreign_key": False,
+                        "foreign_target": None,
+                    }
+                )
+                break
+
     # Default fallback to primary table if no explicit match
     if not matched_elements:
         matched_elements.append(

@@ -36,6 +36,19 @@ class TestMultiEntityGroupBy(unittest.TestCase):
         for token in ("Punjab", "Haryana", "Wheat", "Rice"):
             self.assertIn(token, answer)
 
+    def test_grains_produced_typo_state_and_last_two_years(self):
+        from indicsql.graph.workflow import execute_indicsql_pipeline
+
+        s = execute_indicsql_pipeline(
+            "and what about total grains produced by haryan in last two years from now"
+        )
+        self.assertEqual(s["target_database"], "ndap_crop_production_census")
+        self.assertIn("state_name = 'HARYANA'", s["generated_sql"])
+        self.assertIn("LIMIT 2", s["generated_sql"])
+        self.assertEqual(s["execution_result"]["rows"], [[42033871.0]])
+        self.assertIn("Haryana", s["verbalized_response"])
+        self.assertIn("4.20 Crores", s["verbalized_response"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -193,10 +193,22 @@ def extract_temporal_intent(query: str) -> TemporalIntent:
     if any(re.search(p, norm_q, re.IGNORECASE) for p in current_patterns):
         intent.relative_type = "current"
 
-    # Last N years (e.g. last 3 years, पिछले 3 साल)
-    last_n_match = re.search(
-        r'\b(?:last|past|previous|पिछले|गेल्या|गत|கடந்த|గత|ಕಳೆದ)\s*(\d+)\s*(?:years|साल|वर्षात|বছরে|ஆண்டுகளில்|సంవత్సరాలలో|ವರ್ಷಗಳಲ್ಲಿ)\b',
+    # Last N years (e.g. last 3 years, last two years, पिछले 3 साल)
+    _word_num_map = {
+        "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+        "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+        "एक": "1", "दो": "2", "तीन": "3", "चार": "4", "पांच": "5", "दोन": "2",
+        "రెండు": "2", "మూడు": "3", "இரண்டு": "2", "மூன்று": "3", "দুই": "2", "তিন": "3",
+    }
+    norm_q_words = re.sub(
+        r"\b(" + "|".join(re.escape(k) for k in _word_num_map) + r")\b",
+        lambda m: _word_num_map[m.group(1).lower()],
         norm_q,
+        flags=re.IGNORECASE,
+    )
+    last_n_match = re.search(
+        r'\b(?:last|past|previous|recent|पिछले|गेल्या|गत|கடந்த|గత|ಕಳೆದ)\s*(\d+)\s*(?:years|year|साल|वर्ष|वर्षात|বছরে|বছর|ஆண்டுகளில்|ஆண்டுகள்|సంవత్సరాలలో|సంవత్సరాలు|ವರ್ಷಗಳಲ್ಲಿ)\b',
+        norm_q_words,
         re.IGNORECASE,
     )
     if last_n_match:
@@ -325,8 +337,8 @@ def is_temporal_predicate_supported(
 
     # Rule 4: Set membership conditions (col IN (val1, val2, ...))
     if isinstance(pred, exp.In):
-        # Subquery in IN clause (e.g. col IN (SELECT MAX(col)...))
-        if pred.args.get("query") and intent.relative_type == "latest":
+        # Subquery in IN clause (e.g. col IN (SELECT MAX(col)...) or col IN (SELECT DISTINCT col ... LIMIT N))
+        if pred.args.get("query") and intent.relative_type in ("latest", "last_n_years", "previous", "current"):
             return True
 
         for item in pred.expressions:

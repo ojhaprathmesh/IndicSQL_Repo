@@ -377,8 +377,14 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
     if prod_col_idx is not None:
         prod_val = row[prod_col_idx]
         prod_fmt = format_indian_currency_number(prod_val, lang=lang)
-        crop_name = "Soybean" if "SOYBEAN" in (sql_text + query_text.upper()) else ("Wheat" if "WHEAT" in (sql_text + query_text.upper()) else "crop")
+        crop_name = "Soybean" if "SOYBEAN" in (sql_text + query_text.upper()) else (
+            "Wheat" if "WHEAT" in (sql_text + query_text.upper()) else (
+                "grains" if "grain" in query_text else "crop"
+            )
+        )
         crop_hi = "सोयाबीन" if crop_name == "Soybean" else ("गेहूं" if crop_name == "Wheat" else "फसल")
+        limit_m = re.search(r"ORDER\s+BY\s+\w+\s+DESC\s+LIMIT\s+(\d+)", sql_text)
+        period_en = f" across the latest {limit_m.group(1)} recorded years" if limit_m else ""
         if lang == "hi":
             return f"{detected_state} में {crop_hi} का कुल उत्पादन {prod_fmt} टन दर्ज किया गया।"
         elif lang == "mr":
@@ -392,7 +398,7 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         elif lang == "bn":
             return f"{detected_state}-এ {crop_name}-এর মোট উৎপাদন {prod_fmt} মেট্রিক টন রেকর্ড করা হয়েছে।"
         else:
-            return f"In {detected_state}, the total recorded production of {crop_name} was {prod_fmt} tonnes."
+            return f"In {detected_state}, the total recorded production of {crop_name}{period_en} was {prod_fmt} tonnes."
 
     # 7. Mandi Commodity Prices (INR / Quintal)
     price_col_idx = next(

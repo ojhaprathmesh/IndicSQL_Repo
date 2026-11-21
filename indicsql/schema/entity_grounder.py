@@ -534,6 +534,34 @@ class DynamicEntityGrounder:
                         entities["state_name"] = canonical_state
                         break
 
+            # 3c. Guarded typo-tolerant prefix & consonant-skeleton matching for states (e.g. 'haryan' -> 'HARYANA')
+            if "state_name" not in entities:
+                _ignore_words = {
+                    "what", "where", "which", "when", "total", "grains", "grain", "produced",
+                    "production", "crop", "crops", "state", "states", "district", "districts",
+                    "last", "past", "years", "year", "from", "about", "under", "scheme",
+                    "farmer", "farmers", "amount", "count", "average", "lowest", "highest",
+                    "separate", "separately", "tonnes", "hectares", "area", "sales",
+                }
+                q_words = [
+                    w for w in re.findall(r"[a-zA-Z]{5,}", combined_text)
+                    if w not in INDIC_STOPWORDS and w not in _ignore_words
+                ]
+                for w in q_words:
+                    w_sk = consonant_skeleton(w)
+                    for state in sorted(self.known_states, key=len, reverse=True):
+                        s_low = state.lower()
+                        # Prefix match (e.g. 'haryan' is 6-char prefix of 7-char 'haryana')
+                        if s_low.startswith(w) and (len(s_low) - len(w)) <= 2:
+                            entities["state_name"] = state
+                            break
+                        # Consonant skeleton match for single-word states
+                        if " " not in s_low and len(w_sk) >= 4 and w_sk == consonant_skeleton(s_low) and abs(len(w) - len(s_low)) <= 2:
+                            entities["state_name"] = state
+                            break
+                    if "state_name" in entities:
+                        break
+
         # Step 4: Mask matched state tokens from query so they cannot collide with districts
         clean_for_dist = combined_text
         if "state_name" in entities:
