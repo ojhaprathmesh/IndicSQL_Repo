@@ -367,6 +367,27 @@ class TestMetricRegressionComprehensive(unittest.TestCase):
         self.assertEqual(pred_res["row_count"], 3)
         self.assertEqual([r[0] for r in pred_res["rows"]], ["Varanasi", "Lucknow", "Gorakhpur"])
 
+    # -------------------------------------------------------------------------
+    # Test 23: Threshold Filtering on Education Female Literacy (Bihar > 65% and > 50%)
+    # -------------------------------------------------------------------------
+    def test_23_threshold_filtering_female_literacy_bihar(self):
+        query_65 = "which districts in Bihar have an average female litracy rate of more than 65%?"
+        sql_65 = "SELECT district_name, ROUND(AVG(female_literacy_rate), 2) AS avg_female_literacy_rate FROM ndap_education_stats WHERE state_name = 'BIHAR' GROUP BY district_name HAVING AVG(female_literacy_rate) > 65.0 ORDER BY avg_female_literacy_rate DESC;"
+        fixed_65 = sanitize_metric_aggregations(sql_65, query_65, table_name="ndap_education_stats")
+        self.assertIn("HAVING", fixed_65)
+        self.assertIn("GROUP BY", fixed_65)
+        res_65 = self.sandbox.execute_query(fixed_65)
+        self.assertEqual(res_65["row_count"], 0)
+
+        query_50 = "which districts in Bihar have an average female litracy rate of more than 50%?"
+        sql_50 = "SELECT district_name, ROUND(AVG(female_literacy_rate), 2) AS avg_female_literacy_rate FROM ndap_education_stats WHERE state_name = 'BIHAR' GROUP BY district_name HAVING AVG(female_literacy_rate) > 50.0 ORDER BY avg_female_literacy_rate DESC;"
+        fixed_50 = sanitize_metric_aggregations(sql_50, query_50, table_name="ndap_education_stats")
+        res_50 = self.sandbox.execute_query(fixed_50)
+        self.assertEqual(res_50["row_count"], 5)
+        districts = [r[0] for r in res_50["rows"]]
+        self.assertIn("Samastipur", districts)
+        self.assertIn("Purnia", districts)
+
 
 if __name__ == "__main__":
     unittest.main()

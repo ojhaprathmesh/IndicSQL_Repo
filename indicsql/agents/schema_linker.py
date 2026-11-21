@@ -57,7 +57,7 @@ def link_schema_elements(query: str, lang: str = "en") -> List[SchemaElement]:
             (("produc", "grain", "harvest", "yield", "cereal", "crop"), "ndap_crop_production_census", "production_tonnes", "DOUBLE"),
             (("cultivat", "hectare", "sown"), "ndap_crop_production_census", "area_hectares", "DOUBLE"),
             (("fertiliz", "urea", "dap"), "ndap_fertilizer_distribution", "sales_tonnes", "DOUBLE"),
-            (("literac", "educat"), "ndap_education_stats", "female_literacy_rate", "FLOAT"),
+            (("literac", "litrac", "educat", "sakshar"), "ndap_education_stats", "female_literacy_rate", "FLOAT"),
             (("school",), "ndap_school_infrastructure", "schools_with_electricity", "INTEGER"),
             (("phc", "health", "hospital"), "ndap_rural_health_infrastructure", "primary_health_centres_phc", "INTEGER"),
             (("water", "tap"), "ndap_jal_jeevan_tap_water", "tap_water_connections", "BIGINT"),

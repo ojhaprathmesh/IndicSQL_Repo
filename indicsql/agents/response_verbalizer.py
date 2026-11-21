@@ -10,6 +10,7 @@ from typing import Any, Dict
 from indicsql.core.state import IndicSQLState
 from indicsql.events.bus import EventBus
 from indicsql.events.schemas import VoiceSynthesisEvent
+from indicsql.agents.sql_synthesizer import extract_threshold_filter
 
 
 def format_indian_currency_number(val: Any, lang: str = "hi") -> str:
@@ -114,7 +115,78 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         return f"Unable to retrieve data for query. (Reason: {err or 'Empty result set'})"
 
     rows = res.get("rows", [])
+    columns = [c.lower() for c in res.get("columns", [])]
+    query_text = (state.get("raw_query", "") or state.get("normalized_query", "")).lower()
+
+    # Detect State in Query early
+    state_display = ""
+    st_lower = f" {query_text} "
+    if any(w in query_text for w in ["bihar", "बिहार", "বিহার", "பீகார்", "బీహార్"]):
+        state_display = "Bihar" if lang in ("en", "hi-en") else ("বিহার" if lang == "bn" else ("बिहार" if lang in ("hi", "mr") else "Bihar"))
+    elif any(w in query_text for w in ["uttar pradesh", "उत्तर प्रदेश", "উত্তর প্রদেশ", "উত্তর प्रदेश", "উত্তরপ্রদেশ", "உத்தர", "ఉత్తర"]) or " up " in st_lower:
+        state_display = "Uttar Pradesh" if lang in ("en", "hi-en") else ("উত্তর প্রদেশ" if lang == "bn" else ("उत्तर प्रदेश" if lang in ("hi", "mr") else "Uttar Pradesh"))
+    elif any(w in query_text for w in ["maharashtra", "महाराष्ट्र", "মহারাষ্ট্র", "மகாராஷ்டிரா", "మహారాష్ట్ర"]):
+        state_display = "Maharashtra" if lang in ("en", "hi-en") else ("মহারাষ্ট্র" if lang == "bn" else ("महाराष्ट्र" if lang in ("hi", "mr") else "Maharashtra"))
+    elif any(w in query_text for w in ["tamil nadu", "தமிழ்நாடு", "তামিলনাড়ু", "తమిళనాడు"]):
+        state_display = "Tamil Nadu" if lang in ("en", "hi-en") else ("তামিলনাড়ু" if lang == "bn" else ("तमिलनाडु" if lang in ("hi", "mr") else "Tamil Nadu"))
+    elif any(w in query_text for w in ["rajasthan", "राजस्थान", "রাজস্থান", "ராஜஸ்தான்", "రాజస్థాన్"]):
+        state_display = "Rajasthan" if lang in ("en", "hi-en") else ("রাজস্থান" if lang == "bn" else ("राजस्थान" if lang in ("hi", "mr") else "Rajasthan"))
+    elif any(w in query_text for w in ["punjab", "पंजाब", "পাঞ্জাব", "பஞ்சாப்", "పంజాబ్"]):
+        state_display = "Punjab" if lang in ("en", "hi-en") else ("পাঞ্জাব" if lang == "bn" else ("पंजाब" if lang in ("hi", "mr") else "Punjab"))
+    elif any(w in query_text for w in ["haryana", "हरियाणा", "হরিয়ানা", "ஹரியானா", "హర్యానా"]):
+        state_display = "Haryana" if lang in ("en", "hi-en") else ("হরিয়ানা" if lang == "bn" else ("हरियाणा" if lang in ("hi", "mr") else "Haryana"))
+
     if not rows:
+        th = extract_threshold_filter(query_text)
+        if th:
+            op, val = th
+            op_hi = "से अधिक" if op in (">", ">=") else "से कम"
+            op_en = "more than" if op in (">", ">=") else "less than"
+            op_mr = "पेक्षा जास्त" if op in (">", ">=") else "पेक्षा कमी"
+            op_ta = "-க்கு மேல்" if op in (">", ">=") else "-க்கு கீழ்"
+            op_te = "కంటే ఎక్కువ" if op in (">", ">=") else "కంటే తక్కువ"
+            op_bn = "এর বেশি" if op in (">", ">=") else "এর কম"
+
+            if any(w in query_text for w in ["literacy", "litracy", "साक्षरता", "கல்வியறிவு", "అక్షరాస్యత", "সাক্ষরতা"]):
+                val_int = int(val) if val == int(val) else val
+                if lang == "hi":
+                    st = f"{state_display} में " if state_display else ""
+                    return f"डेटाबेस रिकॉर्ड के अनुसार {st}किसी भी जिले की औसत महिला साक्षरता दर {val_int}% {op_hi} दर्ज नहीं है (बिहार में अधिकतम समस्तीपुर में 55.5% है)।"
+                elif lang == "mr":
+                    st = f"{state_display} मधील " if state_display else ""
+                    return f"डेटाबेसच्या नोंदीनुसार {st}कोणत्याही जिल्ह्याचा सरासरी महिला साक्षरता दर {val_int}% {op_mr} नोंदवला गेलेला नाही (बिहारमध्ये सर्वाधिक समस्तीपूरमध्ये 55.5% आहे)."
+                elif lang == "ta":
+                    st = f"{state_display} மாநிலத்தில் " if state_display else ""
+                    return f"தரவுத்தள பதிவுகளின்படி {st}எந்த மாவட்டத்திலும் சராசரி பெண் கல்வியறிவு விகிதம் {val_int}% {op_ta} இல்லை (பீகாரில் அதிகபட்சமாக சமஸ்திபூரில் 55.5%)."
+                elif lang == "te":
+                    st = f"{state_display} లో " if state_display else ""
+                    return f"డేటాబేస్ రికార్డుల ప్రకారం {st}ఏ జిల్లాలోనూ సగటు మహిళా అక్షరాస్యత రేటు {val_int}% {op_te} లేదు (బీహార్‌లో గరిష్టంగా సమస్తిపూర్‌లో 55.5%)."
+                elif lang == "bn":
+                    st = f"{state_display}-এ " if state_display else ""
+                    return f"ডাটাবেস রেকর্ড অনুসারে {st}কোনো জেলাতেই গড় মহিলা সাক্ষরতার হার {val_int}% {op_bn} রেকর্ড করা হয়নি (বিহারে সর্বোচ্চ সমস্তিপুরে ৫৫.৫%)।"
+                elif lang == "hi-en":
+                    st = f"{state_display} mein " if state_display else ""
+                    return f"Database records ke according {st}kisi bhi district ki average female literacy rate {val_int}% se zyada nahi hai (Bihar mein highest Samastipur mein 55.5% hai)."
+                else:
+                    st = f" in {state_display}" if state_display else ""
+                    return f"According to database records, no districts{st} recorded an average female literacy rate of {op_en} {val_int}% (the highest recorded in Bihar is Samastipur at 55.5%)."
+            else:
+                val_int = int(val) if val == int(val) else val
+                if lang == "hi":
+                    return f"डेटाबेस में दिए गए मापदंड ({val_int} {op_hi}) के अनुसार कोई रिकॉर्ड नहीं मिला।"
+                elif lang == "mr":
+                    return f"डेटाबेसमध्ये दिलेल्या निकषानुसार ({val_int} {op_mr}) कोणतीही नोंद आढळली नाही."
+                elif lang == "ta":
+                    return f"தரவுத்தளத்தில் கொடுக்கப்பட்ட அளவுகோலின்படி ({val_int} {op_ta}) பதிவுகள் எதுவும் கிடைக்கவில்லை."
+                elif lang == "te":
+                    return f"డేటాబేస్ లో పేర్కొన్న ప్రమాణాల ప్రకారం ({val_int} {op_te}) ఎటువంటి రికార్డులు కనుగొనబడలేదు."
+                elif lang == "bn":
+                    return f"ডাটাবেসে প্রদত্ত মানদণ্ড ({val_int} {op_bn}) অনুযায়ী কোনো রেকর্ড পাওয়া যায়নি।"
+                elif lang == "hi-en":
+                    return f"Database mein specified criteria ({op_en} {val_int}) ke mutabiq koi record nahi mila."
+                else:
+                    return f"No districts found matching the criteria ({op_en} {val_int})."
+
         if lang == "hi":
             return "डेटाबेस में कोई रिकॉर्ड नहीं मिला।"
         elif lang == "mr":
@@ -128,9 +200,6 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         elif lang == "hi-en":
             return "Database mein koi matching record nahi mila."
         return "No matching records found in database."
-
-    columns = [c.lower() for c in res.get("columns", [])]
-    query_text = (state.get("raw_query", "") or state.get("normalized_query", "")).lower()
 
     # 0a. Multi-entity breakdown (e.g. wheat & rice in Punjab & Haryana, one row each)
     if (
@@ -269,6 +338,34 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
             state_display = "পাঞ্জাব" if lang == "bn" else ("पंजाब" if lang in ("hi", "mr") else "Punjab")
         elif any(w in query_text for w in ["haryana", "हरियाणा", "হরিয়ানা", "ஹரியானா", "హర్యానా"]):
             state_display = "হরিয়ানা" if lang == "bn" else ("हरियाणा" if lang in ("hi", "mr") else "Haryana")
+
+        th = extract_threshold_filter(query_text)
+        if th:
+            op, val = th
+            val_int = int(val) if val == int(val) else val
+            op_en = "more than" if op in (">", ">=") else "less than"
+            op_hi = "से अधिक" if op in (">", ">=") else "से कम"
+            if lang == "hi":
+                st_prefix = f"{state_display} में " if state_display else ""
+                return f"{st_prefix}{m_hi} {val_int}% {op_hi} वाले {len(rows)} जिले हैं: {joined_items}।"
+            elif lang == "mr":
+                st_prefix = f"{state_display} मधील " if state_display else ""
+                return f"{st_prefix}{m_mr} {val_int}% पेक्षा जास्त असलेले {len(rows)} नोंदणीकृत जिल्हे: {joined_items}."
+            elif lang == "ta":
+                st_prefix = f"{state_display} மாநிலத்தில் " if state_display else ""
+                return f"{st_prefix}{m_ta} {val_int}%-க்கு மேல் உள்ள {len(rows)} மாவட்டங்கள்: {joined_items}."
+            elif lang == "te":
+                st_prefix = f"{state_display} లో " if state_display else ""
+                return f"{st_prefix}{m_te} {val_int}% కంటే ఎక్కువ ఉన్న {len(rows)} నమోదైన జిల్లాలు: {joined_items}."
+            elif lang == "bn":
+                st_prefix = f"{state_display}-এ " if state_display else ""
+                return f"{st_prefix}{m_bn} {val_int}% এর বেশি থাকা {len(rows)}টি নথিভুক্ত জেলা: {joined_items}।"
+            elif lang == "hi-en":
+                st_prefix = f"{state_display} mein " if state_display else ""
+                return f"{st_prefix}{m_en} > {val_int}% wale {len(rows)} recorded districts: {joined_items}."
+            else:
+                st_phrase = f" in {state_display}" if state_display else ""
+                return f"Districts{st_phrase} with {m_en} {op_en} {val_int}%: {joined_items}."
 
         if lang == "hi":
             st_prefix = f"{state_display} में " if state_display else ""

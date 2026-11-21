@@ -61,6 +61,34 @@ def normalize_indic_numbers(text: str) -> str:
         res = res.replace(word, str(num))
     return res
 
+def extract_threshold_filter(text: str) -> Optional[Tuple[str, float]]:
+    """
+    Extracts threshold comparisons like 'more than 65%', '> 65', 'below 40%', '65% se zyada' etc.
+    Returns (operator, value), e.g. ('>', 65.0).
+    """
+    t_clean = normalize_indic_numbers(text).lower()
+    # Greater than patterns
+    gt_patterns = [
+        r'(?:more\s+than|greater\s+than|above|over|exceeding|higher\s+than|>\s*=?)\s*(\d+(?:\.\d+)?)\s*%?',
+        r'(\d+(?:\.\d+)?)\s*%?\s*(?:से\s*(?:ज्यादा|अधिक|ऊपर)|पेक्षा\s*(?:जास्त|अधिक)|এর\s*(?:বেশি|উপরে)|-க்கு\s*மேல்|விட\s*அதிகமாக|కంటే\s*(?:ఎక్కువ|పైగా)|>\s*=?|\+\s*)',
+    ]
+    for p in gt_patterns:
+        m = re.search(p, t_clean)
+        if m:
+            return ('>', float(m.group(1)))
+
+    # Less than patterns
+    lt_patterns = [
+        r'(?:less\s+than|lower\s+than|below|under|fewer\s+than|<\s*=?)\s*(\d+(?:\.\d+)?)\s*%?',
+        r'(\d+(?:\.\d+)?)\s*%?\s*(?:से\s*(?:कम|नीचे)|पेक्षा\s*कमी|এর\s*কম|-க்கு\s*கீழ்|விட\s*குறைவாக|కంటే\s*తక్కువ|<\s*=?)',
+    ]
+    for p in lt_patterns:
+        m = re.search(p, t_clean)
+        if m:
+            return ('<', float(m.group(1)))
+
+    return None
+
 _STATE_LEXICON: List[Tuple[List[str], str]] = [
     # North
     (["उत्तर प्रदेश", "uttar pradesh", "uttarpradesh", "up", "উত্তর প্রদেশ", "উত্তরप्रदेश", "উত্তর प्रदेश", "উত্তর প্রদেশের", "উত্তর प्रदेशের", "উত্তরপ্রদেশ", "உத்தரப் பிரதேசம்", "உத்தர பிரதேசம்", "உத்தரபிரதேசம்", "ఉత్తర ప్రదేశ్", "ఉత్తరప్రదేశ్"], "UTTAR PRADESH"),
@@ -337,6 +365,36 @@ def _build_dynamic_fallback(
         func = "AVG" if is_avg else "SUM"
         alias = f"avg_{target_measure}" if is_avg else f"total_{target_measure}"
         return f"SELECT district_name, {func}({target_measure}) AS {alias} FROM {table_name}{where_str} GROUP BY district_name ORDER BY {alias} {order_dir} LIMIT {limit_n};"
+
+    # Check for threshold filters on grouped entities (e.g. female literacy rate > 65% in Bihar districts)
+    threshold = extract_threshold_filter(raw_query)
+    is_district_query = "district_name" in cols and (
+        any(w in clean_norm_lower for w in ["which district", "which districts", "districts in", "district in", "kis jile", "kon jela", "kis district"])
+        or any(w in raw_query for w in ["कौन से जिले", "किस जिले", "कोणते जिल्हे", "कोणत्या जिल्ह्यात", "எந்த மாவட்டங்கள்", "ఏ జిల్లాలు", "কোন জেলা", "কোন জেলাগুলি", "কোন জেলায়"])
+        or ("district_name" not in entities and any(w in clean_norm_lower for w in ["district", "districts", "जिले", "जिल्हे", "மாவட்டங்கள்", "జిల్లాలు", "জেলা"]))
+    )
+
+    if threshold and is_district_query and numeric_cols:
+        op, val = threshold
+        target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
+        is_avg = (
+            "pct" in target_measure
+            or "_rate" in target_measure
+            or target_measure.startswith("rate_")
+            or "ratio" in target_measure
+            or "avg" in clean_norm_lower
+            or "average" in clean_norm_lower
+            or "औसत" in raw_query
+            or "सरासरी" in raw_query
+            or "சராசரி" in raw_query
+            or "సగటు" in raw_query
+            or "গড়" in raw_query
+        )
+        func = "AVG" if is_avg else "SUM"
+        alias = f"avg_{target_measure}" if is_avg else f"total_{target_measure}"
+        round_expr = f"ROUND({func}({target_measure}), 2)" if is_avg else f"{func}({target_measure})"
+        order_dir = "DESC" if op in (">", ">=") else "ASC"
+        return f"SELECT district_name, {round_expr} AS {alias} FROM {table_name}{where_str} GROUP BY district_name HAVING {func}({target_measure}) {op} {val} ORDER BY {alias} {order_dir};"
 
     if (is_min or is_max) and "district_name" in cols and numeric_cols:
         if table_name == "ndap_pm_kisan_disbursement":

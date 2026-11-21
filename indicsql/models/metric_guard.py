@@ -115,6 +115,34 @@ def normalize_indic_numbers(text: str) -> str:
         res = res.replace(word, str(num))
     return res
 
+def extract_threshold_filter(text: str) -> Optional[Tuple[str, float]]:
+    """
+    Extracts threshold comparisons like 'more than 65%', '> 65', 'below 40%', '65% se zyada' etc.
+    Returns (operator, value), e.g. ('>', 65.0).
+    """
+    t_clean = normalize_indic_numbers(text).lower()
+    # Greater than patterns
+    gt_patterns = [
+        r'(?:more\s+than|greater\s+than|above|over|exceeding|higher\s+than|>\s*=?)\s*(\d+(?:\.\d+)?)\s*%?',
+        r'(\d+(?:\.\d+)?)\s*%?\s*(?:से\s*(?:ज्यादा|अधिक|ऊपर)|पेक्षा\s*(?:जास्त|अधिक)|এর\s*(?:বেশি|উপরে)|-க்கு\s*மேல்|விட\s*அதிகமாக|కంటే\s*(?:ఎక్కువ|పైగా)|>\s*=?|\+\s*)',
+    ]
+    for p in gt_patterns:
+        m = re.search(p, t_clean)
+        if m:
+            return ('>', float(m.group(1)))
+
+    # Less than patterns
+    lt_patterns = [
+        r'(?:less\s+than|lower\s+than|below|under|fewer\s+than|<\s*=?)\s*(\d+(?:\.\d+)?)\s*%?',
+        r'(\d+(?:\.\d+)?)\s*%?\s*(?:से\s*(?:कम|नीचे)|पेक्षा\s*कमी|এর\s*কম|-க்கு\s*கீழ்|விட\s*குறைவாக|కంటే\s*తక్కువ|<\s*=?)',
+    ]
+    for p in lt_patterns:
+        m = re.search(p, t_clean)
+        if m:
+            return ('<', float(m.group(1)))
+
+    return None
+
 
 def extract_metric_intent(query: str) -> MetricIntent:
     """
@@ -257,7 +285,7 @@ def extract_metric_intent(query: str) -> MetricIntent:
         r'ஒவ்வொரு', r'வரியாக',
         r'ప్రతి', r'వారీగా',
     ]
-    if any(re.search(p, clean_q, re.IGNORECASE) for p in grouping_patterns):
+    if any(re.search(p, clean_q, re.IGNORECASE) for p in grouping_patterns) or extract_threshold_filter(clean_q):
         intent.has_grouping_intent = True
 
     return intent
@@ -512,6 +540,7 @@ def sanitize_metric_aggregations(
         and not intent.is_highest
         and not intent.is_ranking_query
         and not _multi_value_grouped_dims()
+        and not tree.args.get("having")
     ):
         has_agg = any(isinstance(c, (exp.Sum, exp.Avg, exp.Count, exp.Min, exp.Max)) for c in tree.find_all(exp.Expression))
         if has_agg and tree.args.get("group"):
