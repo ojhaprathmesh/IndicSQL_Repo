@@ -858,14 +858,29 @@ class _SqlSnippetState extends State<_SqlSnippet> {
       CodeLineEditingController.fromText(widget.sql);
 
   @override
+  void didUpdateWidget(covariant _SqlSnippet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sql != widget.sql) {
+      _controller.text = widget.sql;
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) =>
-      SqlEditor(controller: _controller, readOnly: true, height: 140);
+  Widget build(BuildContext context) {
+    final lineCount = widget.sql.trim().split('\n').length;
+    final snippetHeight = (lineCount * 22.0 + 32.0).clamp(72.0, 160.0);
+    return SqlEditor(
+      controller: _controller,
+      readOnly: true,
+      height: snippetHeight,
+    );
+  }
 }
 
 class _ThinkingIndicator extends StatelessWidget {
