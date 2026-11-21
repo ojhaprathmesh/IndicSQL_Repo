@@ -358,10 +358,40 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
 
     sql_text = sql_upper
     detected_state = ""
+    detected_state_key = ""
     for st in ["UTTAR PRADESH", "PUNJAB", "GUJARAT", "MAHARASHTRA", "RAJASTHAN", "BIHAR", "TAMIL NADU", "WEST BENGAL", "ANDHRA PRADESH", "TELANGANA", "MADHYA PRADESH", "HARYANA", "KARNATAKA", "ODISHA", "KERALA", "ASSAM", "JHARKHAND"]:
         if f"'{st}'" in sql_text or st.lower() in query_text:
             detected_state = st.title()
+            detected_state_key = st
             break
+
+    _STATE_NATIVE = {
+        "MAHARASHTRA": {"hi": "महाराष्ट्र", "mr": "महाराष्ट्रात", "te": "మహారాష్ట్ర", "ta": "மகாராஷ்டிராவில்", "bn": "মহারাষ্ট্রে"},
+        "PUNJAB": {"hi": "पंजाब", "mr": "पंजाबमध्ये", "te": "పంజాబ్‌", "ta": "பஞ்சாபில்", "bn": "পাঞ্জাবে"},
+        "HARYANA": {"hi": "हरियाणा", "mr": "हरियाणामध्ये", "te": "హర్యానా", "ta": "ஹரியானாவில்", "bn": "হরিয়ানায়"},
+        "UTTAR PRADESH": {"hi": "उत्तर प्रदेश", "mr": "उत्तर प्रदेशात", "te": "ఉత్తరప్రదేశ్", "ta": "உத்தரபிரதேசத்தில்", "bn": "উত্তর প্রদেশে"},
+        "BIHAR": {"hi": "बिहार", "mr": "बिहारमध्ये", "te": "బీహార్", "ta": "பீகாரில்", "bn": "বিহারে"},
+        "GUJARAT": {"hi": "गुजरात", "mr": "गुजरातमध्ये", "te": "గుజరాత్", "ta": "குஜராத்தில்", "bn": "গুজরাটে"},
+        "RAJASTHAN": {"hi": "राजस्थान", "mr": "राजस्थानमध्ये", "te": "రాజస్థాన్", "ta": "ராஜஸ்தானில்", "bn": "রাজস্থানে"},
+        "ANDHRA PRADESH": {"hi": "आंध्र प्रदेश", "mr": "आंध्र प्रदेशात", "te": "ఆంధ్రప్రదేశ్‌", "ta": "ஆந்திராவில்", "bn": "অন্ধ্রপ্রদেশে"},
+        "TELANGANA": {"hi": "तेलंगाना", "mr": "तेलंगणामध्ये", "te": "తెలంగాణ", "ta": "தெலுங்கானாவில்", "bn": "তেলেঙ্গানায়"},
+        "TAMIL NADU": {"hi": "तमिलनाडु", "mr": "तामिळनाडूमध्ये", "te": "తమిళనాడు", "ta": "தமிழ்நாட்டில்", "bn": "তামিলনাড়ুতে"},
+        "WEST BENGAL": {"hi": "पश्चिम बंगाल", "mr": "पश्चिम बंगालमध्ये", "te": "పశ్చిమ బెంగాల్", "ta": "மேற்கு வங்கத்தில்", "bn": "পশ্চিমবঙ্গে"},
+        "MADHYA PRADESH": {"hi": "मध्य प्रदेश", "mr": "मध्य प्रदेशात", "te": "మధ్యప్రదేశ్", "ta": "மத்திய பிரதேசத்தில்", "bn": "মধ্যপ্রদেশে"},
+        "KARNATAKA": {"hi": "कर्नाटक", "mr": "कर्नाटकात", "te": "కర్ణాటక", "ta": "கர்நாடகாவில்", "bn": "কর্ণাটকে"},
+        "KERALA": {"hi": "केरल", "mr": "केरळमध्ये", "te": "కేరళ", "ta": "கேரளாவில்", "bn": "কেরলে"},
+        "ODISHA": {"hi": "ओडिशा", "mr": "ओडिशामध्ये", "te": "ఒడిశా", "ta": "ஒடிசாவில்", "bn": "ওড়িশায়"},
+        "JHARKHAND": {"hi": "झारखंड", "mr": "झारखंडमध्ये", "te": "జార్ఖండ్", "ta": "ஜார்கண்டில்", "bn": "ঝাড়খণ্ডে"},
+        "ASSAM": {"hi": "असम", "mr": "आसाममध्ये", "te": "అసోం", "ta": "அசாமில்", "bn": "আসামে"},
+    }
+    st_nat = _STATE_NATIVE.get(detected_state_key, {})
+    st_hi = f"{st_nat.get('hi', detected_state)} में " if detected_state else ""
+    st_mr = f"{st_nat.get('mr', detected_state + ' मध्ये')} " if detected_state else ""
+    st_te = f"{st_nat.get('te', detected_state)} లో " if detected_state else ""
+    st_ta = f"{st_nat.get('ta', detected_state + ' மாநிலத்தில்')} " if detected_state else ""
+    st_bn = f"{st_nat.get('bn', detected_state + '-এ')} " if detected_state else ""
+    st_en = f"In {detected_state}, " if detected_state else ""
+    st_hien = f"{detected_state} mein " if detected_state else ""
 
     # 4. Fertilizer Distribution (DAP, Urea, MOP)
     fert_col_idx = next(
@@ -471,7 +501,94 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
         else:
             return f"In {detected_state}, the average mandi modal price for {comm} was INR {price_fmt} per quintal."
 
-    # 8. Generic schema-aware verbalization localized to detected language
+    # 8. Soil Health Records (Samples Tested / Cards Issued)
+    soil_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["samples_tested", "cards_issued", "soil_samples"])),
+        0 if (len(columns) == 1 and any(k in sql_text for k in ["SAMPLES_TESTED", "CARDS_ISSUED", "SOIL_HEALTH"])) else None
+    )
+    if soil_col_idx is not None and ("SOIL_HEALTH" in sql_text or any(k in query_text for k in ["soil", "मिट्टी", "माती", "నేల", "மண்", "মাটি", "नमूनों", "cards", "नमूने"])):
+        val = row[soil_col_idx]
+        val_fmt = format_indian_currency_number(val, lang=lang)
+        is_cards = "CARDS_ISSUED" in sql_text or any(k in query_text for k in ["cards", "कार्ड", "అట్టలు", "కార్డులు", "அட்டைகள்", "কার্ড"])
+        if is_cards:
+            if lang == "hi":
+                return f"{st_hi}मृदा स्वास्थ्य कार्ड योजना के तहत कुल {val_fmt} सॉइल हेल्थ कार्ड जारी किए गए।"
+            elif lang == "mr":
+                return f"{st_mr}मृदा आरोग्य योजनेंतर्गत एकूण {val_fmt} सॉइल हेल्थ कार्ड जारी करण्यात आले."
+            elif lang == "te":
+                return f"{st_te}సాయిల్ హెల్త్ కార్డ్ పథకం కింద మొత్తం {val_fmt} సాయిల్ హెల్త్ కార్డులు జారీ చేయబడ్డాయి."
+            elif lang == "ta":
+                return f"{st_ta}மண் சுகாதார அட்டை திட்டத்தின் கீழ் மொத்தம் {val_fmt} அட்டைகள் வழங்கப்பட்டுள்ளன."
+            elif lang == "bn":
+                return f"{st_bn}মৃত্তিকা স্বাস্থ্য কার্ড প্রকল্পের অধীনে মোট {val_fmt}টি কার্ড বিতরণ করা হয়েছে।"
+            elif lang == "hi-en":
+                return f"{st_hien}Soil Health Card yojana ke tahat total {val_fmt} soil health cards issue kiye gaye."
+            else:
+                return f"{st_en}a total of {val_fmt} Soil Health Cards were issued under the Soil Health scheme."
+        else:
+            if lang == "hi":
+                return f"{st_hi}मृदा स्वास्थ्य योजना के तहत कुल {val_fmt} मिट्टी के नमूनों की जांच की गई।"
+            elif lang == "mr":
+                return f"{st_mr}मृदा आरोग्य योजनेंतर्गत एकूण {val_fmt} मातीचे नमुने तपासण्यात आले."
+            elif lang == "te":
+                return f"{st_te}సాయిల్ హెల్త్ పథకం కింద మొత్తం {val_fmt} నేల నమూనాలను పరీక్షించారు."
+            elif lang == "ta":
+                return f"{st_ta}மண் சுகாதார திட்டத்தின் கீழ் மொத்தம் {val_fmt} மண் மாதிரிகள் பரிசோதிக்கப்பட்டன."
+            elif lang == "bn":
+                return f"{st_bn}মৃত্তিকা স্বাস্থ্য প্রকল্পের অধীনে মোট {val_fmt}টি মাটির নমুনা পরীক্ষা করা হয়েছে।"
+            elif lang == "hi-en":
+                return f"{st_hien}Soil Health yojana ke under total {val_fmt} soil samples test kiye gaye."
+            else:
+                return f"{st_en}a total of {val_fmt} soil samples were tested under the Soil Health scheme."
+
+    # 9. Jal Jeevan Tap Water Connections
+    water_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["tap_water", "connections", "fhtc"])),
+        0 if (len(columns) == 1 and "TAP_WATER" in sql_text) else None
+    )
+    if water_col_idx is not None and ("JAL_JEEVAN" in sql_text or "TAP_WATER" in sql_text or any(k in query_text for k in ["water", "जल", "पानी", "నీరు", "குடிநீர்", "জল", "नळ"])):
+        val = row[water_col_idx]
+        val_fmt = format_indian_currency_number(val, lang=lang)
+        if lang == "hi":
+            return f"{st_hi}जल जीवन मिशन के तहत कुल {val_fmt} ग्रामीण परिवारों को नल जल कनेक्शन प्रदान किए गए।"
+        elif lang == "mr":
+            return f"{st_mr}जल जीवन अभियानांतर्गत एकूण {val_fmt} ग्रामीण कुटुंबांना नळ जोडणी देण्यात आली."
+        elif lang == "te":
+            return f"{st_te}జల్ జీవన్ మిషన్ కింద మొత్తం {val_fmt} గ్రామీణ ఇళ్లకు కుళాయి నీటి కనెక్షన్లు అందించబడ్డాయి."
+        elif lang == "ta":
+            return f"{st_ta}ஜல் ஜீவன் திட்டத்தின் கீழ் மொத்தம் {val_fmt} கிராமப்புற வீடுகளுக்கு குடிநீர் குழாய் இணைப்புகள் வழங்கப்பட்டுள்ளன."
+        elif lang == "bn":
+            return f"{st_bn}জল জীবন মিশনের অধীনে মোট {val_fmt}টি গ্রামীণ পরিবারে ট্যাপের জলের সংযোগ দেওয়া হয়েছে।"
+        elif lang == "hi-en":
+            return f"{st_hien}Jal Jeevan Mission ke tahat total {val_fmt} rural tap water connections provide kiye gaye."
+        else:
+            return f"{st_en}a total of {val_fmt} tap water connections were provided under the Jal Jeevan Mission."
+
+    # 10. Ayushman Bharat (PM-JAY) Claims & Healthcare
+    ayush_col_idx = next(
+        (i for i, c in enumerate(columns) if any(k in c for k in ["claim_amount", "settled_inr", "authorized_admissions", "empanelled_hospitals"])),
+        0 if (len(columns) == 1 and "AYUSHMAN" in sql_text) else None
+    )
+    if ayush_col_idx is not None and ("AYUSHMAN" in sql_text or "PMJAY" in sql_text or any(k in query_text for k in ["ayushman", "आयुष्मान", "आयुष्यमान", "ஆயுஷ்மான்", "ఆయుష్మాన్", "আয়ুষ্মান", "क्लेम", "claim"])):
+        val = row[ayush_col_idx]
+        val_fmt = format_indian_currency_number(val, lang=lang)
+        if "claim" in columns[ayush_col_idx] or "settled" in columns[ayush_col_idx] or "CLAIM_AMOUNT" in sql_text:
+            if lang == "hi":
+                return f"{st_hi}आयुष्मान भारत (PM-JAY) योजना के तहत कुल ₹{val_fmt} की क्लेम राशि का भुगतान किया गया।"
+            elif lang == "mr":
+                return f"{st_mr}आयुष्यमान भारत (PM-JAY) योजनेअंतर्गत एकूण ₹{val_fmt} चा क्लेम निधी मंजूर करण्यात आला."
+            elif lang == "te":
+                return f"{st_te}ఆయుష్మాన్ భారత్ (PM-JAY) పథకం కింద మొత్తం ₹{val_fmt} క్లెయిమ్ మొత్తం పరిష్కరించబడింది."
+            elif lang == "ta":
+                return f"{st_ta}ஆயுஷ்மான் பாரத் (PM-JAY) திட்டத்தின் கீழ் மொத்தம் ₹{val_fmt} க்ளெய்ம் தொகை தீர்வு செய்யப்பட்டுள்ளது."
+            elif lang == "bn":
+                return f"{st_bn}আয়ুষ্মান ভারত (PM-JAY) প্রকল্পে মোট ₹{val_fmt} দাবি নিষ্পত্তি করা হয়েছে।"
+            elif lang == "hi-en":
+                return f"{st_hien}Ayushman Bharat (PM-JAY) ke under total INR {val_fmt} claim amount settle kiya gaya."
+            else:
+                return f"{st_en}a total claim amount of INR {val_fmt} was settled under Ayushman Bharat (PM-JAY)."
+
+    # 11. Generic schema-aware verbalization localized to detected language
     items_desc = []
     for col, val in zip(res.get("columns", []), row):
         val_str = format_indian_currency_number(val, lang=lang)
