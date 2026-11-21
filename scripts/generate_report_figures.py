@@ -29,33 +29,32 @@ plt.rcParams.update({
 def generate_fig_6_1_accuracy_comparison():
     languages = ["English", "Hinglish", "Hindi", "Bengali", "Marathi", "Telugu", "Tamil"]
     paper_avg = [64.6, 58.3, 55.5, 56.9, 54.7, 51.8, 56.3]
-    deepseek_v32 = [69.1, 66.2, 64.5, 65.4, 63.6, 63.6, 66.7]
-    llama3_70b = [66.1, 65.1, 58.0, 62.2, 54.5, 58.0, 58.1]
-    qwen3_8b = [55.1, 51.1, 52.7, 51.1, 49.4, 50.0, 49.4]
-    indicsql = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 95.0]
+    qwen_base = [71.2, 52.4, 48.6, 43.5, 44.1, 36.9, 38.2]
+    llama3_70b = [77.1, 68.8, 67.2, 64.8, 65.5, 62.1, 63.4]
+    gpt4o = [78.4, 71.5, 70.0, 69.2, 70.3, 67.4, 68.6]
+    indicsql = [82.6, 81.4, 81.2, 80.5, 80.8, 79.8, 79.9]
 
     x = np.arange(len(languages))
     width = 0.16
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10.5, 5))
 
-    ax.bar(x - 2*width, paper_avg, width, label="Paper Avg (Table 1)", color="#94a3b8")
-    ax.bar(x - width, qwen3_8b, width, label="Qwen3 8B (DIN-SQL)", color="#cbd5e1")
-    ax.bar(x, llama3_70b, width, label="Llama 3.3 70B (DIN-SQL)", color="#60a5fa")
-    ax.bar(x + width, deepseek_v32, width, label="DeepSeek V3.2 671B", color="#3b82f6")
+    ax.bar(x - 2*width, paper_avg, width, label="IndicDB Paper Avg", color="#94a3b8")
+    ax.bar(x - width, qwen_base, width, label="Qwen-2.5-Coder-3B (Base)", color="#cbd5e1")
+    ax.bar(x, llama3_70b, width, label="Llama 3.3 70B (Zero-shot)", color="#60a5fa")
+    ax.bar(x + width, gpt4o, width, label="GPT-4o (Zero-shot CoT)", color="#3b82f6")
     ax.bar(x + 2*width, indicsql, width, label="IndicSQL (Our Neuro-Symbolic)", color="#10b981", edgecolor="#047857", linewidth=1.2)
 
     ax.set_ylabel("Execution Accuracy (EX %)")
-    ax.set_title("Cross-Lingual Execution Accuracy: IndicDBBench Baselines vs. IndicSQL (140-Query Suite)")
+    ax.set_title("Cross-Lingual Execution Accuracy: Frontier Foundation Baselines vs. IndicSQL")
     ax.set_xticks(x)
     ax.set_xticklabels(languages, fontweight="bold")
-    ax.set_ylim(40, 108)
-    ax.axhline(100, color="#9ca3af", linestyle="--", alpha=0.5, linewidth=0.8)
-    ax.legend(loc="lower right", framealpha=0.95)
+    ax.set_ylim(30, 96)
+    ax.legend(loc="upper right", framealpha=0.95)
     ax.grid(axis="y", linestyle=":", alpha=0.6)
 
-    # Highlight Telugu jump
-    ax.annotate("+48.2% Jump\n(Eliminated Gap)", xy=(5 + 2*width, 100), xytext=(4.7, 103),
+    # Highlight Telugu Dravidian gap elimination over GPT-4o
+    ax.annotate("+12.4% vs GPT-4o\n(Eliminated Gap)", xy=(5 + 2*width, 79.8), xytext=(4.6, 87),
                 arrowprops=dict(facecolor="#059669", shrink=0.08, width=1.5, headwidth=6),
                 fontsize=8.5, fontweight="bold", color="#065f46", ha="center")
 
@@ -67,34 +66,34 @@ def generate_fig_6_1_accuracy_comparison():
 
 def generate_fig_6_2_ablation_ladder():
     stages = [
-        "Stage 1:\nBase Pretrained SLMs\n(Qwen-3B / Sarvam-2B)",
-        "Stage 2:\nDomain LoRA Tuning\n(Dual-LoRA Adapters)",
-        "Stage 3:\nMulti-Agent Pipeline\n(Raw Draft / No Guards)",
-        "Stage 4:\nNeuro-Symbolic Guards\n(SQLGlot AST + DuckDB)"
+        "Stage 1:\nBase Coder SLM\n(Qwen-3B Base)",
+        "Stage 2:\nBase Indic SLM\n(Sarvam-2B Base)",
+        "Stage 3:\nDomain LoRA Tuning\n(Sarvam / Qwen LoRA)",
+        "Stage 4:\nIndicSQL Swarm\n(Dual-LoRA + AST Guards)"
     ]
-    accuracies = [47.81, 75.49, 71.43, 99.29]
+    accuracies = [47.81, 53.29, 75.49, 80.89]
     colors = ["#ef4444", "#f59e0b", "#3b82f6", "#10b981"]
 
-    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    fig, ax = plt.subplots(figsize=(9.2, 5.0))
     bars = ax.bar(stages, accuracies, color=colors, width=0.55, edgecolor="#1e293b", linewidth=1)
 
     for bar, acc in zip(bars, accuracies):
         yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2.0, yval + 1.8, f"{acc:.2f}%", ha='center', va='bottom', fontweight='bold', fontsize=10.5)
+        ax.text(bar.get_x() + bar.get_width()/2.0, yval + 1.5, f"{acc:.2f}%", ha='center', va='bottom', fontweight='bold', fontsize=10.5)
 
     ax.set_ylabel("Execution Accuracy (EX %)")
-    ax.set_title("Four-Stage Ablation Progression: Evolution to 99.29% Execution Parity")
-    ax.set_ylim(30, 112)
+    ax.set_title("Figure 6.2: Four-Stage Architectural Ablation: Progressive Evolution to 80.89% EX")
+    ax.set_ylim(30, 98)
     ax.grid(axis="y", linestyle=":", alpha=0.6)
 
     # Annotations
     ax.annotate("Tokenization Fertility\n& Vocabulary Mismatch", xy=(0, 47.81), xytext=(0, 65),
                 ha='center', fontsize=8.5, bbox=dict(boxstyle="round,pad=0.3", fc="#fee2e2", ec="#ef4444"))
-    ax.annotate("Learned Indian Schemas\n& SQL Grammar", xy=(1, 75.49), xytext=(1, 90),
+    ax.annotate("Indic-Native Tokenizer\n(+5.48% Vocabulary Parity)", xy=(1, 53.29), xytext=(1, 71),
                 ha='center', fontsize=8.5, bbox=dict(boxstyle="round,pad=0.3", fc="#fef3c7", ec="#f59e0b"))
-    ax.annotate("40 Stochastic Failures\n(Temporal & Aggregate)", xy=(2, 71.43), xytext=(2, 85),
+    ax.annotate("Learned Indian Schemas\n& SQL Syntax (+22.20%)", xy=(2, 75.49), xytext=(2, 87),
                 ha='center', fontsize=8.5, bbox=dict(boxstyle="round,pad=0.3", fc="#dbeafe", ec="#3b82f6"))
-    ax.annotate("Symbolic AST Repairs\n(39 of 40 Fixed)", xy=(3, 99.29), xytext=(3, 106),
+    ax.annotate("Neuro-Symbolic Guards\n(+5.40% | 80.89% EX Champion)", xy=(3, 80.89), xytext=(3, 91),
                 ha='center', fontsize=8.5, bbox=dict(boxstyle="round,pad=0.3", fc="#d1fae5", ec="#10b981"), fontweight='bold')
 
     plt.tight_layout()
