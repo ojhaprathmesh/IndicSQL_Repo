@@ -83,6 +83,38 @@ ADDITIVE_MEASURE_COLUMNS: Set[str] = {
     "infant_mortality_rate",
 }
 
+_INDIC_DIGIT_MAP = str.maketrans("০১২৩৪৫৬৭৮৯०१२३४५६७८९౦౧౨౩౪౫౬౭౮౯௦௧௨௩௪௫௬௭௮௯", "0123456789012345678901234567890123456789")
+
+_INDIC_NUMBER_WORDS = {
+    # 1
+    "একটি": 1, "এক": 1, "एक": 1, "ఒకటి": 1, "ఒక": 1, "ஒன்று": 1, "ஒரு": 1, "one": 1,
+    # 2
+    "দুটি": 2, "দুটো": 2, "দুই": 2, "दो": 2, "दोन": 2, "రెండు": 2, "இரண்டு": 2, "ரெண்டு": 2, "two": 2,
+    # 3
+    "তিনটি": 3, "তিনটে": 3, "তিন": 3, "तीन": 3, "మూడు": 3, "మూன்று": 3, "మూணு": 3, "three": 3,
+    # 4
+    "চারটি": 4, "চারটে": 4, "চার": 4, "चार": 4, "నాలుగు": 4, "நான்கு": 4, "நாலு": 4, "four": 4,
+    # 5
+    "পাঁচটি": 5, "পাঁচটা": 5, "পাঁচ": 5, "पांच": 5, "पाच": 5, "ఐదు": 5, "ஐந்து": 5, "அஞ்சு": 5, "five": 5,
+    # 6
+    "ছয়টি": 6, "ছটি": 6, "ছয়": 6, "छह": 6, "सहा": 6, "ఆరు": 6, "ஆறு": 6, "six": 6,
+    # 7
+    "সাতটি": 7, "সাত": 7, "सात": 7, "ఏడు": 7, "ஏழு": 7, "seven": 7,
+    # 8
+    "আটটি": 8, "আট": 8, "आठ": 8, "ఎనిమిది": 8, "எட்டு": 8, "eight": 8,
+    # 9
+    "নয়টি": 9, "নয়": 9, "नौ": 9, "नऊ": 9, "తొమ్మిది": 9, "ஒன்பது": 9, "nine": 9,
+    # 10
+    "দশটি": 10, "দশ": 10, "दस": 10, "दहा": 10, "పది": 10, "பத்து": 10, "ten": 10,
+}
+
+def normalize_indic_numbers(text: str) -> str:
+    """Translates Indic script digits and replaces Indic number words with Arabic digits."""
+    res = text.translate(_INDIC_DIGIT_MAP)
+    for word, num in sorted(_INDIC_NUMBER_WORDS.items(), key=lambda x: -len(x[0])):
+        res = res.replace(word, str(num))
+    return res
+
 
 def extract_metric_intent(query: str) -> MetricIntent:
     """
@@ -137,9 +169,15 @@ def extract_metric_intent(query: str) -> MetricIntent:
     if any(re.search(p, clean_q, re.IGNORECASE) for p in highest_patterns):
         intent.is_highest = True
 
-    # 4b. Top-N or Bottom-N Ranking Intent
-    top_n_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च|अव्वल|முன்னணி|అగ్ర)\s*(\d+)\b', clean_q, re.IGNORECASE)
-    bottom_n_match = re.search(r'\b(?:bottom|lowest|least)\s*(\d+)\b', clean_q, re.IGNORECASE)
+    # 4b. Top-N or Bottom-N Ranking Intent (supporting Indic numerals, words, and entity qualifiers)
+    clean_norm = normalize_indic_numbers(clean_q)
+    top_n_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च|अव्वल|முன்னணி|అగ్ర)\s*(\d+)\b', clean_norm, re.IGNORECASE)
+    bottom_n_match = re.search(r'\b(?:bottom|lowest|least|न्यूनतम|कनिष्ठ|সর্বনিম্ন)\s*(\d+)\b', clean_norm, re.IGNORECASE)
+    rank_entity_match = re.search(
+        r'(?:কোন|किन|कोणत्या|எந்த|ఏ|which)?\s*(\d+)\s*(?:টি|টা)?\s*(?:districts|जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা|states|राज्य|రాష్ట్రాలు|மாநிலங்கள்|রাজ্য)',
+        clean_norm,
+        re.IGNORECASE
+    )
     if top_n_match:
         intent.is_highest = True
         intent.limit_n = int(top_n_match.group(1))
@@ -150,6 +188,22 @@ def extract_metric_intent(query: str) -> MetricIntent:
         intent.limit_n = int(bottom_n_match.group(1))
         intent.is_ranking_query = True
         intent.has_grouping_intent = True
+    elif rank_entity_match:
+        n_val = int(rank_entity_match.group(1))
+        if intent.is_lowest or any(w in clean_norm for w in ["সবচেয়ে কম", "সর্বনিম্ন", "कम", "bottom", "lowest", "least"]):
+            intent.is_lowest = True
+            intent.limit_n = n_val
+            intent.is_ranking_query = True
+            intent.has_grouping_intent = True
+        elif intent.is_highest or any(w in clean_norm for w in ["সবচেয়ে বেশি", "সর্বাধিক", "ज्यादा", "top", "highest"]):
+            intent.is_highest = True
+            intent.limit_n = n_val
+            intent.is_ranking_query = True
+            intent.has_grouping_intent = True
+        elif not intent.limit_n:
+            intent.limit_n = n_val
+            intent.is_ranking_query = True
+            intent.has_grouping_intent = True
 
     # 5. Soil Health Disambiguation: Samples Tested vs Cards Issued
     soil_samples_patterns = [
@@ -265,7 +319,7 @@ def sanitize_metric_aggregations(
     is_farmer_count = any(re.search(p, query, re.IGNORECASE) for p in farmer_count_patterns)
     if table_name == "ndap_pm_kisan_disbursement" and is_farmer_count:
         # If user explicitly asked for amount as well, preserve amount_inr
-        is_amount_explicit = any(w in query.lower() for w in ['amount', 'disbursement', 'राशि', 'निधी', 'பணம்', 'డబ్బు'])
+        is_amount_explicit = any(w in query.lower() for w in ['amount', 'disbursement', 'राशि', 'धनराशि', 'निधी', 'पैसे', 'रक्कम', 'பணம்', 'நிதி', 'డబ్బు', 'నిధులు', 'অর্থ', 'টাকা', 'বিতরণ', 'বরাদ্দ'])
         if not is_amount_explicit:
             for col in tree.find_all(exp.Column):
                 if col.name.lower() == "amount_inr":
@@ -321,7 +375,7 @@ def sanitize_metric_aggregations(
             r'किस\s*जिले', r'कोणत्या\s*जिल्ह्यात', r'எந்த\s*மாவட்டம்', r'மாவட்டம்\s*எது', r'ఏ\s*జిల్లా', r'কোন\s*জেলায়'
         ]
         is_which_district = any(re.search(p, query, re.IGNORECASE) for p in which_district_patterns)
-        if is_which_district:
+        if is_which_district and not (intent.is_ranking_query and intent.limit_n and intent.limit_n > 1):
             # Find the measure column
             measure_col = next((c.name for c in tree.find_all(exp.Column) if c.name.lower() in PERCENTAGE_RATE_COLUMNS), None)
             if not measure_col:
@@ -366,7 +420,7 @@ def sanitize_metric_aggregations(
         if dim_col:
             measure_col = None
             if table_name == "ndap_pm_kisan_disbursement":
-                measure_col = "amount_inr" if any(w in query.lower() for w in ["amount", "disbursement", "राशि", "पैसे", "డబ్బు", "பணம்"]) else "farmer_beneficiaries"
+                measure_col = "amount_inr" if any(w in query.lower() for w in ["amount", "disbursement", "disbursed", "राशि", "धनराशि", "पैसे", "रुपये", "रक्कम", "निधी", "డబ్బు", "నిధులు", "பணம்", "நிதி", "অর্থ", "টাকা", "বিতরণ", "বরাদ্দ"]) else "farmer_beneficiaries"
             elif table_name == "ndap_education_stats":
                 if any(w in query.lower() for w in ["literacy", "साक्षरता", "கல்வியறிவு", "అక్షరాస్యత", "সাক্ষরতা", "साक्षर"]):
                     measure_col = "male_literacy_rate" if any(w in query.lower() for w in ["male", "पुरुष", "ஆண்", "పురుష"]) else "female_literacy_rate"

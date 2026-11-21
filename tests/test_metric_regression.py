@@ -350,6 +350,23 @@ class TestMetricRegressionComprehensive(unittest.TestCase):
                 f"Failed live execution isomorphism on {qid}: {fixed_sql} vs {gold_sql}",
             )
 
+    # -------------------------------------------------------------------------
+    # Test 22: Bottom-N Ranking with Indic Number Words & Superlatives (Bengali PM-KISAN)
+    # -------------------------------------------------------------------------
+    def test_22_bottom_n_ranking_pm_kisan_disbursement_bengali(self):
+        query = "উত্তর प्रदेशের কোন তিনটি জেলায় পিএম-কিষাণ প্রকল্পের অধীনে মোট বিতরণ করা অর্থের পরিমাণ সবচেয়ে কম?"
+        raw_sql = "SELECT district_name, farmer_beneficiaries FROM ndap_pm_kisan_disbursement WHERE state_name = 'UTTAR PRADESH' ORDER BY farmer_beneficiaries ASC LIMIT 1;"
+        fixed_sql = sanitize_metric_aggregations(raw_sql, query, table_name="ndap_pm_kisan_disbursement")
+
+        self.assertIn("amount_inr", fixed_sql)
+        self.assertIn("LIMIT 3", fixed_sql)
+        self.assertIn("GROUP BY", fixed_sql)
+        self.assertIn("ASC", fixed_sql)
+
+        pred_res = self.sandbox.execute_query(fixed_sql)
+        self.assertEqual(pred_res["row_count"], 3)
+        self.assertEqual([r[0] for r in pred_res["rows"]], ["Varanasi", "Lucknow", "Gorakhpur"])
+
 
 if __name__ == "__main__":
     unittest.main()

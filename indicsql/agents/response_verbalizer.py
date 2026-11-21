@@ -171,70 +171,126 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
                     formatted_items.append(f"{ent} ({float(val):.1f}%)")
                 except (ValueError, TypeError):
                     formatted_items.append(f"{ent} ({val})")
+            elif "amount" in val_col_name:
+                formatted_items.append(f"{ent} (₹{format_indian_currency_number(val, lang=lang)})")
             else:
                 formatted_items.append(f"{ent} ({format_indian_currency_number(val, lang=lang)})")
 
         joined_items = ", ".join(formatted_items)
 
-        # Determine human-readable metric basis
-        metric_en = "PM-Kisan farmer beneficiaries"
-        metric_hi = "किसान लाभार्थियों (Farmer Beneficiaries)"
-        if "student" in val_col_name:
-            metric_en = "student enrollment"
-            metric_hi = "विद्यार्थी संख्या (Student Count)"
+        # Determine ranking direction (ASC = lowest, DESC = highest/top)
+        gen_sql = (state.get("generated_sql") or "").upper()
+        is_lowest = "ASC" in gen_sql or any(
+            w in query_text.lower() for w in [
+                "lowest", "bottom", "least", "min", "kam", "kami",
+                "कम", "कमी", "সবচেয়ে কম", "কম", "সর্বনিম্ন", "குறைந்த", "மிகக் குறைந்த", "తక్కువ", "అత్యల్ప"
+            ]
+        )
+
+        rank_hi = "न्यूनतम" if is_lowest else "शीर्ष"
+        rank_mr = "सर्वात कमी" if is_lowest else "अव्वल"
+        rank_ta = "மிகக் குறைந்த" if is_lowest else "முன்னணி"
+        rank_te = "అత్యల్ప" if is_lowest else "అగ్ర"
+        rank_bn = "সর্বনিম্ন" if is_lowest else "শীর্ষ"
+        rank_en = "Bottom" if is_lowest else "Top"
+
+        # Determine human-readable metric basis across languages
+        m_en = "PM-Kisan farmer beneficiaries"
+        m_hi = "किसान लाभार्थियों (Farmer Beneficiaries)"
+        m_mr = "शेतकरी लाभार्थी"
+        m_ta = "விவசாய பயனாளிகள்"
+        m_te = "రైతు లబ్ధిదారులు"
+        m_bn = "পিএম-কিষাণ কৃষক সুবিধাভোগী"
+
+        if "amount" in val_col_name:
+            m_en = "disbursed amount (₹)"
+            m_hi = "वितरित राशि (₹)"
+            m_mr = "वितरित रक्कम (₹)"
+            m_ta = "வழங்கப்பட்ட நிதி (₹)"
+            m_te = "పంపిణీ చేసిన నిధులు (₹)"
+            m_bn = "বিতরণ করা অর্থ (₹)"
+        elif "student" in val_col_name:
+            m_en = "student enrollment"
+            m_hi = "विद्यार्थी संख्या (Student Count)"
+            m_mr = "विद्यार्थी संख्या"
+            m_ta = "மாணவர் சேர்க்கை"
+            m_te = "విద్యార్థుల సంఖ్య"
+            m_bn = "শিক্ষার্থী সংখ্যা"
         elif "literacy" in val_col_name:
-            metric_en = "literacy rate"
-            metric_hi = "साक्षरता दर (Literacy Rate)"
+            m_en = "literacy rate"
+            m_hi = "साक्षरता दर (Literacy Rate)"
+            m_mr = "साक्षरता प्रमाण"
+            m_ta = "கல்வியறிவு விகிதம்"
+            m_te = "అక్షరాస్యత రేటు"
+            m_bn = "সাক্ষরতার হার"
         elif "manday" in val_col_name:
-            metric_en = "MGNREGA mandays"
-            metric_hi = "मनरेगा कार्य दिवसों (Mandays)"
+            m_en = "MGNREGA mandays"
+            m_hi = "मनरेगा कार्य दिवसों (Mandays)"
+            m_mr = "मनरेगा मनुष्यदिन"
+            m_ta = "மகாத்மா காந்தி வேலைவாய்ப்பு மனித நாட்கள்"
+            m_te = "ఉపాధి హామీ పని దినాలు"
+            m_bn = "মনরেগা কাজের দিন"
         elif "water" in val_col_name or "tap" in val_col_name:
-            metric_en = "tap water connections"
-            metric_hi = "नल जल कनेक्शनों (Tap Water Connections)"
+            m_en = "tap water connections"
+            m_hi = "नल जल कनेक्शनों (Tap Water Connections)"
+            m_mr = "नळ जोडणी"
+            m_ta = "குடிநீர் குழாய் இணைப்புகள்"
+            m_te = "కుళాయి నీటి కనెక్షన్లు"
+            m_bn = "ট্যাপের পানির সংযোগ"
         elif "school" in val_col_name:
-            metric_en = "school infrastructure count"
-            metric_hi = "स्कूलों की संख्या"
+            m_en = "school infrastructure count"
+            m_hi = "स्कूलों की संख्या"
+            m_mr = "शाळांची संख्या"
+            m_ta = "பள்ளிகள் எண்ணிக்கை"
+            m_te = "పాఠశాలల సంఖ్య"
+            m_bn = "বিদ্যালয়ের সংখ্যা"
         elif "production" in val_col_name:
-            metric_en = "crop production (tonnes)"
-            metric_hi = "फसल उत्पादन"
-        elif "amount" in val_col_name:
-            metric_en = "disbursed amount (₹)"
-            metric_hi = "वितरित राशि"
+            m_en = "crop production (tonnes)"
+            m_hi = "फसल उत्पादन"
+            m_mr = "पीक उत्पादन"
+            m_ta = "பயிர் உற்பத்தி"
+            m_te = "పంట ఉత్పత్తి"
+            m_bn = "ফসল উৎপাদন"
 
         # Detect State in Query
         state_display = ""
-        if "uttar pradesh" in query_text or " uttar " in f" {query_text} " or " up " in f" {query_text} " or "उत्तर प्रदेश" in query_text:
-            state_display = "Uttar Pradesh"
-        elif "bihar" in query_text or "बिहार" in query_text:
-            state_display = "Bihar"
-        elif "maharashtra" in query_text or "महाराष्ट्र" in query_text:
-            state_display = "Maharashtra"
-        elif "tamil nadu" in query_text or "தமிழ்நாடு" in query_text:
-            state_display = "Tamil Nadu"
-        elif "rajasthan" in query_text or "राजस्थान" in query_text:
-            state_display = "Rajasthan"
+        st_lower = f" {query_text.lower()} "
+        if any(w in query_text for w in ["uttar pradesh", "उत्तर प्रदेश", "উত্তর প্রদেশ", "উত্তর प्रदेश", "উত্তরপ্রদেশ", "உத்தர", "ఉత్తర"]) or " up " in st_lower:
+            state_display = "উত্তর প্রদেশ" if lang == "bn" else ("उत्तर प्रदेश" if lang in ("hi", "mr") else "Uttar Pradesh")
+        elif any(w in query_text for w in ["bihar", "बिहार", "বিহার", "பீகார்", "బీహార్"]):
+            state_display = "বিহার" if lang == "bn" else ("बिहार" if lang in ("hi", "mr") else "Bihar")
+        elif any(w in query_text for w in ["maharashtra", "महाराष्ट्र", "মহারাষ্ট্র", "மகாராஷ்டிரா", "మహారాష్ట్ర"]):
+            state_display = "মহারাষ্ট্র" if lang == "bn" else ("महाराष्ट्र" if lang in ("hi", "mr") else "Maharashtra")
+        elif any(w in query_text for w in ["tamil nadu", "தமிழ்நாடு", "তামিলনাড়ু", "తమిళనాడు"]):
+            state_display = "তামিলনাড়ু" if lang == "bn" else ("तमिलनाडु" if lang in ("hi", "mr") else "Tamil Nadu")
+        elif any(w in query_text for w in ["rajasthan", "राजस्थान", "রাজস্থান", "ராஜஸ்தான்", "రాజస్థాన్"]):
+            state_display = "রাজস্থান" if lang == "bn" else ("राजस्थान" if lang in ("hi", "mr") else "Rajasthan")
+        elif any(w in query_text for w in ["punjab", "पंजाब", "পাঞ্জাব", "பஞ்சாப்", "పంజాబ్"]):
+            state_display = "পাঞ্জাব" if lang == "bn" else ("पंजाब" if lang in ("hi", "mr") else "Punjab")
+        elif any(w in query_text for w in ["haryana", "हरियाणा", "হরিয়ানা", "ஹரியானா", "హర్యానా"]):
+            state_display = "হরিয়ানা" if lang == "bn" else ("हरियाणा" if lang in ("hi", "mr") else "Haryana")
 
         if lang == "hi":
             st_prefix = f"{state_display} में " if state_display else ""
-            return f"{st_prefix}{metric_hi} के अनुसार शीर्ष {len(rows)} जिले हैं: {joined_items}।"
+            return f"{st_prefix}{m_hi} के अनुसार {rank_hi} {len(rows)} जिले हैं: {joined_items}।"
         elif lang == "mr":
             st_prefix = f"{state_display} मधील " if state_display else ""
-            return f"{st_prefix}{metric_en} नुसार नोंदणीकृत अव्वल {len(rows)} जिल्हे: {joined_items}."
+            return f"{st_prefix}{m_mr} नुसार {rank_mr} {len(rows)} नोंदणीकृत जिल्हे: {joined_items}."
         elif lang == "ta":
             st_prefix = f"{state_display} மாநிலத்தில் " if state_display else ""
-            return f"{st_prefix}{metric_en} அடிப்படையில் முன்னணி {len(rows)} மாவட்டங்கள்: {joined_items}."
+            return f"{st_prefix}{m_ta} அடிப்படையில் {rank_ta} {len(rows)} மாவட்டங்கள்: {joined_items}."
         elif lang == "te":
             st_prefix = f"{state_display} లో " if state_display else ""
-            return f"{st_prefix}{metric_en} ఆధారంగా అగ్ర {len(rows)} నమోదైన జిల్లాలు: {joined_items}."
+            return f"{st_prefix}{m_te} ఆధారంగా {rank_te} {len(rows)} నమోదైన జిల్లాలు: {joined_items}."
         elif lang == "bn":
-            st_prefix = f"{state_display} এ " if state_display else ""
-            return f"{st_prefix}{metric_en} অনুসারে শীর্ষ {len(rows)}টি নথিভুক্ত জেলা: {joined_items}।"
+            st_prefix = f"{state_display}-এ " if state_display else ""
+            return f"{st_prefix}{m_bn} অনুসারে {rank_bn} {len(rows)}টি নথিভুক্ত জেলা: {joined_items}।"
         elif lang == "hi-en":
             st_prefix = f"{state_display} mein " if state_display else ""
-            return f"{st_prefix}{metric_en} ke basis par top {len(rows)} recorded districts: {joined_items}."
+            return f"{st_prefix}{m_en} ke basis par {rank_en.lower()} {len(rows)} recorded districts: {joined_items}."
         else:
             st_phrase = f" in {state_display}" if state_display else ""
-            return f"Top {len(rows)} recorded districts{st_phrase} by {metric_en}: {joined_items}."
+            return f"{rank_en} {len(rows)} recorded districts{st_phrase} by {m_en}: {joined_items}."
 
     row = rows[0]
 

@@ -29,35 +29,67 @@ _ollama_client = OllamaClient()
 # ---------------------------------------------------------------------------
 # Comprehensive Pan-India Entity Lexicons (All Regions)
 # ---------------------------------------------------------------------------
+_INDIC_DIGIT_MAP = str.maketrans("০১২৩৪৫৬৭৮৯०१२३४५६७८९౦౧౨౩౪౫౬౭౮౯௦௧௨௩௪௫௬௭௮௯", "0123456789012345678901234567890123456789")
+
+_INDIC_NUMBER_WORDS = {
+    # 1
+    "একটি": 1, "এক": 1, "एक": 1, "ఒకటి": 1, "ఒక": 1, "ஒன்று": 1, "ஒரு": 1, "one": 1,
+    # 2
+    "দুটি": 2, "দুটো": 2, "দুই": 2, "दो": 2, "दोन": 2, "రెండు": 2, "இரண்டு": 2, "ரெண்டு": 2, "two": 2,
+    # 3
+    "তিনটি": 3, "তিনটে": 3, "তিন": 3, "तीन": 3, "మూడు": 3, "మూன்று": 3, "మూணு": 3, "three": 3,
+    # 4
+    "চারটি": 4, "চারটে": 4, "চার": 4, "चार": 4, "నాలుగు": 4, "நான்கு": 4, "நாலு": 4, "four": 4,
+    # 5
+    "পাঁচটি": 5, "পাঁচটা": 5, "পাঁচ": 5, "पांच": 5, "पाच": 5, "ఐదు": 5, "ஐந்து": 5, "அஞ்சு": 5, "five": 5,
+    # 6
+    "ছয়টি": 6, "ছটি": 6, "ছয়": 6, "छह": 6, "सहा": 6, "ఆరు": 6, "ஆறு": 6, "six": 6,
+    # 7
+    "সাতটি": 7, "সাত": 7, "सात": 7, "ఏడు": 7, "ஏழு": 7, "seven": 7,
+    # 8
+    "আটটি": 8, "আট": 8, "आठ": 8, "ఎనిమిది": 8, "எட்டு": 8, "eight": 8,
+    # 9
+    "নয়টি": 9, "নয়": 9, "नौ": 9, "नऊ": 9, "తొమ్మిది": 9, "ஒன்பது": 9, "nine": 9,
+    # 10
+    "দশটি": 10, "দশ": 10, "दस": 10, "दहा": 10, "పది": 10, "பத்து": 10, "ten": 10,
+}
+
+def normalize_indic_numbers(text: str) -> str:
+    """Translates Indic script digits and replaces Indic number words with Arabic digits."""
+    res = text.translate(_INDIC_DIGIT_MAP)
+    for word, num in sorted(_INDIC_NUMBER_WORDS.items(), key=lambda x: -len(x[0])):
+        res = res.replace(word, str(num))
+    return res
+
 _STATE_LEXICON: List[Tuple[List[str], str]] = [
     # North
-    (["उत्तर प्रदेश", "uttar pradesh", "uttarpradesh", "up"], "UTTAR PRADESH"),
-    (["पंजाब", "punjab", "punjb", "panjab", "ਪੰਜਾਬ"], "PUNJAB"),
-    (["हरियाणा", "haryana", "haryan", "hariyana", "harayana"], "HARYANA"),
-    (["राजस्थान", "rajasthan", "rajsthan"], "RAJASTHAN"),
-    (["हिमाचल", "himachal pradesh", "himachal", "himanchal"], "HIMACHAL PRADESH"),
-    (["उत्तराखंड", "uttarakhand", "uttrakhand", "uttaranchal"], "UTTARAKHAND"),
+    (["उत्तर प्रदेश", "uttar pradesh", "uttarpradesh", "up", "উত্তর প্রদেশ", "উত্তরप्रदेश", "উত্তর प्रदेश", "উত্তর প্রদেশের", "উত্তর प्रदेशের", "উত্তরপ্রদেশ", "உத்தரப் பிரதேசம்", "உத்தர பிரதேசம்", "உத்தரபிரதேசம்", "ఉత్తర ప్రదేశ్", "ఉత్తరప్రదేశ్"], "UTTAR PRADESH"),
+    (["पंजाब", "punjab", "punjb", "panjab", "ਪੰਜਾਬ", "পাঞ্জাব", "பஞ்சாப்", "పంజాబ్"], "PUNJAB"),
+    (["हरियाणा", "haryana", "haryan", "hariyana", "harayana", "হরিয়ানা", "ஹரியானா", "హర్యానా"], "HARYANA"),
+    (["राजस्थान", "rajasthan", "rajsthan", "রাজস্থান", "ராஜஸ்தான்", "రాజస్థాన్"], "RAJASTHAN"),
+    (["हिमाचल", "himachal pradesh", "himachal", "himanchal", "হিমাচল", "இமாச்சலப் பிரதேசம்", "హిమాచల్"], "HIMACHAL PRADESH"),
+    (["उत्तराखंड", "uttarakhand", "uttrakhand", "uttaranchal", "উত্তরাখণ্ড", "உத்தரகாண்ட்", "உత్తరాఖండ్"], "UTTARAKHAND"),
     (["जम्मू", "कश्मीर", "jammu", "kashmir"], "JAMMU AND KASHMIR"),
-    (["दिल्ली", "delhi", "new delhi"], "DELHI"),
+    (["दिल्ली", "delhi", "new delhi", "দিল্লি", "தில்லி", "ఢిల్లీ"], "DELHI"),
     # South
-    (["तमिलनाडु", "தமிழ்நாடு", "tamil nadu", "tamilnadu"], "TAMIL NADU"),
-    (["कर्नाटक", "ಕರ್ನಾಟಕ", "karnataka", "karnatka"], "KARNATAKA"),
-    (["केरल", "kerala", "keral", "കേരളം"], "KERALA"),
-    (["आंध्र", "ఆంధ్రప్రదేశ్", "andhra pradesh", "andhrapradesh", "andhra"], "ANDHRA PRADESH"),
-    (["तेलंगाना", "తెలంగాణ", "telangana", "telngana", "telengana"], "TELANGANA"),
+    (["तमिलनाडु", "தமிழ்நாடு", "tamil nadu", "tamilnadu", "তামিলনাড়ু", "తమిళనాడు"], "TAMIL NADU"),
+    (["कर्नाटक", "ಕರ್ನಾಟಕ", "karnataka", "karnatka", "কর্ণাটক", "கர்நாடகா", "కర్ణాటక"], "KARNATAKA"),
+    (["केरल", "kerala", "keral", "കേരളം", "কেরালা", "கேரளா", "కేరళ"], "KERALA"),
+    (["आंध्र", "ఆంధ్రప్రదేశ్", "ఆంధ్ర", "andhra pradesh", "andhrapradesh", "andhra", "অন্ধ্রপ্রদেশ", "ஆந்திரா", "ஆந்திரப் பிரதேசம்"], "ANDHRA PRADESH"),
+    (["तेलंगाना", "తెలంగాణ", "telangana", "telngana", "telengana", "তেলেঙ্গানা", "தெலுங்கானா"], "TELANGANA"),
     # West
-    (["महाराष्ट्र", "maharashtra", "maharastra", "maharshtra", "महाराष्ट्रात"], "MAHARASHTRA"),
-    (["गुजरात", "gujarat", "gujrat", "ગુજરાત"], "GUJARAT"),
-    (["गोवा", "goa"], "GOA"),
+    (["महाराष्ट्र", "maharashtra", "maharastra", "maharshtra", "महाराष्ट्रात", "মহারাষ্ট্র", "மகாராஷ்டிரா", "మహారాష్ట్ర"], "MAHARASHTRA"),
+    (["गुजरात", "gujarat", "gujrat", "ગુજરાત", "গুজরাত", "গুজরাট", "குஜராத்", "గుజరాత్"], "GUJARAT"),
+    (["गोवा", "goa", "গোয়া"], "GOA"),
     # East & Central
-    (["बिहार", "bihar"], "BIHAR"),
-    (["पश्चिम बंगाल", "পশ্চিমবঙ্গ", "west bengal", "bengal"], "WEST BENGAL"),
-    (["ओडिशा", "odisha", "orissa", "ଓଡ଼ିଶା"], "ODISHA"),
-    (["झारखंड", "jharkhand"], "JHARKHAND"),
-    (["मध्य प्रदेश", "madhya pradesh", "mp"], "MADHYA PRADESH"),
-    (["छत्तीसगढ़", "chhattisgarh"], "CHHATTISGARH"),
+    (["बिहार", "bihar", "বিহার", "பீகார்", "బీహార్"], "BIHAR"),
+    (["पश्चिम बंगाल", "পশ্চিমবঙ্গ", "পশ্চিম বঙ্গ", "west bengal", "bengal", "மேற்கு வங்காளம்", "పశ్చిమ బెంగాల్"], "WEST BENGAL"),
+    (["ओडिशा", "odisha", "orissa", "ଓଡ଼ିଶା", "ওড়িশা", "ஒடிசா", "ఒడిశా"], "ODISHA"),
+    (["झारखंड", "jharkhand", "ঝাড়খণ্ড", "ஜார்கண்ட்", "జార్ఖండ్"], "JHARKHAND"),
+    (["मध्य प्रदेश", "madhya pradesh", "mp", "মধ্যপ্রদেশ", "মধ্য প্রদেশ", "மத்தியப் பிரதேசம்", "மத்திய பிரதேசம்", "మధ్యప్రదేశ్"], "MADHYA PRADESH"),
+    (["छत्तीसगढ़", "chhattisgarh", "ছত্তিশগড়", "சத்தீஸ்கர்", "ఛత్తీస్‌గఢ్"], "CHHATTISGARH"),
     # North-East & UTs
-    (["असम", "assam", "অসম"], "ASSAM"),
+    (["असम", "assam", "অসম", "আসাম", "அசாம்", "అస్సాం"], "ASSAM"),
     (["मेघालय", "meghalaya"], "MEGHALAYA"),
     (["त्रिपुरा", "tripura"], "TRIPURA"),
     (["चंडीगढ़", "chandigarh"], "CHANDIGARH"),
@@ -243,17 +275,62 @@ def _build_dynamic_fallback(
         and not c.endswith("_id")
     ]
 
-    # Check for top N / bottom N ranking
-    top_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च)\s*(\d+)\b', lower) or re.search(
-        r'(?:सबसे\s+अधिक|सर्वाधिक|अधिक|সর্বাধিক)[^0-9]*?(\d+)\s*(?:जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা|districts)', raw_query
+    # Pre-compute metric intents and normalized queries early
+    clean_norm = normalize_indic_numbers(raw_query)
+    clean_norm_lower = clean_norm.lower()
+
+    query_no_scheme = re.sub(
+        r'पीएम-किसान|पीएम\s+किसान|pm-kisan|pm\s+kisan|పీఎం-కిసాన్|পিএম-কিষানের|পিএম-কিষাণ|பிஎம்-கிசான்',
+        ' ',
+        raw_query,
+        flags=re.IGNORECASE,
     )
-    bottom_match = re.search(r'\b(?:bottom|lowest|least)\s*(\d+)\b', lower)
+    lower_no_scheme = query_no_scheme.lower()
+    has_farmer_intent = any(w in lower_no_scheme or w in query_no_scheme for w in ["farmer", "beneficiar", "किसान", "लाभार्थि", "शेतकऱ्यां", "రైతు", "விவசாயி", "কৃষক"])
+    has_amount_intent = any(
+        w in lower_no_scheme or w in query_no_scheme
+        for w in [
+            "amount", "disbursement", "disbursed", "distribute", "रुपये", "राशि",
+            "धनराशि", "निधी", "रक्कम", "నిధులు", "பணம்", "நிதி", "টাকা", "অর্থ", "বিতরণ", "பண", "డబ్బు", "বরাদ্দ"
+        ]
+    )
+
+    # Check for lowest / highest superlative in query with script boundaries
+    is_min = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['lowest', 'min', 'minimum', 'sabse kam']) or any(
+        re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
+        for w in ['कम', 'குறைவாக', 'తక్కువ', 'అత్యల్పంగా', 'কম', 'कमी', 'সর্বনিম্ন']
+    ) or "সবচেয়ে কম" in raw_query or "সবচেয়ে কম" in clean_norm
+    is_max = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['highest', 'max', 'maximum', 'sabse zyada']) or any(
+        re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
+        for w in ['ज्यादा', 'सर्वाधिक', 'सर्वাধিক', 'अधिक', 'అత్యధిక', 'सर्वात जास्त', 'जास्त', 'அதிகமாக', 'அதிக', 'সর্বাধিক']
+    ) or "সবচেয়ে বেশি" in raw_query
+
+    # Check for top N / bottom N ranking
+    top_match = re.search(r'\b(?:top|first|best|शीर्ष|सर्वोच्च|अव्वल|முன்னணி|அగ్ర)\s*(\d+)\b', clean_norm_lower) or re.search(
+        r'(?:सबसे\s+अधिक|सर्वाधिक|अधिक|সর্বাধিক)[^0-9]*?(\d+)\s*(?:টি)?\s*(?:जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা|districts)', clean_norm
+    )
+    bottom_match = re.search(r'\b(?:bottom|lowest|least|न्यूनतम|কনিষ্ঠ|সর্বনিম্ন)\s*(\d+)\b', clean_norm_lower) or re.search(
+        r'(?:সবচেয়ে\s*কম|সর্বনিম্ন|सबसे\s*कम|न्यूनतम|सर्वात\s*कमी|மிகக்\s*குறைந்த|అత్యల్ప)[^0-9]*?(\d+)\s*(?:টি)?\s*(?:जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা|districts)', clean_norm
+    )
+    if not (top_match or bottom_match):
+        entity_num_match = re.search(
+            r'(?:কোন|किन|कोणत्या|எந்த|ఏ|which)?\s*(\d+)\s*(?:টি|টা)?\s*(?:districts|जिले|जिल्हे|மாவட்டங்கள்|జిల్లాలు|জেলা)',
+            clean_norm,
+            re.IGNORECASE
+        )
+        if entity_num_match:
+            if is_min or any(w in clean_norm for w in ["সবচেয়ে কম", "কম", "कम", "bottom", "lowest", "least", "সর্বনিম্ন"]):
+                bottom_match = entity_num_match
+            elif is_max or any(w in clean_norm for w in ["সবচেয়ে বেশি", "বেশি", "ज्यादा", "top", "highest", "সর্বাধিক"]):
+                top_match = entity_num_match
+
     if (top_match or bottom_match) and "district_name" in cols and numeric_cols:
         limit_n = int(top_match.group(1)) if top_match else int(bottom_match.group(1))
         order_dir = "DESC" if top_match else "ASC"
-        target_measure = "farmer_beneficiaries" if table_name == "ndap_pm_kisan_disbursement" and "amount" not in lower else (
-            next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
-        )
+        if table_name == "ndap_pm_kisan_disbursement":
+            target_measure = "amount_inr" if has_amount_intent else "farmer_beneficiaries"
+        else:
+            target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
         if table_name == "ndap_nfhs5_health_indicators":
             return f"SELECT district_name, {target_measure} FROM {table_name}{where_str} ORDER BY {target_measure} {order_dir} LIMIT {limit_n};"
         is_avg = "pct" in target_measure or "_rate" in target_measure
@@ -261,20 +338,13 @@ def _build_dynamic_fallback(
         alias = f"avg_{target_measure}" if is_avg else f"total_{target_measure}"
         return f"SELECT district_name, {func}({target_measure}) AS {alias} FROM {table_name}{where_str} GROUP BY district_name ORDER BY {alias} {order_dir} LIMIT {limit_n};"
 
-    # Check for lowest / highest superlative in query with script boundaries
-    is_min = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['lowest', 'min', 'minimum', 'sabse kam']) or any(
-        re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
-        for w in ['कम', 'குறைவாக', 'తక్కువ', 'అత్యల్పంగా', 'কম', 'कमी']
-    )
-    is_max = any(re.search(r'\b' + re.escape(w) + r'\b', lower) for w in ['highest', 'max', 'maximum', 'sabse zyada']) or any(
-        re.search(r'(?:^|[^\w\u0900-\u0D7F])' + re.escape(w) + r'(?:[^\w\u0900-\u0D7F]|$)', raw_query)
-        for w in ['ज्यादा', 'सर्वाधिक', 'सर्वাধিক', 'अधिक', 'అత్యధిక', 'सर्वात जास्त', 'जास्त', 'அதிகமாக', 'அதிக', 'সর্বাধিক']
-    )
-
     if (is_min or is_max) and "district_name" in cols and numeric_cols:
-        target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
+        if table_name == "ndap_pm_kisan_disbursement":
+            target_measure = "amount_inr" if has_amount_intent else "farmer_beneficiaries"
+        else:
+            target_measure = next((c for c in (matched_cols or []) if c in numeric_cols), numeric_cols[0])
         order_dir = "ASC" if is_min else "DESC"
-        if table_name in ("ndap_pmay_rural_housing", "ndap_school_infrastructure", "ndap_jal_jeevan_tap_water") and not (
+        if table_name in ("ndap_pmay_rural_housing", "ndap_school_infrastructure", "ndap_jal_jeevan_tap_water", "ndap_pm_kisan_disbursement") and not (
             "pct" in target_measure or "_rate" in target_measure
         ):
             alias = f"total_{target_measure}"
