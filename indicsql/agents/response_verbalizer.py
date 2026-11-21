@@ -5,8 +5,8 @@ in the citizen's mother tongue (Hindi, Marathi, Tamil, Telugu, Bengali, Hinglish
 with localized Indian numbering (Lakhs and Crores).
 """
 
+import re
 from typing import Any, Dict
-
 from indicsql.core.state import IndicSQLState
 from indicsql.events.bus import EventBus
 from indicsql.events.schemas import VoiceSynthesisEvent
@@ -88,6 +88,26 @@ def verbalize_tabular_result(state: IndicSQLState) -> str:
 
     columns = [c.lower() for c in res.get("columns", [])]
     query_text = (state.get("raw_query", "") or state.get("normalized_query", "")).lower()
+
+    # 0a. Multi-entity breakdown (e.g. wheat & rice in Punjab & Haryana, one row each)
+    if (
+        len(rows) > 1
+        and "district_name" not in columns
+        and len(columns) >= 2
+        and not re.search(r"\b(top|bottom|highest|lowest)\b|शीर्ष", query_text)
+    ):
+        dim_idx = [i for i, c in enumerate(columns[:-1]) if c in ("state_name", "crop_name", "fertilizer_type", "commodity", "year", "crop_year", "reporting_year")]
+        if dim_idx and isinstance(rows[0][-1], (int, float)):
+            metric_label = columns[-1].replace("total_", "").replace("avg_", "avg ").replace("_", " ")
+            items = []
+            for r in rows:
+                label = " – ".join(str(r[i]).title() for i in dim_idx)
+                items.append(f"{label}: {format_indian_currency_number(r[-1], lang=lang)}")
+            lead = {
+                "hi": "विवरण", "mr": "तपशील", "ta": "விவரம்", "te": "వివరాలు",
+                "bn": "বিস্তারিত", "hi-en": "Breakdown",
+            }.get(lang, "Breakdown")
+            return f"{lead} ({metric_label}): " + "; ".join(items) + "."
 
     # 0. Multi-row Ranking / Grouping Verbalization (e.g. top districts / states)
     if len(rows) > 1 and ("district_name" in columns or "state_name" in columns):

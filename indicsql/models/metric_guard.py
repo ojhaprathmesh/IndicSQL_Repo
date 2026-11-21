@@ -196,7 +196,7 @@ def extract_metric_intent(query: str) -> MetricIntent:
 
     # 7. Grouping Intent
     grouping_patterns = [
-        r'\b(?:each|every|per|breakdown|by\s+state|by\s+district|by\s+year|state-wise|district-wise|year-wise|wise|top\s+\d+|bottom\s+\d+|districts\s+in|states\s+in)\b',
+        r'\b(?:each|every|per|separately|respectively|individually|breakdown|by\s+state|by\s+district|by\s+year|state-wise|district-wise|year-wise|wise|top\s+\d+|bottom\s+\d+|districts\s+in|states\s+in)\b',
         r'वार', r'जिलेवार', r'राज्यवार', r'सालवार', r'प्रत्येक', r'हर\s*एक',
         r'जिल्हानिहाय', r'राज्यनिहाय',
         r'প্রতিটি', r'অনুসারে',
@@ -438,7 +438,27 @@ def sanitize_metric_aggregations(
     # If the user did NOT request grouping (no 'by district', 'each', etc.),
     # and the query is a scalar aggregate, prune non-aggregate dimension projections,
     # drop unrequested GROUP BY, and drop scalar ORDER BY/LIMIT.
-    if not intent.has_grouping_intent and not intent.is_lowest and not intent.is_highest and not intent.is_ranking_query:
+    # A GROUP BY over a dimension that is filtered to several values (IN ('A','B'))
+    # is an explicit per-entity breakdown and must never be pruned.
+    def _multi_value_grouped_dims() -> bool:
+        group = tree.args.get("group")
+        if not group:
+            return False
+        grouped = {g.name.lower() for g in group.expressions if isinstance(g, exp.Column)}
+        return any(
+            isinstance(i.this, exp.Column)
+            and i.this.name.lower() in grouped
+            and len(i.args.get("expressions") or []) >= 2
+            for i in tree.find_all(exp.In)
+        )
+
+    if (
+        not intent.has_grouping_intent
+        and not intent.is_lowest
+        and not intent.is_highest
+        and not intent.is_ranking_query
+        and not _multi_value_grouped_dims()
+    ):
         has_agg = any(isinstance(c, (exp.Sum, exp.Avg, exp.Count, exp.Min, exp.Max)) for c in tree.find_all(exp.Expression))
         if has_agg and tree.args.get("group"):
             kept_selects = [
