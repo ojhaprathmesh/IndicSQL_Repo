@@ -51,9 +51,52 @@ def format_indian_currency_number(val: Any, lang: str = "hi") -> str:
 
 def verbalize_tabular_result(state: IndicSQLState) -> str:
     """Produces the localized natural language explanation across all 7 supported languages."""
+    lang = state.get("detected_lang", "en")
+
+    if state.get("is_out_of_scope"):
+        if lang == "hi":
+            return (
+                "यह प्रश्न उपलब्ध डेटाबेस के दायरे (scope) से बाहर है। "
+                "IndicSQL केवल 20 भारतीय सरकारी सार्वजनिक डेटासेट (जैसे कृषि व फसल उत्पादन, पीएम-किसान, "
+                "उर्वरक, मंडी भाव, स्कूल व उच्च शिक्षा, ग्रामीण स्वास्थ्य, आयुष्मान भारत, मनरेगा एवं जल जीवन मिशन) का उत्तर दे सकता है।"
+            )
+        elif lang == "mr":
+            return (
+                "हा प्रश्न उपलब्ध डेटाबेसच्या कक्षेबाहेर (scope) आहे. "
+                "IndicSQL सध्या 20 सरकारी सार्वजनिक डेटासेट्स (कृषी उत्पादन, खते, बाजार भाव, पीएम-किसान, "
+                "शिक्षण, आरोग्य, मनरेगा रोजगार व जल जीवन नळ जोडणी) वरील प्रश्नांची माहिती देऊ शकते."
+            )
+        elif lang == "te":
+            return (
+                "ఈ ప్రశ్న డేటాబేస్ పరిధికి వెలుపల ఉంది. "
+                "IndicSQL కేవలం భారత ప్రభుత్వ 20 NDAP పబ్లిక్ డేటాసెట్‌లకు (వ్యవసాయం, పంటల ఉత్పత్తి, పీఎం-కిసాన్, "
+                "ఎరువులు, పాఠశాల విద్య, గ్రామీణ ఆరోగ్యం, ఆయుష్మాన్ భారత్, ఉపాధి హామీ, జల్ జీవన్ మిషన్) సంబంధించిన ప్రశ్నలకు మాత్రమే సమాధానం ఇవ్వగలదు."
+            )
+        elif lang == "ta":
+            return (
+                "இந்தக் கேள்வி கிடைக்கக்கூடிய தரவுத்தளத்தின் எல்லைக்கு அப்பாற்பட்டது. "
+                "IndicSQL 20 இந்திய அரசு (NDAP) பொதுத் திட்டங்கள் (வேளாண்மை, பயிர் உற்பத்தி, பிஎம்-கிசான், உரங்கள், "
+                "கல்வி, பொது சுகாதாரம், மகாத்மா காந்தி வேலை உறுதித் திட்டம், ஜல் ஜீவன் குடிநீர் இணைப்புகள்) சார்ந்த கேள்விகளுக்கு மட்டுமே பதிலளிக்கும்."
+            )
+        elif lang == "bn":
+            return (
+                "এই প্রশ্নটি উপলব্ধ ডাটাবেসের আওতাভুক্ত নয়। "
+                "IndicSQL ভারতীয় সরকারের ২০টি সরকারি তথ্যভাণ্ডার (যেমন কৃষি ও ফসল উৎপাদন, পিএম-কিষাণ, সার, শিক্ষা, "
+                "স্বাস্থ্যসেবা, ১০০ দিনের কাজ, এবং পানীয় জল সংযোগ) সম্পর্কিত প্রশ্নের উত্তর দিতে সক্ষম।"
+            )
+        elif lang == "hi-en":
+            return (
+                "Yeh question available database ke scope se bahar hai. "
+                "IndicSQL currently 20 Indian Government (NDAP) public datasets cover karta hai: agriculture (crop production, mandi prices, fertilizers, PM-KISAN), education, healthcare, MGNREGA employment, and Jal Jeevan tap water."
+            )
+        else:
+            return (
+                "This question is outside the scope of the available database. "
+                "IndicSQL currently queries 20 Indian Government (NDAP) public datasets covering agriculture (crop production, mandi prices, fertilizers, soil health, PM-KISAN), public education & skilling, healthcare (Ayushman Bharat, rural PHCs, TB, NFHS-5), and rural welfare (MGNREGA employment, Jal Jeevan tap water, PMAY housing, and rural roads)."
+            )
+
     res = state.get("execution_result")
     err = state.get("execution_error")
-    lang = state.get("detected_lang", "en")
 
     if err or not res:
         if lang == "hi":

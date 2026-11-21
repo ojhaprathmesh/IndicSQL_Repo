@@ -113,6 +113,14 @@ def execute_indicsql_pipeline(
     # Step 2: Schema Linker
     state.update(schema_linker_node(state))
 
+    # Short-circuit if query is out of scope for the NDAP database
+    if state.get("is_out_of_scope"):
+        state["generated_sql"] = ""
+        state["raw_stochastic_sql"] = ""
+        state["execution_result"] = {"columns": [], "rows": []}
+        state.update(response_verbalizer_node(state))
+        return state
+
     # Step 3: Loop with Reflection
     while True:
         # Synthesize SQL
