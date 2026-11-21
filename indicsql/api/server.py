@@ -70,15 +70,17 @@ class SqlInspectRequest(BaseModel):
 @app.get("/app")
 def serve_frontend_ui():
     """Serves the interactive frontend web application matching the design mockup."""
-    frontend_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "index.html"
-    if frontend_path.exists():
-        return FileResponse(frontend_path)
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    next_out = repo_root / "frontend" / "out" / "index.html"
+    if next_out.exists():
+        return FileResponse(next_out)
     return {
         "service": "IndicSQL Agent Swarm",
         "version": __version__,
         "status": "healthy",
         "supported_languages": ["hi", "bn", "ta", "te", "mr", "hi-en", "en"],
-        "ui_url": "/ui",
+        "docs_url": "/docs",
+        "studio_frontend": "Run 'npm run dev' inside frontend/ for the full Next.js Studio Cockpit",
     }
 
 

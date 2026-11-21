@@ -418,8 +418,8 @@ def generate_html(svg_content, q_train, q_eval, s_train, s_eval) -> str:
 
 
 def main():
-    qwen_path = "models/lora_weights/qwen_adapter/trainer_state.json"
-    sarvam_path = "models/lora_weights/sarvam_adapter/trainer_state.json"
+    qwen_path = "models/lora_weights/qwen_3b_sql/checkpoint-36/trainer_state.json"
+    sarvam_path = "models/lora_weights/sarvam_transliteration/checkpoint-36/trainer_state.json"
 
     print("📊 Loading genuine logs from trainer_state.json...")
     q_train, q_eval, q_ep, q_step = load_logs(qwen_path)

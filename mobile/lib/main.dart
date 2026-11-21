@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,7 +11,7 @@ import 'conversation_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
-  final defaultApiUrl = Platform.isAndroid
+  final defaultApiUrl = (!kIsWeb && Platform.isAndroid)
       ? 'http://10.0.2.2:8000'
       : 'http://127.0.0.1:8000';
   final api = IndicSqlApi(

@@ -3,6 +3,7 @@ Unit and Integration Tests for Model Adapters and Tri-Combo Benchmark Engine.
 Verifies lazy loading, graceful fallback, combo comparison, and Arena execution.
 """
 
+import os
 import unittest
 from pathlib import Path
 
@@ -61,11 +62,15 @@ class TestModelsAndCombos(unittest.TestCase):
         self.assertTrue(
             "qwen_3b_sql" in str(qwen.lora_path) or "qwen_adapter" in str(qwen.lora_path)
         )
-        # If weights are present on disk, verify is_available is True
+        # If weights are present on disk, verify is_available matches base model cache readiness
         if (sarvam.lora_path / "adapter_model.safetensors").exists():
             self.assertTrue(sarvam.is_available)
         if (qwen.lora_path / "adapter_model.safetensors").exists():
-            self.assertTrue(qwen.is_available)
+            qwen_cached = (Path.home() / ".cache" / "huggingface" / "hub" / "models--Qwen--Qwen2.5-Coder-3B-Instruct").exists()
+            if os.environ.get("INDICSQL_OFFLINE", "1") == "0" or qwen_cached:
+                self.assertTrue(qwen.is_available)
+            else:
+                self.assertFalse(qwen.is_available)
 
     def test_tri_combo_fallback_execution(self):
         engine = TriComboEngine()

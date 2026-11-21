@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -12,7 +13,13 @@ class ConversationStore {
   final String? databasePath;
   Database? _database;
 
+  // In-memory fallback for web platforms where sqflite is unavailable
+  final List<Map<String, dynamic>> _webConversations = [];
+  final List<Map<String, dynamic>> _webMessages = [];
+  int _webMsgIdSeq = 1;
+
   Future<void> initialize() async {
+    if (kIsWeb) return;
     final path = databasePath ?? p.join(await getDatabasesPath(), 'indicsql_studio.db');
     _database = await openDatabase(
       path,
@@ -60,6 +67,15 @@ class ConversationStore {
   Future<Conversation> createConversation({String title = 'New conversation'}) async {
     final now = DateTime.now().toUtc();
     final id = _newId();
+    if (kIsWeb) {
+      _webConversations.add({
+        'id': id,
+        'title': title,
+        'created_at': now.toIso8601String(),
+        'updated_at': now.toIso8601String(),
+      });
+      return Conversation(id: id, title: title, createdAt: now, updatedAt: now);
+    }
     await _db.insert('conversations', {
       'id': id,
       'title': title,
@@ -70,7 +86,16 @@ class ConversationStore {
   }
 
   Future<List<Conversation>> listConversations({String search = ''}) async {
-    final term = search.trim();
+    final term = search.trim().toLowerCase();
+    if (kIsWeb) {
+      final filtered = _webConversations.where((c) {
+        if (term.isEmpty) return true;
+        final title = (c['title'] as String? ?? '').toLowerCase();
+        return title.contains(term);
+      }).toList();
+      filtered.sort((a, b) => (b['updated_at'] as String).compareTo(a['updated_at'] as String));
+      return filtered.map(Conversation.fromMap).toList();
+    }
     final rows = await _db.query(
       'conversations',
       where: term.isEmpty ? null : 'title LIKE ?',
@@ -81,6 +106,11 @@ class ConversationStore {
   }
 
   Future<List<StoredMessage>> loadMessages(String conversationId) async {
+    if (kIsWeb) {
+      final filtered = _webMessages.where((m) => m['conversation_id'] == conversationId).toList();
+      filtered.sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));
+      return filtered.map(StoredMessage.fromMap).toList();
+    }
     final rows = await _db.query(
       'messages',
       where: 'conversation_id = ?',
@@ -98,6 +128,27 @@ class ConversationStore {
     bool isError = false,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
+    if (kIsWeb) {
+      final existingCount = _webMessages.where((m) => m['conversation_id'] == conversationId).length;
+      _webMessages.add({
+        'id': _webMsgIdSeq++,
+        'conversation_id': conversationId,
+        'role': role,
+        'content': content,
+        'created_at': now,
+        'payload_json': payload == null ? null : jsonEncode(payload),
+        'is_error': isError ? 1 : 0,
+      });
+      final convIndex = _webConversations.indexWhere((c) => c['id'] == conversationId);
+      if (convIndex != -1) {
+        if (existingCount == 0 && role == 'user') {
+          final title = content.replaceAll(RegExp(r'\s+'), ' ').trim();
+          _webConversations[convIndex]['title'] = title.length > 72 ? '${title.substring(0, 69)}...' : title;
+        }
+        _webConversations[convIndex]['updated_at'] = now;
+      }
+      return;
+    }
     await _db.transaction((transaction) async {
       final existingMessages = Sqflite.firstIntValue(
         await transaction.rawQuery(
@@ -135,6 +186,14 @@ class ConversationStore {
   Future<void> renameConversation(String id, String title) async {
     final normalized = title.trim();
     if (normalized.isEmpty) throw ArgumentError.value(title, 'title', 'Cannot be empty.');
+    if (kIsWeb) {
+      final index = _webConversations.indexWhere((c) => c['id'] == id);
+      if (index != -1) {
+        _webConversations[index]['title'] = normalized;
+        _webConversations[index]['updated_at'] = DateTime.now().toUtc().toIso8601String();
+      }
+      return;
+    }
     await _db.update(
       'conversations',
       {'title': normalized, 'updated_at': DateTime.now().toUtc().toIso8601String()},
@@ -144,10 +203,20 @@ class ConversationStore {
   }
 
   Future<void> deleteConversation(String id) async {
+    if (kIsWeb) {
+      _webConversations.removeWhere((c) => c['id'] == id);
+      _webMessages.removeWhere((m) => m['conversation_id'] == id);
+      return;
+    }
     await _db.delete('conversations', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> close() async {
+    if (kIsWeb) {
+      _webConversations.clear();
+      _webMessages.clear();
+      return;
+    }
     await _database?.close();
     _database = null;
   }
